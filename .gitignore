@@ -1,7 +1,9 @@
 html/*
+attic/*
 .project
 .cproject
 .pydevproject
 .settings
 *.directory
 generated*
+sysroots
