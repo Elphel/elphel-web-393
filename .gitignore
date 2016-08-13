@@ -7,3 +7,4 @@ attic/*
 *.directory
 generated*
 sysroots
+bitbake-logs
