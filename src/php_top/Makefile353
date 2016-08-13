@@ -1,0 +1,85 @@
+include $(AXIS_TOP_DIR)/tools/build/Rules.axis
+OWN = -o root -g root
+
+ROOT         = $(prefix)
+DOCUMENTROOT = $(prefix)/usr/html
+ATTICROOT    = $(prefix)/usr/html/attic
+INCLUDES     = $(prefix)/usr/html/includes
+INSTDOCS     =  0644
+INSTEXE      =  0755
+
+DOCS=       LICENSE
+
+PHPSHELL=   phpshell.php \
+            phpshell.css \
+            valid-xhtml10.png \
+            vcss.png
+HTMLFILES=  10364.html \
+            focus.html \
+	    robots.txt
+##ATTICFILES - files that are not ported (or even needed with 8.x software)
+ATTICFILES= camera_demo.php \
+            compressor.php \
+            demo_focus.php \
+            init354.php \
+            senspars.php \
+            ccam.php \
+            framepars.php \
+            syncmaster354.php \
+            syncslave354.php \
+            whitebalance.php \
+            demo_aexp.php \
+            camvars.php \
+            jhead.php
+
+PHPSCRIPTS= 10364.php \
+            103641.php \
+            103697.php \
+            coring_filter_setup.php \
+            fpga.php \
+            diag_utils.php \
+            focus.php \
+            init347.php \
+	    webcam.php \
+            mshutter.php \
+            mjpeg.php \
+	    raw.php \
+	    raw_demo.php \
+            webcam_adv.php \
+            parsedit.php \
+            phpinfo.php \
+            power347.php \
+            readparameter_demo.php \
+            setparameters_demo.php \
+            snapfull.php \
+            sync.php \
+            sync_other2this.php \
+            trig.php \
+            i2c.php \
+            paramtool.php \
+            tuneseq.php \
+            launcher.php \
+            index.php
+PHPEXE=     bdetect.php \
+            usb10369a.php \
+            detect_ioboard.php
+
+PHPINCLUDES=i2c.inc show_source.inc
+
+
+all:
+install:
+	$(INSTALL) $(OWN) -d $(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -d $(INCLUDES)
+	$(INSTALL) $(OWN) -d $(ATTICROOT)
+
+#install files
+	tar -xzf phpshell.tar.gz
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPSHELL)    $(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPSCRIPTS)  $(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTEXE)  $(PHPEXE)      $(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPINCLUDES) $(INCLUDES)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(HTMLFILES)   $(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS)        $(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS)        $(ROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(ATTICFILES)  $(ATTICROOT)

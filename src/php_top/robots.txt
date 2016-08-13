@@ -1,0 +1,9 @@
+User-agent: *
+Noindex: /
+Disallow: /
+Allow: /camvc.html
+Allow: /webcam.php
+
+
+
+
