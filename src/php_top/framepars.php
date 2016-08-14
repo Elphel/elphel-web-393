@@ -285,48 +285,6 @@ CAPTION;
            $xml->addChild ('LSEEK_SENSORPROC',    fseek($framepars_file,ELPHEL_LSEEK_SENSORPROC,    SEEK_END));
            $frame=0;
 // gets half-frame
-/*
-           elphel_set_P_value(ELPHEL_BITS,                   8, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_QUALITY,               80, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR,                  1, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_BLUE,200, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_RED, 200, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_SENSOR_RUN,             2, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-*/
-/*
-//works
-           elphel_set_P_value(ELPHEL_BITS,                   8, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_QUALITY,               80, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR,                  1, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_BLUE,200, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_RED, 200, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_SENSOR_RUN,             2, $frame+4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-*/
-/*
-wrong
-           elphel_set_P_value(ELPHEL_BITS,                   8, $frame+4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_QUALITY,               80, $frame+4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR,                  1, $frame+4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_BLUE,200, $frame+4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_RED, 200, $frame+4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_SENSOR_RUN,             2, $frame+4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-
-           elphel_set_P_value(ELPHEL_BITS,                   8, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_QUALITY,               80, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR,                  1, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_BLUE,200, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_RED, 200, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_SENSOR_RUN,             2, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-
-*/
-/*
-           elphel_set_P_value(ELPHEL_BITS,                   8, $frame+4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_QUALITY,               80, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR,                  1, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_BLUE,200, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_COLOR_SATURATION_RED, 200, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-           elphel_set_P_value(ELPHEL_SENSOR_RUN,             2, $frame+5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
-*/
 
            elphel_set_P_value(ELPHEL_MAXAHEAD,               2, 0, 8); /// When servicing interrupts, try programming up to 2 frames ahead of due time)
 

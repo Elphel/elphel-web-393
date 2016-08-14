@@ -119,6 +119,9 @@
 
 //main()
 ///globals
+    $PARS_FRAMES=16;
+    $PARS_FRAMES_MASK = $PARS_FRAMES - 1;
+    $sensor_port=0; /// TODO: NC393 - add sensor port control, initially will use $sensor_port=0 for all php functions that require it    
     $autocampars='/usr/html/autocampars.php';
     $descriptions=getParDescriptions($autocampars);
     $default_ahead=3;
@@ -186,7 +189,7 @@
       } else { // return XML page with specified parameters values
         addGammas($todo);
         $names=array_merge(extractNames($global_params),extractNames($frame_params));
-        $currentParameters=elphel_get_P_arr($names);
+        $currentParameters=elphel_get_P_arr($sensor_port, $names);
         applyPost($todo,true); // no final wait
         $msg="<?xml version=\"1.0\"?>\n<parameters>\n";
         foreach ($currentParameters as $key=>$value) {
@@ -568,7 +571,7 @@ echo "</pre>";
 function showLastImages($numImg,$imagesPerRow,$imgScale) {
   $done= decodeTodo ($_GET['done']);
 //  $this_exif=elphel_get_exif_elphel(0);
-  $circbuf_pointers=elphel_get_circbuf_pointers(1);
+  $circbuf_pointers=elphel_get_circbuf_pointers($sensor_port,1);
   $framesAgo=0;
 //echo "<pre>\n";
   end($circbuf_pointers);
@@ -596,12 +599,12 @@ function showLastImages($numImg,$imagesPerRow,$imgScale) {
   $lastFrameIndex=key($circbuf_pointers);
   for ($i=0; $i<=min(($numImg-1),$lastFrameIndex);$i++) {
     $meta[$i]=array('circbuf_pointer'=>$circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['circbuf_pointer'],
-                    'meta'=>elphel_get_interframe_meta($circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['circbuf_pointer']),
-                    'Exif'=>elphel_get_exif_elphel    ($circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['exif_pointer']));
+                    'meta'=>elphel_get_interframe_meta($sensor_port,$circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['circbuf_pointer']),
+                    'Exif'=>elphel_get_exif_elphel    ($sensor_port,$circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['exif_pointer']));
     $lastFrameNumber=$circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['frame'];
   }
-  $running=(elphel_get_P_value(ELPHEL_COMPRESSOR_RUN)==ELPHEL_CONST_COMPRESSOR_RUN_CONT) &&
-           (elphel_get_P_value(ELPHEL_SENSOR_RUN)==ELPHEL_CONST_SENSOR_RUN_CONT);
+  $running=(elphel_get_P_value($sensor_port, ELPHEL_COMPRESSOR_RUN)==ELPHEL_CONST_COMPRESSOR_RUN_CONT) &&
+           (elphel_get_P_value($sensor_port, ELPHEL_SENSOR_RUN)==ELPHEL_CONST_SENSOR_RUN_CONT);
   $page_title=sprintf("%s %d images acquired to the circular buffer (circbuf). Acquisition is %s. Last frame is %d"
                       ,$framesAgo?"$framesAgo frames (stored) ago":"Latest"
                       ,$numImg
@@ -745,10 +748,10 @@ function  applyPost($todo,$noFinalWait=false) {
      $waitingEnabled=false;
      break;
    }
-   if (elphel_get_frame()<8) $waitingEnabled=false; /// or is "==0" enough?
-   if ($waitingEnabled && !$noFinalWait) elphel_skip_frames(1); // in GET mode, do not skip any frames
+   if (elphel_get_frame($sensor_port)< 8) $waitingEnabled=false; /// or is "==0" enough?
+   if ($waitingEnabled && !$noFinalWait) elphel_skip_frames($sensor_port,1); // in GET mode, do not skip any frames
 /// store the current frame number as reference for all actions delays
-   $frame_zero=elphel_get_frame();
+   $frame_zero=elphel_get_frame($sensor_port);
    $frame_since=0;
    $frame_now=$frame_zero;
 ///Iterate through $todo array, programming the parameter changes
@@ -758,23 +761,23 @@ function  applyPost($todo,$noFinalWait=false) {
        $frame_now=$frame_since+$frame_zero;
        if ($waitingEnabled) {
          if ($showSeqMode>0) {printf ("waiting frame %d (0x%x) ... ",$frame_now,$frame_now);  ob_flush();  flush();}
-         elphel_wait_frame_abs($frame_now);
+         elphel_wait_frame_abs($sensor_port, $frame_now);
          if ($showSeqMode>0) {printf ("done\n");   ob_flush();  flush();}
        }
      }
-     elphel_set_P_arr ($pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
+     elphel_set_P_arr ($sensor_port, $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
    }
    if (!$noFinalWait) {
      $frame_now=$since+$frame_zero+1; /// wait just 1 frame longer that the target of the last command in $todo
 //   echo "since=$since\n"; ob_flush();  flush();
      if ($showSeqMode>0) {printf ("waiting frame %d (0x%x) ... ",$frame_now,$frame_now);  ob_flush();  flush();}
      if ($waitingEnabled) {
-        elphel_wait_frame_abs($frame_now);
+        elphel_wait_frame_abs($sensor_port, $frame_now);
      } else {
        $timeout_step=  100000; /// 0.1 sec
        $timeout=      3000000; /// 3.0sec
        for ($i=0 ; $i < $timeout; $i+=$timeout_step) {
-        if (elphel_get_frame()>=$frame_now) break;
+        if (elphel_get_frame($sensor_port)>=$frame_now) break;
         usleep($timeout_step);
        }
      }
@@ -877,7 +880,7 @@ function  addGammas($todo) {
      $black=($gamma_black>>8) & 0xff;
      $gamma=($gamma_black & 0xff)*0.01;
      if ($showSeqMode>0) printf("<pre>Adding gamma table (gamma=%f, black level=%d)\n</pre>\n",$gamma,$black);
-     elphel_gamma_add ($gamma, $black);
+     elphel_gamma_add ($gamma, $black); // does not need $sensor_port
    }
 }
 
@@ -928,7 +931,7 @@ function parseGetNames() {
 /// locate $key among constants, accept numeric values also
         $address=myval ($key);
         if (($address==0) && (strlen($key)>3)) { /// suspect constant
-          $address=elphel_parse_P_name($key);
+          $address=elphel_parse_P_name($key); // does not need $sensor_port,
         }
         if ($address==0) {
           $xml = new SimpleXMLElement("<?xml version='1.0'?><framepars/>");
@@ -960,7 +963,7 @@ function parseGetNames() {
           if ($isPost) {
             $ahead=$posted_params[$index]['delay'];
           }
-          if (elphel_is_global_par($address)) {
+          if (elphel_is_global_par($address)) { // does not need $sensor_port,
 
             $global_params[$index++]=array("number"=>$address,
                                            "name"=>$key,
@@ -994,7 +997,7 @@ function readCurrentParameterValues() {
    }
 // echo "<pre>";
 //print_r($pars);
-   $pars=elphel_get_P_arr($pars); /// next2 frame/globals
+   $pars=elphel_get_P_arr($sensor_port, $pars); /// next2 frame/globals
 //print_r($pars);
    foreach ($frame_params as $key=>$par) {
       $frame_params[$key]['cur_value']=$pars[$par['name']];
@@ -1202,7 +1205,7 @@ function printPage($encoded_todo) {
      fclose($fd_circ);
 //     echo "circbuf_pointer=$circbuf_pointer";
      if ($circbuf_pointer>=0) {
-       $meta=elphel_get_interframe_meta($circbuf_pointer);
+       $meta=elphel_get_interframe_meta($sensor_port, $circbuf_pointer);
        $width= floor($meta['width']*$embedImageScale);
        $height=floor($meta['height']*$embedImageScale);
 //echo "width=$width, height=$height, embedImageScale=$embedImageScale<br />\n";
@@ -1304,7 +1307,7 @@ function printPage($encoded_todo) {
 function getDescription ($compositeName,$descriptions){
   if (array_key_exists($compositeName,$descriptions)) return $descriptions[$compositeName];
 /// try to find a parent name
-  $number=elphel_parse_P_name($compositeName);
+  $number=elphel_parse_P_name($compositeName); // does not need $sensor_port,
   if (!$number) return "Unknown name";
   $prefix="";
 // is it a bit field?
@@ -1315,7 +1318,7 @@ function getDescription ($compositeName,$descriptions){
     $name=substr($compositeName,0,strlen($compositeName)-strlen('__XXYY'));
     if ($width==1) $prefix.= sprintf("This is the bit %d of %s - ",$bit,$name);
     else           $prefix.= sprintf("This is a bit selection - bits %d through %d of %s - ",$bit,($bit+$width-1),$name);
-    $number=elphel_parse_P_name($name);
+    $number=elphel_parse_P_name($name); // does not need $sensor_port,
     if (!$number) {
         echo "Internal error in parsedit.php:Unknown name $name of $compositeName";
         exit (1);
