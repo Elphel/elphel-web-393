@@ -14,11 +14,15 @@ PHP_SCRIPTS=camvars.php \
 
 all:
 	@echo "make all in src"
+	@echo "REMOTE_IP =$(REMOTE_IP)"
+	@echo "REMOTE_USER =$(REMOTE_USER)"
 
 install:
 	@echo "make install in src"
 	$(INSTALL) $(OWN) -d $(DOCUMENTROOT)
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS) $(DOCUMENTROOT)
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHP_SCRIPTS) $(DOCUMENTROOT)
+	@echo "REMOTE_IP =$(REMOTE_IP)"
+	@echo "REMOTE_USER =$(REMOTE_USER)"
 clean:
 	@echo "make clean in src"

@@ -1,4 +1,4 @@
-#!/usr/local/sbin/php -q
+#!/usr/bin/env php -q
 <?php
 /*!
 *! PHP script
@@ -122,7 +122,7 @@
     $PARS_FRAMES=16;
     $PARS_FRAMES_MASK = $PARS_FRAMES - 1;
     $sensor_port=0; /// TODO: NC393 - add sensor port control, initially will use $sensor_port=0 for all php functions that require it    
-    $autocampars='/usr/html/autocampars.php';
+    $autocampars='/www/pages/autocampars.php';
     $descriptions=getParDescriptions($autocampars);
     $default_ahead=3;
     $maxahead=6; /// maximal ahead of the current frame that tasks can currently be set to driver;
@@ -160,6 +160,9 @@
          printDefaultPage();
          endPage();
          exit (0);
+    }
+    if (array_key_exists ( 'sensor_port', $_GET )) {
+    	$sensor_port = (myval($_GET ['sensor_port'])) & 3;
     }
     $elp_const=get_defined_constants(true);
     $elp_const=$elp_const["elphel"];

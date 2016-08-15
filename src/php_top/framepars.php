@@ -148,6 +148,7 @@ USAGE;
        exit (0);
 }
 //$_SERVER["SERVER_ADDR"] . ":8081
+	$sensor_port=0; /// TODO: NC393 - add sensor port control, initially will use $sensor_port=0 for all php functions that require it
     $address="";
     $data="";
     $frame="";
