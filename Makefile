@@ -1,6 +1,6 @@
 
 # Runs 'make', 'make install', and 'make clean' in specified subdirectories
-SUBDIRS := src/php_top # src1
+SUBDIRS := src/php_top src/python_tests # src1
 INSTALLDIRS = $(SUBDIRS:%=install-%)
 CLEANDIRS =   $(SUBDIRS:%=clean-%)
 
