@@ -5,6 +5,31 @@ if (isset($_GET['cmd']))
 else
     $cmd = "do_nothing";
 
+function control_records_sort($a,$b){
+
+    $ad1 = strpos($a,":");
+    $ad2 = strpos($a,"[");
+    
+    $afile = substr($a,0,$ad1);
+    $aline = (int)substr($a,$ad1+1,($ad2-1)-$ad1-1);
+    
+    $bd1 = strpos($b,":");
+    $bd2 = strpos($b,"[");
+    
+    $bfile = substr($b,0,$bd1);
+    $bline = (int)substr($b,$bd1+1,($bd2-1)-$bd1-1);
+    
+    if ($afile==$bfile){
+        if ($aline==$bline){
+            return 0;
+        }
+        return($aline<$bline)?-1:1;
+    }
+    
+    return ($afile<$bfile)?-1:1;
+    
+}
+    
 function get_control($f){
     $res = Array();
     $results = trim(file_get_contents($f));
@@ -15,6 +40,8 @@ function get_control($f){
     //then [module] inside brackets
     //function from "]" to " "
 
+    usort($ress,"control_records_sort");
+    
     $oldfile = "";
     
     foreach($ress as $line){

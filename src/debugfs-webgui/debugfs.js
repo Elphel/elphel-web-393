@@ -141,7 +141,7 @@ function init(){
 
 function update_debugfs_config(){
     console.log("syncing debugfs config");
-    console.log(debugfs_data);
+    //console.log(debugfs_data);
     $.ajax({
         type: "POST",
         url: "debugfs.php?cmd=sync",
