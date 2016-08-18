@@ -161,18 +161,42 @@ $elp_const = get_defined_constants ( true );
 $elp_const = $elp_const ["elphel"];
 $test = 0;
 $hist_needed = 0;
+$port_mask = 0;
+$SENSOR_PORTS = 4;
 $framepars_paths =   array ("/dev/frameparsall0",
 							"/dev/frameparsall1",
 							"/dev/frameparsall2",
 							"/dev/frameparsall3");
+// Next is just to turn on/off compressor interrupts (new in NC393)
+//circbuf0
+$circbuf_paths =   array ("/dev/circbuf0",
+						  "/dev/circbuf1",
+						  "/dev/circbuf2",
+						  "/dev/circbuf3");
+
 
 if (array_key_exists ( 'sensor_port', $_GET )) {
-	$sensor_port = (myval($_GET ['sensor_port'])) & 3;
+	$sensor_port = (myval($_GET ['sensor_port']));
 }
 if (array_key_exists ( 'sensor_subchn', $_GET )) {
-	$sensor_port = (myval($_GET ['sensor_subchn'])) & 3;
+	$sensor_port = (myval($_GET ['sensor_subchn']));
 }
+if ($sensor_port >= 0){
+	$sensor_port &= $SENSOR_PORTS-1;
+	$port_mask = 1 << $sensor_port;
+} else {
+	$port_mask = (-$sensor_port);
+	if ($port_mask >= (1 << $SENSOR_PORTS)) $port_mask = (1 << $SENSOR_PORTS) -1;
+	$sensor_port = 0;
+	for ($i = 0; $i< $SENSOR_PORTS; $i++) if ($port_mask & (1<<i)){
+		$sensor_port = $i;
+		break;
+	}
+}
+
+
 $framepars_path = $framepars_paths[$sensor_port]; 
+$circbuf_path =   $circbuf_paths[$sensor_port]; 
 foreach ( $_GET as $key => $value ) {
 	switch ($key) {
 		case "profile" :
@@ -255,31 +279,33 @@ CAPTION;
 		case "gamma_reverse" :
 			$xml = new SimpleXMLElement ( "<?xml version='1.0'?><framepars/>" );
 			$value = floatval ( $value );
-			switch ($key) {
-				case "histogram_direct" :
-					$xml->addChild ( 'histogram_direct_r', elphel_histogram ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 0, $value ) );
-					$xml->addChild ( 'histogram_direct_g', elphel_histogram ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 1, $value ) );
-					$xml->addChild ( 'histogram_direct_gb', elphel_histogram ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 2, $value ) );
-					$xml->addChild ( 'histogram_direct_b', elphel_histogram ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 3, $value ) );
-					break;
-				case "histogram_reverse" :
-					$xml->addChild ( 'histogram_reverse_r', elphel_reverse_histogram ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 0, $value ) );
-					$xml->addChild ( 'histogram_reverse_g', elphel_reverse_histogram ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 1, $value ) );
-					$xml->addChild ( 'histogram_reverse_gb', elphel_reverse_histogram ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 2, $value ) );
-					$xml->addChild ( 'histogram_reverse_b', elphel_reverse_histogram ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 3, $value ) );
-					break;
-				case "gamma_direct" :
-					$xml->addChild ( 'gamma_direct_r', elphel_gamma ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 0, $value ) );
-					$xml->addChild ( 'gamma_direct_g', elphel_gamma ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 1, $value ) );
-					$xml->addChild ( 'gamma_direct_gb', elphel_gamma ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 2, $value ) );
-					$xml->addChild ( 'gamma_direct_b', elphel_gamma ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 3, $value ) );
-					break;
-				case "gamma_reverse" :
-					$xml->addChild ( 'gamma_reverse_r', elphel_reverse_gamma ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 0, $value ) );
-					$xml->addChild ( 'gamma_reverse_g', elphel_reverse_gamma ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 1, $value ) );
-					$xml->addChild ( 'gamma_reverse_gb', elphel_reverse_gamma ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 2, $value ) );
-					$xml->addChild ( 'gamma_reverse_b', elphel_reverse_gamma ($GLOBALS['sensor_port'],$GLOBALS['$sensor_subchn'], 3, $value ) );
-					break;
+			for ($sensor_port = 0; $sensor_port < $GLOBALS['SENSOR_PORTS'];$sensor_port++) if ($GLOBALS['port_mask'] & (1 << $sensor_port))  {
+					switch ($key) {
+						case "histogram_direct" :
+							$xml->addChild ( 'histogram_direct_r'.strval($sensor_port), elphel_histogram ( $sensor_port, $GLOBALS ['$sensor_subchn'], 0, $value ) );
+							$xml->addChild ( 'histogram_direct_g'.strval($sensor_port), elphel_histogram ( $sensor_port, $GLOBALS ['$sensor_subchn'], 1, $value ) );
+							$xml->addChild ( 'histogram_direct_gb'.strval($sensor_port), elphel_histogram ( $sensor_port, $GLOBALS ['$sensor_subchn'], 2, $value ) );
+							$xml->addChild ( 'histogram_direct_b'.strval($sensor_port), elphel_histogram ( $sensor_port, $GLOBALS ['$sensor_subchn'], 3, $value ) );
+							break;
+						case "histogram_reverse" :
+							$xml->addChild ( 'histogram_reverse_r'.strval($sensor_port), elphel_reverse_histogram ( $sensor_port, $GLOBALS ['$sensor_subchn'], 0, $value ) );
+							$xml->addChild ( 'histogram_reverse_g'.strval($sensor_port), elphel_reverse_histogram ( $sensor_port, $GLOBALS ['$sensor_subchn'], 1, $value ) );
+							$xml->addChild ( 'histogram_reverse_gb'.strval($sensor_port), elphel_reverse_histogram ( $sensor_port, $GLOBALS ['$sensor_subchn'], 2, $value ) );
+							$xml->addChild ( 'histogram_reverse_b'.strval($sensor_port), elphel_reverse_histogram ( $sensor_port, $GLOBALS ['$sensor_subchn'], 3, $value ) );
+							break;
+						case "gamma_direct" :
+							$xml->addChild ( 'gamma_direct_r'.strval($sensor_port), elphel_gamma ( $sensor_port, $GLOBALS ['$sensor_subchn'], 0, $value ) );
+							$xml->addChild ( 'gamma_direct_g'.strval($sensor_port), elphel_gamma ( $sensor_port, $GLOBALS ['$sensor_subchn'], 1, $value ) );
+							$xml->addChild ( 'gamma_direct_gb'.strval($sensor_port), elphel_gamma ( $sensor_port, $GLOBALS ['$sensor_subchn'], 2, $value ) );
+							$xml->addChild ( 'gamma_direct_b'.strval($sensor_port), elphel_gamma ( $sensor_port, $GLOBALS ['$sensor_subchn'], 3, $value ) );
+							break;
+						case "gamma_reverse" :
+							$xml->addChild ( 'gamma_reverse_r'.strval($sensor_port), elphel_reverse_gamma ( $sensor_port, $GLOBALS ['$sensor_subchn'], 0, $value ) );
+							$xml->addChild ( 'gamma_reverse_g'.strval($sensor_port), elphel_reverse_gamma ( $sensor_port, $GLOBALS ['$sensor_subchn'], 1, $value ) );
+							$xml->addChild ( 'gamma_reverse_gb'.strval($sensor_port), elphel_reverse_gamma ( $sensor_port, $GLOBALS ['$sensor_subchn'], 2, $value ) );
+							$xml->addChild ( 'gamma_reverse_b'.strval($sensor_port), elphel_reverse_gamma ( $sensor_port, $GLOBALS ['$sensor_subchn'], 3, $value ) );
+							break;
+					}
 			}
 			$rslt = $xml->asXML ();
 			header ( "Content-Type: text/xml" );
@@ -290,67 +316,9 @@ CAPTION;
 		case "cmd" :
 		case "seek" :
 		case "fseek" :
-		case "lseek" :
+		case "lseek":
 			$xml = new SimpleXMLElement ( "<?xml version='1.0'?><framepars/>" );
-			if (! $value) {
-				$xml->addChild ( 'frame', elphel_get_frame ($GLOBALS['sensor_port']) );
-//				$xml->addChild ( 'frame8', elphel_fpga_read ( 0x16 ) & 7 );
-			} else if ($value == "time") {
-				$xml->addChild ( 'fpga_time', elphel_get_fpga_time ($GLOBALS['sensor_port']) );
-			} else if ($value == "irqoff") {
-				$framepars_file = fopen ( $framepars_path, "r" );
-				$xml->addChild ( 'irqoff_result', fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_OFF, SEEK_END ) ); // #define LSEEK_INTERRUPT_OFF 0x23 /// disable camera interrupts
-				fclose ( $framepars_file );
-			} else if ($value == "irqon") {
-				// / wait for frame8=0
-//				while ( elphel_fpga_read ( 0x16 ) & 7 )
-//					usleep ( 1000 ); // / Maybe needed to wait for 7, then 0?
-				$framepars_file = fopen ( $framepars_path, "r" );
-				$xml->addChild ( 'irqon_result', fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_ON, SEEK_END ) ); // #define LSEEK_INTERRUPT_ON 0x24 /// enable camera interrupts
-				fclose ( $framepars_file );
-			} else if ($value == "init") {
-				$framepars_file = fopen ( $framepars_path, "r" );
-				$xml->addChild ( 'LSEEK_FRAMEPARS_INIT', fseek ( $framepars_file, ELPHEL_LSEEK_FRAMEPARS_INIT, SEEK_END ) );
-				$xml->addChild ( 'elphel_set_P_value', elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_SENSOR, 0x00, 0, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ) ); // / will start detection
-				$xml->addChild ( 'LSEEK_SENSORPROC', fseek ( $framepars_file, ELPHEL_LSEEK_SENSORPROC, SEEK_END ) );
-				$frame = 0;
-				// gets half-frame
-				
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_MAXAHEAD, 2, 0, 8 ); // / When servicing interrupts, try programming up to 2 frames ahead of due time)
-				
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_FPGA_XTRA, 1000, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // /compressor needs extra 1000 cycles to compress a frame (estimate)
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_EXTERN_TIMESTAMP, 1, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / only used with async trigger
-				                                                                                                       
-				// / good (latency should be changed, but for now that will make a correct initialization - maybe obsolete)
-				
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_BITS, 8, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_QUALITY, 80, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_COLOR, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_COLOR_SATURATION_BLUE, 200, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_COLOR_SATURATION_RED, 200, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_BAYER, 0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_SENSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-				elphel_set_P_value ($GLOBALS['sensor_port'], ELPHEL_COMPRESSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
-				
-				fclose ( $framepars_file );
-				$gamma = 57;
-				$black = 10;
-				$scale_r = ( int ) (1.0 * 1024);
-				$scale_g = ( int ) (0.9 * 1024);
-				$scale_b = ( int ) (1.1 * 1024);
-				$scale_gb = ( int ) (0.9 * 1024);
-				elphel_gamma_add ( 0.01 * $gamma, $black ); // does not depend on $GLOBALS['sensor_port']
-				// define P_GTAB_R 138 // combines (P_PIXEL_LOW<<24) | (P_GAMMA <<16) and 16-bit (6.10) scale for gamma tables, individually for each color.
-				// 16Msbs are also "hash16" and do not need to be black level/gamma, just uniqualy identify the table for applications
-				$gamma_pars = array (
-						"GTAB_R" => ($black << 24) | ($gamma << 16) | ($scale_r & 0xffff),
-						"GTAB_G" => ($black << 24) | ($gamma << 16) | ($scale_g & 0xffff),
-						"GTAB_B" => ($black << 24) | ($gamma << 16) | ($scale_b & 0xffff),
-						"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff) 
-				);
-				$frame = elphel_get_frame ($GLOBALS['sensor_port']); // 0
-				elphel_set_P_arr ($GLOBALS['sensor_port'], $gamma_pars, $frame + 3, 0 );
-			} else if ($value == "gamma57") {
+			if ($value == "gamma57") {
 				$gamma = 57;
 				$black = 10;
 				$scale_r = ( int ) (1.0 * 1024);
@@ -364,10 +332,13 @@ CAPTION;
 						"GTAB_R" => ($black << 24) | ($gamma << 16) | ($scale_r & 0xffff),
 						"GTAB_G" => ($black << 24) | ($gamma << 16) | ($scale_g & 0xffff),
 						"GTAB_B" => ($black << 24) | ($gamma << 16) | ($scale_b & 0xffff),
-						"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff) 
+						"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff)
 				);
-				$frame = elphel_get_frame ($GLOBALS['sensor_port']); // 0
-				elphel_set_P_arr ($GLOBALS['sensor_port'], $gamma_pars, $frame + 3, 0 );
+				for($sensor_port = 0; $sensor_port < $GLOBALS ['SENSOR_PORTS']; $sensor_port ++)
+					if ($GLOBALS ['port_mask'] & (1 << $sensor_port)) {
+						$frame = elphel_get_frame ( $sensor_port ); // 0
+						elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 3, 0 );
+					}
 			} else if ($value == "gamma") {
 				$gamma = 60;
 				$black = 10;
@@ -382,10 +353,13 @@ CAPTION;
 						"GTAB_R" => ($black << 24) | ($gamma << 16) | ($scale_r & 0xffff),
 						"GTAB_G" => ($black << 24) | ($gamma << 16) | ($scale_g & 0xffff),
 						"GTAB_B" => ($black << 24) | ($gamma << 16) | ($scale_b & 0xffff),
-						"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff) 
+						"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff)
 				);
-				$frame = elphel_get_frame ($GLOBALS['sensor_port']); // 0
-				elphel_set_P_arr ($GLOBALS['sensor_port'], $gamma_pars, $frame + 3, 0 );
+				for($sensor_port = 0; $sensor_port < $GLOBALS ['SENSOR_PORTS']; $sensor_port ++)
+					if ($GLOBALS ['port_mask'] & (1 << $sensor_port)) {
+						$frame = elphel_get_frame ( $sensor_port ); // 0
+						elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 3, 0 );
+					}
 			} else if ($value == "linear") {
 				$gamma = 100;
 				$black = 0;
@@ -394,60 +368,130 @@ CAPTION;
 				$scale_b = ( int ) (1.0 * 1024);
 				$scale_gb = ( int ) (1.0 * 1024);
 				elphel_gamma_add ( 0.01 * $gamma, $black ); // does not depend on $GLOBALS['sensor_port']
-				// define P_GTAB_R 138 // combines (P_PIXEL_LOW<<24) | (P_GAMMA <<16) and 16-bit (6.10) scale for gamma tables, individually for each color.
-				// 16Msbs are also "hash16" and do not need to be black level/gamma, just uniquely identify the table for applications
+				                                            // define P_GTAB_R 138 // combines (P_PIXEL_LOW<<24) | (P_GAMMA <<16) and 16-bit (6.10) scale for gamma tables, individually for each color.
+				                                            // 16Msbs are also "hash16" and do not need to be black level/gamma, just uniquely identify the table for applications
 				$gamma_pars = array (
 						"GTAB_R" => ($black << 24) | ($gamma << 16) | ($scale_r & 0xffff),
 						"GTAB_G" => ($black << 24) | ($gamma << 16) | ($scale_g & 0xffff),
 						"GTAB_B" => ($black << 24) | ($gamma << 16) | ($scale_b & 0xffff),
 						"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff) 
 				);
-				$frame = elphel_get_frame ($GLOBALS['sensor_port']); // 0
-				elphel_set_P_arr ($GLOBALS['sensor_port'], $gamma_pars, $frame + 3, 0 );
-			} else if ($value == "initgamma") {
-				$gammas_file = fopen ( "/dev/gamma_cache", "r" );
-				$xml->addChild ( 'LSEEK_GAMMA_INIT', fseek ( $gammas_file, ELPHEL_LSEEK_GAMMA_INIT, SEEK_END ) );
-				fclose ( $gammas_file );
-			} else if ($value == "jpegheader") {
-				$circbuf_file = fopen ( "/dev/circbuf", "r" );
-				fseek ( $circbuf_file, ELPHEL_LSEEK_CIRC_LAST, SEEK_END );
-				$jpeg_start = ftell ( $circbuf_file );
-				$xml->addChild ( 'circbuf_pointer', sprintf ( "0x%x (0x%x)", $jpeg_start, $jpeg_start >> 2 ) );
-				fclose ( $circbuf_file );
-				$header_file = fopen ( "/dev/jpeghead", "r" );
-				// / Now select right frame (different frames may have different header sizes)
-				fseek ( $header_file, $jpeg_start + 1, SEEK_END ); // / selects frame, creates header
-				fseek ( $header_file, 0, SEEK_END ); // / positions to the end
-				$header_size = ftell ( $header_file ); // /
-				$xml->addChild ( 'header_size', $header_size );
-				fseek ( $header_file, 0, SEEK_SET ); // / positions to the beginning
-				$header = fread ( $header_file, 8192 );
-				$xml->addChild ( 'header_read_length', strlen ( $header ) );
-				fclose ( $header_file );
-				$aheader = unpack ( 'C*', $header );
-				for($i = 0; $i < count ( $aheader ); $i += 16) {
-					$d = "";
-					for($j = $i; ($j < $i + 16) && ($j < count ( $aheader )); $j ++)
-						$d .= sprintf ( " %02x", $aheader [$j + 1] );
-					$xml->addChild ( sprintf ( 'header%03x', $i ), $d );
-				}
-			} else if ($value == "reset") {
-				$framepars_file = fopen ( $framepars_path, "r" );
-				$xml->addChild ( 'LSEEK_DMA_STOP', fseek ( $framepars_file, ELPHEL_LSEEK_DMA_STOP, SEEK_END ) );
-				$xml->addChild ( 'LSEEK_DMA_INIT', fseek ( $framepars_file, ELPHEL_LSEEK_DMA_INIT, SEEK_END ) );
-				$xml->addChild ( 'LSEEK_COMPRESSOR_RESET', fseek ( $framepars_file, ELPHEL_LSEEK_COMPRESSOR_RESET, SEEK_END ) );
-				fclose ( $framepars_file );
+				for($sensor_port = 0; $sensor_port < $GLOBALS ['SENSOR_PORTS']; $sensor_port ++)
+					if ($GLOBALS ['port_mask'] & (1 << $sensor_port)) {
+						$frame = elphel_get_frame ( $sensor_port ); // 0
+						elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 3, 0 );
+					}
 			} else if ($value == "constants") {
 				echo "<pre>\n";
 				print_r ( $elp_const );
 				echo "</pre>\n";
 				exit ( 0 );
-			} else {
-				$framepars_file = fopen ( $framepars_path, "r" );
-				$xml->addChild ( 'lseek_' . $value, fseek ( $framepars_file, $value, SEEK_END ) );
-				fclose ( $framepars_file );
-			}
-			
+			} else
+				for($sensor_port = 0; $sensor_port < $GLOBALS ['SENSOR_PORTS']; $sensor_port ++)
+					if ($GLOBALS ['port_mask'] & (1 << $sensor_port)) {
+						if (! $value) {
+							$xml->addChild ( 'frame' . strval ( $sensor_port ), elphel_get_frame ( $sensor_port ) );
+							$xml->addChild ( 'compressed' . strval ( $sensor_port ), elphel_get_compressed_frame ( $sensor_port ) );
+						} else if ($value == "time") {
+							$xml->addChild ( 'fpga_time' . strval ( $sensor_port ), elphel_get_fpga_time ( $sensor_port ) );
+						} else if ($value == "irqoff") {
+							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+" );
+							$xml->addChild ( 'irqoff_result' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_OFF, SEEK_END ) ); // #define LSEEK_INTERRUPT_OFF 0x23 /// disable camera interrupts
+							fclose ( $framepars_file );
+						} else if ($value == "irqon") {
+							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+" );
+							$xml->addChild ( 'irqon_result' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_ON, SEEK_END ) ); // #define LSEEK_INTERRUPT_ON 0x24 /// enable camera interrupts
+							fclose ( $framepars_file );
+						} else if ($value == "compressor_irqoff") {
+							$framepars_file = fopen ( $GLOBALS ['circbuf_paths'] [$sensor_port], "w+" );
+							$xml->addChild ( 'compressor_irqoff_result' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_OFF, SEEK_END ) ); // #define LSEEK_INTERRUPT_OFF 0x23 /// disable camera interrupts
+							fclose ( $framepars_file );
+						} else if ($value == "compressor_irqon") {
+							$framepars_file = fopen ( $GLOBALS ['circbuf_paths'] [$sensor_port], "w+" );
+							$xml->addChild ( 'compressor_irqon_result', fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_ON, SEEK_END ) ); // #define LSEEK_INTERRUPT_ON 0x24 /// enable camera interrupts
+							fclose ( $framepars_file );
+						} else if ($value == "init") {
+							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+"); //r" );
+							$xml->addChild ('DEBUG_01_'. strval ( $sensor_port ), $GLOBALS ['framepars_paths'] [$sensor_port]);
+							$xml->addChild ( 'LSEEK_FRAMEPARS_INIT' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_FRAMEPARS_INIT, SEEK_END ) );
+							$xml->addChild ( 'elphel_set_P_value' . strval ( $sensor_port ), elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR, 0x00, 0, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ) ); // / will start detection
+							$xml->addChild ( 'LSEEK_SENSORPROC' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_SENSORPROC, SEEK_END ) );
+							$frame = 0;
+							// gets half-frame
+							
+							elphel_set_P_value ( $sensor_port, ELPHEL_MAXAHEAD, 2, 0, 8 ); // / When servicing interrupts, try programming up to 2 frames ahead of due time)
+							
+							elphel_set_P_value ( $sensor_port, ELPHEL_FPGA_XTRA, 1000, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // /compressor needs extra 1000 cycles to compress a frame (estimate)
+							elphel_set_P_value ( $sensor_port, ELPHEL_EXTERN_TIMESTAMP, 1, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / only used with async trigger
+							                                                                                                                   
+							// / good (latency should be changed, but for now that will make a correct initialization - maybe obsolete)
+							
+							elphel_set_P_value ( $sensor_port, ELPHEL_BITS, 8, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_QUALITY, 80, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR_SATURATION_BLUE, 200, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR_SATURATION_RED, 200, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_BAYER, 0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
+							
+							fclose ( $framepars_file );
+							$gamma = 57;
+							$black = 10;
+							$scale_r = ( int ) (1.0 * 1024);
+							$scale_g = ( int ) (0.9 * 1024);
+							$scale_b = ( int ) (1.1 * 1024);
+							$scale_gb = ( int ) (0.9 * 1024);
+							elphel_gamma_add ( 0.01 * $gamma, $black ); // does not depend on $GLOBALS['sensor_port']
+							                                            // define P_GTAB_R 138 // combines (P_PIXEL_LOW<<24) | (P_GAMMA <<16) and 16-bit (6.10) scale for gamma tables, individually for each color.
+							                                            // 16Msbs are also "hash16" and do not need to be black level/gamma, just uniqualy identify the table for applications
+							$gamma_pars = array (
+									"GTAB_R" => ($black << 24) | ($gamma << 16) | ($scale_r & 0xffff),
+									"GTAB_G" => ($black << 24) | ($gamma << 16) | ($scale_g & 0xffff),
+									"GTAB_B" => ($black << 24) | ($gamma << 16) | ($scale_b & 0xffff),
+									"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff) 
+							);
+							$frame = elphel_get_frame ( $sensor_port ); // 0
+							elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 3, 0 );
+						} else if ($value == "initgamma") {
+							$gammas_file = fopen ( "/dev/gamma_cache", "w+" );
+							$xml->addChild ( 'LSEEK_GAMMA_INIT' . strval ( $sensor_port ), fseek ( $gammas_file, ELPHEL_LSEEK_GAMMA_INIT, SEEK_END ) );
+							fclose ( $gammas_file );
+						} else if ($value == "jpegheader") {
+							$circbuf_file = fopen ( "/dev/circbuf", "w+" );
+							fseek ( $circbuf_file, ELPHEL_LSEEK_CIRC_LAST, SEEK_END );
+							$jpeg_start = ftell ( $circbuf_file );
+							$xml->addChild ( 'circbuf_pointer' . strval ( $sensor_port ), sprintf ( "0x%x (0x%x)", $jpeg_start, $jpeg_start >> 2 ) );
+							fclose ( $circbuf_file );
+							$header_file = fopen ( "/dev/jpeghead", "w+" );
+							// / Now select right frame (different frames may have different header sizes)
+							fseek ( $header_file, $jpeg_start + 1, SEEK_END ); // / selects frame, creates header
+							fseek ( $header_file, 0, SEEK_END ); // / positions to the end
+							$header_size = ftell ( $header_file ); // /
+							$xml->addChild ( 'header_size' . strval ( $sensor_port ), $header_size );
+							fseek ( $header_file, 0, SEEK_SET ); // / positions to the beginning
+							$header = fread ( $header_file, 8192 );
+							$xml->addChild ( 'header_read_length' . strval ( $sensor_port ), strlen ( $header ) );
+							fclose ( $header_file );
+							$aheader = unpack ( 'C*', $header );
+							for($i = 0; $i < count ( $aheader ); $i += 16) {
+								$d = "";
+								for($j = $i; ($j < $i + 16) && ($j < count ( $aheader )); $j ++)
+									$d .= sprintf ( " %02x", $aheader [$j + 1] );
+								$xml->addChild ( sprintf ( 'header%03x' . strval ( $sensor_port ), $i ), $d );
+							}
+						} else if ($value == "reset") {
+							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+" );
+							$xml->addChild ( 'LSEEK_DMA_STOP' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_DMA_STOP, SEEK_END ) );
+							$xml->addChild ( 'LSEEK_DMA_INIT' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_DMA_INIT, SEEK_END ) );
+							$xml->addChild ( 'LSEEK_COMPRESSOR_RESET' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_COMPRESSOR_RESET, SEEK_END ) );
+							fclose ( $framepars_file );
+						} else {
+							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+" );
+							$xml->addChild ( 'lseek_' . $value . "_" . strval ( $sensor_port ), fseek ( $framepars_file, $value, SEEK_END ) );
+							fclose ( $framepars_file );
+						}
+					}
 			$rslt = $xml->asXML ();
 			header ( "Content-Type: text/xml" );
 			header ( "Content-Length: " . strlen ( $rslt ) . "\n" );
@@ -641,7 +685,7 @@ if ($data === "") {
 		printf ( "<p><a href=\"%s/prev/prev/prev/prev/prev/prev/prev/prev/meta/next/meta/next/meta/next/meta/next/meta/next/meta/next/meta/next/meta/next/meta\">meta data for the last 9 frames</a></p>\n", $imgsrv );
 		ob_flush ();
 		flush (); // /OK here
-		$circbuf_file = fopen ( "/dev/circbuf", "r" );
+		$circbuf_file = fopen ( "/dev/circbuf", "w+" );
 		$current_frame = $frame;
 		printf ( "<p>frame=%d (0x%x), time=%d </p>\n", elphel_get_frame ($GLOBALS['sensor_port']), elphel_get_frame ($GLOBALS['sensor_port']), time () );
 		ob_flush ();
@@ -781,7 +825,7 @@ function printGammaStructure() {
 	printf ( "</table>\n" );
 }
 function getGammaStructure() {
-	$gammas_file = fopen ( "/dev/gamma_cache", "r" );
+	$gammas_file = fopen ( "/dev/gamma_cache", "w+" );
 	fseek ( $gammas_file, 0, SEEK_END );
 	$numberOfEntries = ftell ( $gammas_file );
 	fclose ( $gammas_file );
