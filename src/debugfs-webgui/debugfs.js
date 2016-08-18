@@ -1,4 +1,5 @@
 var CUT_STRING_LIMIT = 20;
+var NLINES = 30;
 
 var debugfs_data;
 
@@ -72,10 +73,10 @@ function init(){
                 content.append(
                     $("<td>").addClass("hidden_rows").hide()
                 ).append(
-                    $("<td>").append(
-                        $("<table>").css({margin:"5px"})
-                    )
+                    $("<td>",{id:"content_td"})
                 );
+                
+                //$("<table>").css({margin:"5px"})
                 
                 //.append($("<td>").addClass("hidden_rows").css({display:"none"}))
                 
@@ -83,8 +84,20 @@ function init(){
                 
                 var r1 = r[i].configs[0].lines;
                 
+                var table_index=0;
+                
                 for (var j=0;j<r1.length;j++){
-
+                    table_index = Math.floor(j/NLINES);
+                    
+                    if (j%2==0) oddeven = "even";
+                    else        oddeven = "odd";
+                    
+                    //create those tables?!
+                    if (content.find("#ctbl_"+table_index).length==0) {
+                        ctbl = $("<table>",{id:"ctbl_"+table_index}).css({margin:"5px 30px 5px 5px",display:"inline"});
+                        content.find("#content_td").append(ctbl);
+                    }
+                    
                     ttl  = "module:      "+r1[j].module+"\n";
                     ttl += "function:    "+r1[j].function+"\n";
                     ttl += "format:      "+r1[j].format;
@@ -101,13 +114,13 @@ function init(){
                     if (r1[j].format.length>CUT_STRING_LIMIT) cut_format = "...";
                     else                                      cut_format = "";
            
-                    l  = "<tr>";
+                    l  = "<tr class='"+oddeven+"'>";
                     l += "  <td style='text-align:center' title='"+ttl+"'>"+r1[j].lineno+"</td>";
                     l += "  <td style='text-align:center'><input type='checkbox' class='tp debug' "+checked+" file='"+r1[j].file+"' line='"+r1[j].lineno+"' /></td>";
                     l += "  <td>"+r1[j].function.substr(0,20)+"...</td>";
                     l += "  <td>"+r1[j].format.substr(0,20)+"...</td>";
                     l += "</tr>";
-                    content.find("table").append(l);
+                    ctbl.append(l);
                 }
             }
             
