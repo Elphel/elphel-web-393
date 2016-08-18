@@ -1,3 +1,5 @@
+var CUT_STRING_LIMIT = 20;
+
 var debugfs_data;
 
 function init(){
@@ -85,9 +87,17 @@ function init(){
                         checked = "";
                     }
                 
+                    if (r1[j].function.length>CUT_STRING_LIMIT) cut_function = "...";
+                    else                                        cut_function = "";
+           
+                    if (r1[j].format.length>CUT_STRING_LIMIT) cut_format = "...";
+                    else                                      cut_format = "";
+           
                     l  = "<tr>";
                     l += "  <td style='text-align:center' title='"+ttl+"'>"+r1[j].lineno+"</td>";
                     l += "  <td style='text-align:center'><input type='checkbox' class='tp debug' "+checked+" file='"+r1[j].file+"' line='"+r1[j].lineno+"' /></td>";
+                    l += "  <td>"+r1[j].function.substr(0,20)+"...</td>";
+                    l += "  <td>"+r1[j].format.substr(0,20)+"...</td>";
                     l += "</tr>";
                     content.find("table").append(l);
                 }

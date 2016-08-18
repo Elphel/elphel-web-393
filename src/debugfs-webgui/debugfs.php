@@ -33,12 +33,12 @@ function get_control($f){
         $subarr['file']     = substr($line,0,$d1);
         $subarr['lineno']   = substr($line,$d1+1,($d2-1)-$d1-1);
         $subarr['module']   = substr($line,$d2+1,($d3-1)-$d2);
-        $subarr['function'] = substr($line,$d3+1,($d4-1)-$d3);
+        $subarr['function'] = substr($line,$d3+1,($d4-1)-$d3-1);
         $subarr['flags']    = substr($line,$d4+1,1);
         $subarr['format']   = substr($line,$d5+1,-1);
     
         if ($subarr['file']!=$oldfile){
-            echo "processing ".$subarr['file']."\n";
+            //echo "processing ".$subarr['file']."\n";
             if ($oldfile!="") array_push($res,$sub);
             $oldfile = $subarr['file'];
             $sub = Array(
@@ -57,7 +57,7 @@ function get_control($f){
     }
     //last
     array_push($res,$sub);
-    
+        
     return $res;
 }
 
@@ -107,9 +107,10 @@ if (($cmd=="do_nothing")||($cmd=="restore")){
     
     if (!is_file("debugfs.json")) {
         $arr = get_control($file);
-        print_r($arr);
+        //print_r($arr);
         update_config(json_encode($arr));
-        echo "debugfs.json was missing, refresh page\n";
+        echo json_encode($arr);
+        //echo "debugfs.json was missing, refresh page\n";
     }else{
         $json_data = file_get_contents("debugfs.json");
         //print_r(json_decode($json_data));
