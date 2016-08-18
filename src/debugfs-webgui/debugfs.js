@@ -19,7 +19,15 @@ function init(){
         }
     });
     
-    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0));
+    var b1 = $("<button>",{id:"b1"}).css({margin:"0px 0px 0px 10px"}).html("save to fs");
+    
+    b1.click(function(){
+        $.ajax({
+            url: "debugfs.php?cmd=savetofs"
+        });
+    });
+    
+    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1));
     
     var t = $("<table border=\"1\">").html("\
         <tr>\

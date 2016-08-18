@@ -1,4 +1,7 @@
 <?php
+//globals
+$config = "debugfs.json";
+$tmp_config = "/tmp/$config";
 
 if (isset($_GET['cmd']))
     $cmd = $_GET['cmd'];
@@ -27,7 +30,6 @@ function control_records_sort($a,$b){
     }
     
     return ($afile<$bfile)?-1:1;
-    
 }
     
 function get_control($f){
@@ -89,13 +91,16 @@ function get_control($f){
 }
 
 function update_config($data){
+    global $tmp_config;
     // debugfs.json
-    file_put_contents("debugfs.json",$data);
+    file_put_contents($tmp_config,$data);
 }
 
 function sync_to_config($file,$line,$flag){
+    global $tmp_config;
+
     //$arr_debugfs = get_control("/sys/kernel/debug/dynamic_debug/control");
-    $arr_config = json_decode(file_get_contents("debugfs.json"),true);
+    $arr_config = json_decode(file_get_contents($tmp_config),true);
         
     foreach($arr_config as $k => $v){
         if ($v['file']==$file) $dc = $k;
@@ -132,16 +137,22 @@ if (($cmd=="do_nothing")||($cmd=="restore")){
     //echo json_encode(get_control($file));
     //echo "<pre>";
     
-    if (!is_file("debugfs.json")) {
-        $arr = get_control($file);
-        //print_r($arr);
-        update_config(json_encode($arr));
-        echo json_encode($arr);
+    if (!is_file($tmp_config)) {
+        if (is_file($config)) {
+            copy($config,$tmp_config);
+            $json_data = file_get_contents($tmp_config);
+            echo $json_data;
+        }else{
+            $arr = get_control($file);
+            //print_r($arr);
+            update_config(json_encode($arr));
+            echo json_encode($arr);
+        }
         //echo "debugfs.json was missing, refresh page\n";
     }else{
-        $json_data = file_get_contents("debugfs.json");
-        //print_r(json_decode($json_data));
+        $json_data = file_get_contents($tmp_config);
         echo $json_data;
+        //print_r(json_decode($json_data));
     }
 }
 
@@ -176,7 +187,9 @@ if ($cmd=="sync"){
     update_config($data);
 }
 
-
+if ($cmd=="savetofs"){
+    copy($tmp_config,$config);
+}
 //single line: echo -n 'file gamma_tables.c +p' > /sys/kernel/debug/dynamic_debug/control
 
 ?>
