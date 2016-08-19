@@ -125,9 +125,9 @@ function init(){
            
                     l  = "<tr class='"+oddeven+"'>";
                     l += "  <td style='text-align:center' title='"+ttl+"'>"+r1[j].lineno+"</td>";
-                    l += "  <td style='text-align:center'><input type='checkbox' class='tp debug' "+checked+" file='"+r1[j].file+"' line='"+r1[j].lineno+"' /></td>";
-                    l += "  <td>"+r1[j].function.substr(0,20)+"...</td>";
-                    l += "  <td>"+r1[j].format.substr(0,20)+"...</td>";
+                    l += "  <td style='text-align:center'><input title='p-flag' type='checkbox' class='tp debug' "+checked+" file='"+r1[j].file+"' line='"+r1[j].lineno+"' /></td>";
+                    l += "  <td title=\"function:   "+r1[j].function+"\">"+r1[j].function.substr(0,20)+cut_function+"</td>";
+                    l += "  <td title=\"format:   "+r1[j].format+"\">"+r1[j].format.substr(0,20)+cut_format+"</td>";
                     l += "</tr>";
                     ctbl.append(l);
                 }

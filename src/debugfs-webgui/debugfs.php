@@ -110,7 +110,7 @@ function apply_config_to_control(){
                     if ($flag=="p") $sign = "+";
                     else            $sign = "-";
                     exec("echo -n 'file $file line $lineno ${sign}p' > /sys/kernel/debug/dynamic_debug/control");
-                    echo "echo -n 'file $file line $lineno ${sign}p'\n";
+                    //echo "echo -n 'file $file line $lineno ${sign}p'\n";
                 }
             }
         }
