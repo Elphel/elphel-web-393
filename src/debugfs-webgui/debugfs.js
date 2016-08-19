@@ -5,7 +5,7 @@ var debugfs_data;
 
 function init(){
     
-    $("body").html("<h3>DebugFS:</h3>");
+    $("body").html("<h3>Dynamic Debug, DebugFS:</h3>");
     
     var b0 = $("<button>",{id:"b0"}).html("toggle hidden");
     b0.prop("state",0);
@@ -17,6 +17,8 @@ function init(){
         }else{
             $(this).prop("state",0)
             $(".hidden_rows").hide();
+            $(".hidden_content").hide();
+            //$("#content_"+id).hide(); ?!
         }
     });
     
@@ -55,97 +57,29 @@ function init(){
             //global
             debugfs_data = r;
             
+            var l,content,controls;
+            
             for(var i=0;i<r.length;i++){
-                                
-                l = $("<tr>",{id:"row_"+i}).html("\
-                    <td class='hidden_rows' style='text-align:center;display:none' >\
-                        <input id='cb_"+i+"' class='tp visibility_cb' type='checkbox'>\
-                    </td>\
-                    <td class='special filename' id='header_"+i+" '>"+r[i].file+"</td>\
-                ");
-                
-                if (r[i].state==0){
-                    l.addClass("hidden_rows").hide();
-                    l.find("input").prop("checked",false);
-                }else{
-                    l.removeClass("hidden_rows").show();
-                    l.find("input").prop("checked",true);
-                }
-                
-                content = $("<tr>",{
-                    id: "content_"+i
-                }).css({
-                    display: "none",
-                    border: "0px solid rgba(255,255,255,0)"
-                });                
-                
-                content.append(
-                    $("<td>").addClass("hidden_rows").hide()
-                ).append(
-                    $("<td>",{id:"content_td"})
-                );
-                
-                //$("<table>").css({margin:"5px"})
-                
-                //.append($("<td>").addClass("hidden_rows").css({display:"none"}))
-                
-                t.append(l).append(content);
+                                                
+                l        = init_ui_file(r[i],i);
+                content  = init_ui_content(r[i],i);
+                controls = init_ui_controls(r[i],i);
+                                                                              
+                t.append(l).append(controls).append(content);
                 
                 var r1 = r[i].configs[0].lines;
                 
-                var table_index=0;
-                
-                for (var j=0;j<r1.length;j++){
-                    table_index = Math.floor(j/NLINES);
-                    
-                    if (j%2==0) oddeven = "even";
-                    else        oddeven = "odd";
-                    
-                    //create those tables?!
-                    if (content.find("#ctbl_"+table_index).length==0) {
-                        ctbl = $("<table>",{id:"ctbl_"+table_index}).css({margin:"5px 30px 5px 5px",display:"inline"});
-                        content.find("#content_td").append(ctbl);
-                    }
-                    
-                    ttl  = "module:      "+r1[j].module+"\n";
-                    ttl += "function:    "+r1[j].function+"\n";
-                    ttl += "format:      "+r1[j].format;
-                
-                    if (r1[j].flags=="p"){
-                        checked = "checked";
-                    }else{
-                        checked = "";
-                    }
-                
-                    if (r1[j].function.length>CUT_STRING_LIMIT) cut_function = "...";
-                    else                                        cut_function = "";
-           
-                    if (r1[j].format.length>CUT_STRING_LIMIT) cut_format = "...";
-                    else                                      cut_format = "";
-           
-                    l  = "<tr class='"+oddeven+"'>";
-                    l += "  <td style='text-align:center' title='"+ttl+"'>"+r1[j].lineno+"</td>";
-                    l += "  <td style='text-align:center'><input title='p-flag' type='checkbox' class='tp debug' "+checked+" file='"+r1[j].file+"' line='"+r1[j].lineno+"' /></td>";
-                    l += "  <td title=\"function:   "+r1[j].function+"\">"+r1[j].function.substr(0,20)+cut_function+"</td>";
-                    l += "  <td title=\"format:   "+r1[j].format+"\">"+r1[j].format.substr(0,20)+cut_format+"</td>";
-                    l += "</tr>";
-                    ctbl.append(l);
-                }
+                fill_content(r1,i,content.find("#content_td"));
             }
-            
-            //init actions
-            $(".debug").change(function(){
-                console.log($(this).attr("file")+", "+$(this).attr("line")+", "+$(this).prop("checked"));
-                $.ajax({
-                    url: "debugfs.php?cmd=echo&file="+$(this).attr("file")+"&line="+$(this).attr("line")+"&pflag="+$(this).prop("checked")
-                });
-            });
-            
+              
+            fill_content_rebind_events();
+              
             $(".filename").click(function(){
                 var id = $(this).attr("id");
                 id = id.substr(id.indexOf("_")+1);
                 console.log(id);
                 $("#content_"+id).toggle();
+                $("#controls_"+id).toggle();
             });
             
             $(".visibility_cb").change(function(){
@@ -153,10 +87,13 @@ function init(){
                 id = id.substr(id.indexOf("_")+1);
                 if ($(this).prop("checked")){
                     $("#row_"+id).removeClass("hidden_rows");
+                    $("#content_"+id).removeClass("hidden_content");
+                    $("#controls_"+id).removeClass("hidden_content");
                     debugfs_data[id].state = 1;
                 }else{
                     $("#row_"+id).addClass("hidden_rows");
-                    $("#content_"+id).hide();
+                    $("#content_"+id).addClass("hidden_content");
+                    $("#controls_"+id).addClass("hidden_content");
                     debugfs_data[id].state = 0;
                 }
                 update_debugfs_config();
@@ -167,6 +104,173 @@ function init(){
             // save config
         }
     });
+}
+
+function fill_content(record,index,target){
+    
+    target.html("");
+    
+    var table_index=0;
+
+    for (var j=0;j<record.length;j++){
+        table_index = Math.floor(j/NLINES);
+        //shift because of 'all' checkbox
+        if (j==((table_index+1)*NLINES-1)) table_index++;
+        
+        if (j%2==0) oddeven = "even";
+        else        oddeven = "odd";
+        
+        //create those tables?!
+        if (target.find("#ctbl_"+table_index).length==0) {
+            ctbl = $("<table>",{id:"ctbl_"+table_index}).css({margin:"5px 30px 5px 5px",display:"inline"});
+            
+            if (table_index==0){
+                //add all/none checkbox
+                l  = "<tr>";
+                l += "  <td style='text-align:center' title='check/uncheck all'>all</td>";
+                l += "  <td id='all_"+index+"' style='text-align:center'><input title='check flags' type='checkbox' class='tp allornone' /></td>";
+                l += "  <td></td>";
+                l += "  <td></td>";
+                l += "</tr>";
+                
+                ctbl.append(l);
+            }
+            
+            target.append(ctbl);
+        }
+        
+        ttl  = "module:      "+record[j].module+"\n";
+        ttl += "function:    "+record[j].function+"\n";
+        ttl += "format:      "+record[j].format;
+
+        if (record[j].flags=="p"){
+            checked = "checked";
+        }else{
+            checked = "";
+        }
+
+        if (record[j].function.length>CUT_STRING_LIMIT) cut_function = "...";
+        else                                            cut_function = "";
+
+        if (record[j].format.length>CUT_STRING_LIMIT) cut_format = "...";
+        else                                          cut_format = "";
+
+        l  = "<tr class='"+oddeven+"'>";
+        l += "  <td style='text-align:center' title='"+ttl+"'>"+record[j].lineno+"</td>";
+        l += "  <td style='text-align:center'><input title='p-flag' type='checkbox' class='tp debug' "+checked+" file='"+record[j].file+"' line='"+record[j].lineno+"' /></td>";
+        l += "  <td title=\"function:   "+record[j].function+"\">"+record[j].function.substr(0,20)+cut_function+"</td>";
+        l += "  <td title=\"format:   "+record[j].format+"\">"+record[j].format.substr(0,20)+cut_format+"</td>";
+        l += "</tr>";
+        ctbl.append(l);   
+    }
+}
+
+function fill_content_rebind_events(){
+    //init actions
+    $(".debug").off("change");
+    $(".debug").change(function(){
+        console.log($(this).attr("file")+", "+$(this).attr("line")+", "+$(this).prop("checked"));
+        $.ajax({
+            url: "debugfs.php?cmd=echo&file="+$(this).attr("file")+"&line="+$(this).attr("line")+"&pflag="+$(this).prop("checked")
+        });
+    });
+}
+
+function init_ui_file(record,index){
+    var l = $("<tr>",{id:"row_"+index}).html("\
+        <td class='hidden_rows' style='text-align:center;display:none' >\
+            <input id='cb_"+index+"' class='tp visibility_cb' type='checkbox'>\
+        </td>\
+        <td class='special filename' id='header_"+index+" '>"+record.file+"</td>\
+    ");
+    
+    if (record.state==0){
+        l.addClass("hidden_rows").hide();
+        l.find("input").prop("checked",false);
+    }else{
+        l.find("input").prop("checked",true);
+    }
+    
+    return l;
+}
+
+function init_ui_content(record,index){
+    var content = $("<tr>",{
+        id: "content_"+index
+    }).css({
+        display: "none",
+        border: "0px solid rgba(255,255,255,0)"
+    });
+    
+    if (record.state==0){
+        content.addClass("hidden_content").hide();
+    }
+    
+    content.append(
+        $("<td>").addClass("hidden_rows").hide()
+    ).append(
+        $("<td>",{id:"content_td"})
+    );
+    
+    return content;
+}
+
+function init_ui_controls(record,index){
+    var controls = $("<tr>",{
+        id: "controls_"+index
+    }).css({
+        display: "none",
+        border: "0px solid rgba(255,255,255,0)"
+    });
+    
+    if (record.state==0){
+        controls.addClass("hidden_content").hide();
+    }
+    
+    controls.append(
+        $("<td>").addClass("hidden_rows").hide()
+    ).append(
+        $("<td>",{id:"controls_td"})
+    );
+    
+    var bc0 = $("<button>",{id:"bc0_"+index,file:record.file}).css({margin:"5px 5px 5px 5px","font-size":"14px"}).html("reread from debugfs");
+    
+    bc0.click(function(){
+        var id = $(this).attr("id");
+        id = id.substr(id.indexOf("_")+1);
+        file = $(this).attr("file");
+        $.ajax({
+            url:"debugfs.php?cmd=reread&file="+file,
+            success:function(data){
+                rec = jQuery.parseJSON(data);
+                target = $("#content_"+id).find("#content_td");
+                
+                //apply existing checkboxes to rec
+                oldrec = debugfs_data[id];
+                
+                lnew = rec.configs[0].lines.length;
+                lold = debugfs_data[id].configs[0].lines.length;
+                
+                for(var i=0;i<lnew;i++){
+                    if (i<lold) {
+                        rec.configs[0].lines[i].flags=oldrec.configs[0].lines[i].flags;
+                    }else{
+                        rec.configs[0].lines[i].flags=oldrec.configs[0].lines[lold-1].flags;
+                    }
+                }
+                
+                //update debugfs_data
+                debugfs_data[id].configs[0] = rec.configs[0];
+                
+                fill_content(rec.configs[0].lines,id,target);
+                fill_content_rebind_events();
+            }
+        });
+    });
+    
+    controls.find("#controls_td").append(bc0);
+    
+    return controls;
 }
 
 function update_debugfs_config(){

@@ -3,6 +3,8 @@
 $config = "debugfs.json";
 $tmp_config = "/tmp/$config";
 
+$DEBUGFSFILE = "/sys/kernel/debug/dynamic_debug/control";
+
 if (isset($_GET['cmd']))
     $cmd = $_GET['cmd'];
 else
@@ -97,7 +99,7 @@ function update_config($data){
 }
 
 function apply_config_to_control(){
-    global $tmp_config;
+    global $tmp_config, $DEBUGFSFILE;
     $arr_config = json_decode(file_get_contents($tmp_config),true);
     foreach($arr_config as $k0 => $v0){
         if ($v0['state']==1){
@@ -109,7 +111,7 @@ function apply_config_to_control(){
                         $flag = $v2['flags'];
                         if ($flag=="p") $sign = "+";
                         else            $sign = "-";
-                        exec("echo -n 'file $file line $lineno ${sign}p' > /sys/kernel/debug/dynamic_debug/control");
+                        exec("echo -n 'file $file line $lineno ${sign}p' > $DEBUGFSFILE");
                         //echo "echo -n 'file $file line $lineno ${sign}p'\n";
                     }
                 }
@@ -153,9 +155,20 @@ function sync_to_config($file,$line,$flag){
     update_config(json_encode($arr_config));
 }
 
+function filter_record_by_file($a,$f){
+    $res = Array();
+    foreach($a as $k=>$v){
+        if ($v['file']==$f){
+            $res = $v;
+            break;
+        }
+    }
+    return $res;
+}
+
 if ($cmd=="do_nothing"){
     if (isset($_GET['file'])) $file = $_GET['file'];
-    else                      $file = "/sys/kernel/debug/dynamic_debug/control";
+    else                      $file = $DEBUGFSFILE;
     
     //echo json_encode(get_control($file));
     //echo "<pre>";
@@ -191,7 +204,7 @@ if ($cmd=="echo") {
         $flag="-";
     }
     
-    exec("echo -n 'file $file line $line ${flag}p' > /sys/kernel/debug/dynamic_debug/control");
+    exec("echo -n 'file $file line $line ${flag}p' > $DEBUGFSFILE");
     
     sync_to_config($file,$line,$flag);
 }
@@ -201,7 +214,7 @@ $debugfs_configs = "debugfs_configs";
 if ($cmd=="save"){
     $file = $_GET['file'];
     if (!is_dir($debugfs_configs)) mkdir($debugfs_configs);
-    file_put_contents("$debugfs_configs/$file", file_get_contents("/sys/kernel/debug/dynamic_debug/control"));
+    file_put_contents("$debugfs_configs/$file", file_get_contents($DEBUGFSFILE));
 }
 
 if ($cmd=="sync"){
@@ -216,6 +229,14 @@ if ($cmd=="savetofs"){
 
 if ($cmd=="restore"){
     apply_config_to_control();
+}
+
+if ($cmd=="reread"){
+    $file = $_GET['file'];
+    $arr = get_control($DEBUGFSFILE);
+    $filtered = filter_record_by_file($arr,$file);
+    echo json_encode($filtered);
+    //echo "<pre>";print_r($filtered);
 }
 
 //single line: echo -n 'file gamma_tables.c +p' > /sys/kernel/debug/dynamic_debug/control
