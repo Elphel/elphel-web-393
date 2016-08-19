@@ -1,9 +1,12 @@
-DOCUMENTROOT=$(DESTDIR)/www/pages
+DOCUMENTROOT=www/pages
 OWN = -o root -g root
 INSTDOCS = 0644
 INSTALL = install
 DOCS=       favicon.ico \
             robots.txt
+CONFS=      autocampars.xml            
+SYSCONFDIR   = etc
+CONFDIR      = $(SYSCONFDIR)/elphel393
 
 PHP_SCRIPTS=camvars.php \
             ccam.php \
@@ -19,10 +22,11 @@ all:
 
 install:
 	@echo "make install in src"
-	$(INSTALL) $(OWN) -d $(DOCUMENTROOT)
-	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS) $(DOCUMENTROOT)
-	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHP_SCRIPTS) $(DOCUMENTROOT)
-	@echo "REMOTE_IP =$(REMOTE_IP)"
-	@echo "REMOTE_USER =$(REMOTE_USER)"
+	$(INSTALL) $(OWN) -d $(DESTDIR)/$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS) $(DESTDIR)/$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHP_SCRIPTS) $(DESTDIR)/$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -d $(DESTDIR)/$(SYSCONFDIR)
+	$(INSTALL) $(OWN) -d $(DESTDIR)/$(CONFDIR)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(CONFS) $(DESTDIR)/$(CONFDIR)
 clean:
 	@echo "make clean in src"

@@ -412,6 +412,10 @@ CAPTION;
 							fclose ( $framepars_file );
 						} else if ($value == "init") {
 							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+"); //r" );
+							// NC393 - added IRQs ON 
+//							$xml->addChild ( 'irqon_result' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_ON, SEEK_END ) ); // #define LSEEK_INTERRUPT_ON 0x24 /// enable camera interrupts
+//							$xml->addChild ( 'compressor_irqon_result', fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_ON, SEEK_END ) ); // #define LSEEK_INTERRUPT_ON 0x24 /// enable camera interrupts
+							
 							$xml->addChild ('DEBUG_01_'. strval ( $sensor_port ), $GLOBALS ['framepars_paths'] [$sensor_port]);
 							$xml->addChild ( 'LSEEK_FRAMEPARS_INIT' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_FRAMEPARS_INIT, SEEK_END ) );
 							$xml->addChild ( 'elphel_set_P_value' . strval ( $sensor_port ), elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR, 0x00, 0, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ) ); // / will start detection
