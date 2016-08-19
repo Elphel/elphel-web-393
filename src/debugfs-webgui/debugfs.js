@@ -20,7 +20,7 @@ function init(){
         }
     });
     
-    var b1 = $("<button>",{id:"b1"}).css({margin:"0px 0px 0px 10px"}).html("save to fs");
+    var b1 = $("<button>",{id:"b1"}).css({margin:"0px 0px 0px 10px"}).html("save to persistent storage");
     
     b1.click(function(){
         $.ajax({
@@ -28,7 +28,7 @@ function init(){
         });
     });
     
-    var b2 = $("<button>",{id:"b2"}).css({margin:"0px 0px 0px 10px"}).html("apply all");
+    var b2 = $("<button>",{id:"b2"}).css({margin:"0px 0px 0px 10px"}).html("restore configs for selected files");
     
     b2.click(function(){
         $.ajax({

@@ -99,23 +99,24 @@ function update_config($data){
 function apply_config_to_control(){
     global $tmp_config;
     $arr_config = json_decode(file_get_contents($tmp_config),true);
-    
     foreach($arr_config as $k0 => $v0){
-        foreach($v0['configs'] as $k1 => $v1){
-            if ($v1['state']==1){
-                foreach($v1['lines'] as $k2 => $v2){
-                    $file = $v2['file'];
-                    $lineno = $v2['lineno'];
-                    $flag = $v2['flags'];
-                    if ($flag=="p") $sign = "+";
-                    else            $sign = "-";
-                    exec("echo -n 'file $file line $lineno ${sign}p' > /sys/kernel/debug/dynamic_debug/control");
-                    //echo "echo -n 'file $file line $lineno ${sign}p'\n";
+        if ($v0['state']==1){
+            foreach($v0['configs'] as $k1 => $v1){
+                if ($v1['state']==1){
+                    foreach($v1['lines'] as $k2 => $v2){
+                        $file = $v2['file'];
+                        $lineno = $v2['lineno'];
+                        $flag = $v2['flags'];
+                        if ($flag=="p") $sign = "+";
+                        else            $sign = "-";
+                        exec("echo -n 'file $file line $lineno ${sign}p' > /sys/kernel/debug/dynamic_debug/control");
+                        //echo "echo -n 'file $file line $lineno ${sign}p'\n";
+                    }
                 }
             }
         }
     }
-    
+    echo "Done";
 }
 
 function sync_to_config($file,$line,$flag){
