@@ -5,9 +5,12 @@ var debugfs_data;
 
 function init(){
     
-    $("body").html("<h3>Dynamic Debug, DebugFS:</h3>");
+    $("body").html("<h3>Linux Kernel Dynamic Debug, DebugFS:</h3>");
     
-    var b0 = $("<button>",{id:"b0"}).html("toggle hidden");
+    var b0 = $("<button>",{
+        id:"b0",
+        title: "select/hide files"
+    }).html("Edit list");
     b0.prop("state",0);
     
     b0.click(function(){
@@ -18,11 +21,13 @@ function init(){
             $(this).prop("state",0)
             $(".hidden_rows").hide();
             $(".hidden_content").hide();
-            //$("#content_"+id).hide(); ?!
         }
     });
     
-    var b1 = $("<button>",{id:"b1"}).css({margin:"0px 0px 0px 10px"}).html("save to persistent storage");
+    var b1 = $("<button>",{
+        id:"b1",
+        title:"Copy /tmp/debugfs.json to /<path-to-debugfs.php>/debugfs.json"
+    }).css({margin:"0px 0px 0px 10px"}).html("Save to persistent storage");
     
     b1.click(function(){
         $.ajax({
@@ -30,7 +35,10 @@ function init(){
         });
     });
     
-    var b2 = $("<button>",{id:"b2"}).css({margin:"0px 0px 0px 10px"}).html("restore configs for selected files");
+    var b2 = $("<button>",{
+        id:"b2",
+        title:"Apply configuration of the selected files in GUI to DebugFS"
+    }).css({margin:"0px 0px 0px 10px"}).html("Apply to debugfs (selected files)");
     
     b2.click(function(){
         $.ajax({
@@ -38,9 +46,9 @@ function init(){
         });
     });    
     
-    
     $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1).append(b2));
     
+    //list header
     var t = $("<table border=\"1\">").html("\
         <tr>\
             <th style='display:none;' class='hidden_rows'>Show</th>\
@@ -50,6 +58,7 @@ function init(){
     
     $("body").append(t);
     
+    //everything's initialized on response
     $.ajax({
         url: "debugfs.php",
         success: function(data){
@@ -59,42 +68,36 @@ function init(){
             
             var l,content,controls;
             
-            for(var i=0;i<r.length;i++){
-                                                
+            //file walk
+            for(var i=0;i<r.length;i++){         
                 l        = init_ui_file(r[i],i);
                 content  = init_ui_content(r[i],i);
-                controls = init_ui_controls(r[i],i);
-                                                                              
+                controls = init_ui_controls(r[i],i);                 
                 t.append(l).append(controls).append(content);
-                
-                var r1 = r[i].configs[0].lines;
-                
-                fill_content(r1,i,content.find("#content_td"));
+                //line walk
+                fill_content(r[i].configs[0].lines,i,content.find("#content_td"));
             }
-              
+
             fill_content_rebind_events();
               
             $(".filename").click(function(){
-                var id = $(this).attr("id");
-                id = id.substr(id.indexOf("_")+1);
-                console.log(id);
-                $("#content_"+id).toggle();
-                $("#controls_"+id).toggle();
+                var index = $(this).attr("index");
+                $("#content_"+index).toggle();
+                $("#controls_"+index).toggle();
             });
             
             $(".visibility_cb").change(function(){
-                var id = $(this).attr("id");
-                id = id.substr(id.indexOf("_")+1);
+                var index = $(this).attr("index");
                 if ($(this).prop("checked")){
-                    $("#row_"+id).removeClass("hidden_rows");
-                    $("#content_"+id).removeClass("hidden_content");
-                    $("#controls_"+id).removeClass("hidden_content");
-                    debugfs_data[id].state = 1;
+                    $("#row_"+index).removeClass("hidden_rows");
+                    $("#content_"+index).removeClass("hidden_content");
+                    $("#controls_"+index).removeClass("hidden_content");
+                    debugfs_data[index].state = 1;
                 }else{
-                    $("#row_"+id).addClass("hidden_rows");
-                    $("#content_"+id).addClass("hidden_content");
-                    $("#controls_"+id).addClass("hidden_content");
-                    debugfs_data[id].state = 0;
+                    $("#row_"+index).addClass("hidden_rows");
+                    $("#content_"+index).addClass("hidden_content");
+                    $("#controls_"+index).addClass("hidden_content");
+                    debugfs_data[index].state = 0;
                 }
                 update_debugfs_config();
             });
@@ -128,7 +131,7 @@ function fill_content(record,index,target){
                 //add all/none checkbox
                 l  = "<tr>";
                 l += "  <td style='text-align:center' title='check/uncheck all'>all</td>";
-                l += "  <td id='all_"+index+"' style='text-align:center'><input title='check flags' type='checkbox' class='tp allornone' /></td>";
+                l += "  <td style='text-align:center'><input id='all_"+index+"' title='check flags' type='checkbox' class='tp debugall' index='"+index+"' /></td>";
                 l += "  <td></td>";
                 l += "  <td></td>";
                 l += "</tr>";
@@ -157,7 +160,7 @@ function fill_content(record,index,target){
 
         l  = "<tr class='"+oddeven+"'>";
         l += "  <td style='text-align:center' title='"+ttl+"'>"+record[j].lineno+"</td>";
-        l += "  <td style='text-align:center'><input title='p-flag' type='checkbox' class='tp debug' "+checked+" file='"+record[j].file+"' line='"+record[j].lineno+"' /></td>";
+        l += "  <td style='text-align:center'><input title='p-flag' type='checkbox' class='tp debug' "+checked+" file='"+record[j].file+"' line='"+record[j].lineno+"' index='"+index+"' subindex='"+j+"' /></td>";
         l += "  <td title=\"function:   "+record[j].function+"\">"+record[j].function.substr(0,20)+cut_function+"</td>";
         l += "  <td title=\"format:   "+record[j].format+"\">"+record[j].format.substr(0,20)+cut_format+"</td>";
         l += "</tr>";
@@ -169,19 +172,34 @@ function fill_content_rebind_events(){
     //init actions
     $(".debug").off("change");
     $(".debug").change(function(){
-        console.log($(this).attr("file")+", "+$(this).attr("line")+", "+$(this).prop("checked"));
+        var index    = $(this).attr("index");
+        var subindex = $(this).attr("subindex");
+        if ($(this).prop("checked")) flags = "p";
+        else                         flags = "_";
+        
+        debugfs_data[index].configs[0].lines[subindex].flags = flags;
+        //console.log($(this).attr("file")+", "+$(this).attr("line")+", "+$(this).prop("checked"));
         $.ajax({
             url: "debugfs.php?cmd=echo&file="+$(this).attr("file")+"&line="+$(this).attr("line")+"&pflag="+$(this).prop("checked")
         });
     });
+    
+    $(".debugall").off("change");
+    $(".debugall").change(function(){
+        var index = $(this).attr("index");
+        var checked = $(this).prop("checked");
+        $("#content_"+index).find(".debug").prop("checked",checked).change();
+        
+    });
+    
 }
 
 function init_ui_file(record,index){
     var l = $("<tr>",{id:"row_"+index}).html("\
         <td class='hidden_rows' style='text-align:center;display:none' >\
-            <input id='cb_"+index+"' class='tp visibility_cb' type='checkbox'>\
+            <input id='cb_"+index+"' class='tp visibility_cb' type='checkbox' index='"+index+"' >\
         </td>\
-        <td class='special filename' id='header_"+index+" '>"+record.file+"</td>\
+        <td class='special filename' id='header_"+index+"' index='"+index+"' >"+record.file+"</td>\
     ");
     
     if (record.state==0){
@@ -233,7 +251,11 @@ function init_ui_controls(record,index){
         $("<td>",{id:"controls_td"})
     );
     
-    var bc0 = $("<button>",{id:"bc0_"+index,file:record.file}).css({margin:"5px 5px 5px 5px","font-size":"14px"}).html("reread from debugfs");
+    var bc0 = $("<button>",{
+        id:"bc0_"+index,
+        title:"read config from debugfs - useful when changes were made and the line numbers got shifted from the ones in the stored config",
+        file:record.file
+    }).css({margin:"5px 5px 5px 5px","font-size":"14px"}).html("read from debugfs");
     
     bc0.click(function(){
         var id = $(this).attr("id");
