@@ -96,6 +96,28 @@ function update_config($data){
     file_put_contents($tmp_config,$data);
 }
 
+function apply_config_to_control(){
+    global $tmp_config;
+    $arr_config = json_decode(file_get_contents($tmp_config),true);
+    
+    foreach($arr_config as $k0 => $v0){
+        foreach($v0['configs'] as $k1 => $v1){
+            if ($v1['state']==1){
+                foreach($v1['lines'] as $k2 => $v2){
+                    $file = $v2['file'];
+                    $lineno = $v2['lineno'];
+                    $flag = $v2['flags'];
+                    if ($flag=="p") $sign = "+";
+                    else            $sign = "-";
+                    exec("echo -n 'file $file line $lineno ${sign}p' > /sys/kernel/debug/dynamic_debug/control");
+                    echo "echo -n 'file $file line $lineno ${sign}p'\n";
+                }
+            }
+        }
+    }
+    
+}
+
 function sync_to_config($file,$line,$flag){
     global $tmp_config;
 
@@ -130,7 +152,7 @@ function sync_to_config($file,$line,$flag){
     update_config(json_encode($arr_config));
 }
 
-if (($cmd=="do_nothing")||($cmd=="restore")){
+if ($cmd=="do_nothing"){
     if (isset($_GET['file'])) $file = $_GET['file'];
     else                      $file = "/sys/kernel/debug/dynamic_debug/control";
     
@@ -190,6 +212,11 @@ if ($cmd=="sync"){
 if ($cmd=="savetofs"){
     copy($tmp_config,$config);
 }
+
+if ($cmd=="restore"){
+    apply_config_to_control();
+}
+
 //single line: echo -n 'file gamma_tables.c +p' > /sys/kernel/debug/dynamic_debug/control
 
 ?>

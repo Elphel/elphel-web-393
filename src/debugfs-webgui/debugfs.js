@@ -28,7 +28,16 @@ function init(){
         });
     });
     
-    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1));
+    var b2 = $("<button>",{id:"b2"}).css({margin:"0px 0px 0px 10px"}).html("apply all");
+    
+    b2.click(function(){
+        $.ajax({
+            url: "debugfs.php?cmd=restore"
+        });
+    });    
+    
+    
+    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1).append(b2));
     
     var t = $("<table border=\"1\">").html("\
         <tr>\
