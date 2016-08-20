@@ -4,7 +4,8 @@ INSTDOCS = 0644
 INSTALL = install
 DOCS=       debugfs.html \
             debugfs.css \
-            debugfs.js
+            debugfs.js \
+            jquery.ajax.queue.js
 
 PHP_SCRIPTS=debugfs.php
 
