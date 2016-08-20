@@ -31,7 +31,8 @@ function init(){
     
     b1.click(function(){
         $.ajax({
-            url: "debugfs.php?cmd=savetofs"
+            url: "debugfs.php?cmd=savetofs",
+            queue: true
         });
     });
     
@@ -42,7 +43,8 @@ function init(){
     
     b2.click(function(){
         $.ajax({
-            url: "debugfs.php?cmd=restore"
+            url: "debugfs.php?cmd=restore",
+            queue: true
         });
     });    
     
@@ -263,6 +265,7 @@ function init_ui_controls(record,index){
         file = $(this).attr("file");
         $.ajax({
             url:"debugfs.php?cmd=reread&file="+file,
+            queue: true,
             success:function(data){
                 rec = jQuery.parseJSON(data);
                 target = $("#content_"+id).find("#content_td");
