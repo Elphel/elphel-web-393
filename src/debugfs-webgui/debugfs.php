@@ -121,14 +121,17 @@ function apply_config_to_control(){
     echo "Done";
 }
 
-function sync_to_config($file,$line,$flag){
+function sync_from_debugfs_to_config($file,$line,$flags,$sign){
     global $tmp_config;
 
     //$arr_debugfs = get_control("/sys/kernel/debug/dynamic_debug/control");
     $arr_config = json_decode(file_get_contents($tmp_config),true);
         
     foreach($arr_config as $k => $v){
-        if ($v['file']==$file) $dc = $k;
+        if ($v['file']==$file) {
+            $dc = $k;
+            break;
+        }
     }
     
     echo "DC=$dc\n";
@@ -136,23 +139,28 @@ function sync_to_config($file,$line,$flag){
     $tmp_arr1 = $arr_config[$dc]['configs'];
     
     foreach($tmp_arr1 as $k => $v){
-        if ($v['state']==1) $dcc = $k;
+        if ($v['state']==1) {
+            $dcc = $k;
+            break;
+        }
     }
     
     $tmp_arr2 = $arr_config[$dc]['configs'][$dcc]['lines'];
     
     foreach($tmp_arr2 as $k => $v){
-        if ($v['lineno']==$line) $dccc = $k;
+        if ($v['lineno']==$line) {
+            $dccc = $k;
+            break;
+        }
     }
     
-    if ($flag=="+") $flag = "p";
+    if ($sign=="+") $flag = "p";
     else            $flag = "_";
     
     $arr_config[$dc]['configs'][$dcc]['lines'][$dccc]['flags'] = $flag;
-    
-    print_r($arr_config);
-    
+        
     update_config(json_encode($arr_config));
+    //print_r($arr_config);
 }
 
 function filter_record_by_file($a,$f){
@@ -195,18 +203,16 @@ if ($cmd=="do_nothing"){
 if ($cmd=="echo") {
     $file = $_GET['file'];
     $line = $_GET['line'];
-    $flag = $_GET['pflag'];
+    $flags = $_GET['flags'];
     //$config name
     
-    if ($flag=="true"){
-        $flag="+";
+    if (strpos($flags,"p")===FALSE){
+        $sign = "-p";
     }else{
-        $flag="-";
+        $sign = "+";
     }
-    
-    exec("echo -n 'file $file line $line ${flag}p' > $DEBUGFSFILE");
-    
-    sync_to_config($file,$line,$flag);
+    exec("echo -n 'file $file line $line ${sign}${flags}' > $DEBUGFSFILE");
+    sync_from_debugfs_to_config($file,$line,$flags,$sign);
 }
 
 $debugfs_configs = "debugfs_configs";

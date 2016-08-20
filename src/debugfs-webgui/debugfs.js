@@ -160,7 +160,7 @@ function fill_content(record,index,target){
 
         l  = "<tr class='"+oddeven+"'>";
         l += "  <td style='text-align:center' title='"+ttl+"'>"+record[j].lineno+"</td>";
-        l += "  <td style='text-align:center'><input title='p-flag' type='checkbox' class='tp debug' "+checked+" file='"+record[j].file+"' line='"+record[j].lineno+"' index='"+index+"' subindex='"+j+"' /></td>";
+        l += "  <td style='text-align:center'><input title='pflag' type='checkbox' class='tp debug' "+checked+" file='"+record[j].file+"' line='"+record[j].lineno+"' index='"+index+"' subindex='"+j+"' /></td>";
         l += "  <td title=\"function:   "+record[j].function+"\">"+record[j].function.substr(0,20)+cut_function+"</td>";
         l += "  <td title=\"format:   "+record[j].format+"\">"+record[j].format.substr(0,20)+cut_format+"</td>";
         l += "</tr>";
@@ -180,7 +180,8 @@ function fill_content_rebind_events(){
         debugfs_data[index].configs[0].lines[subindex].flags = flags;
         //console.log($(this).attr("file")+", "+$(this).attr("line")+", "+$(this).prop("checked"));
         $.ajax({
-            url: "debugfs.php?cmd=echo&file="+$(this).attr("file")+"&line="+$(this).attr("line")+"&pflag="+$(this).prop("checked")
+            url: "debugfs.php?cmd=echo&file="+$(this).attr("file")+"&line="+$(this).attr("line")+"&flags="+flags,
+            queue: true
         });
     });
     
@@ -189,7 +190,6 @@ function fill_content_rebind_events(){
         var index = $(this).attr("index");
         var checked = $(this).prop("checked");
         $("#content_"+index).find(".debug").prop("checked",checked).change();
-        
     });
     
 }
