@@ -27,6 +27,9 @@ install:
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHP_SCRIPTS) $(DESTDIR)/$(DOCUMENTROOT)
 	$(INSTALL) $(OWN) -d $(DESTDIR)/$(SYSCONFDIR)
 	$(INSTALL) $(OWN) -d $(DESTDIR)/$(CONFDIR)
-	$(INSTALL) $(OWN) -m $(INSTDOCS) $(CONFS) $(DESTDIR)/$(CONFDIR)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)/$(CONFDIR)/autocampars0.xml
+	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)/$(CONFDIR)/autocampars1.xml
+	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)/$(CONFDIR)/autocampars2.xml
+	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)/$(CONFDIR)/autocampars3.xml
 clean:
 	@echo "make clean in src"

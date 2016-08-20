@@ -86,4 +86,5 @@ return mmap.mmap(f.fileno(), self.PAGE_SIZE, offset = page_addr)
 
 """
 if __name__ == "__main__":
-    test_mmap(0)
+    for p in range(4):
+        test_mmap(p)
