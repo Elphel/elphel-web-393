@@ -176,7 +176,14 @@ function fill_content_rebind_events(){
     $(".debug").change(function(){
         var index    = $(this).attr("index");
         var subindex = $(this).attr("subindex");
-        if ($(this).prop("checked")) flags = "p";
+        
+        var flags = "";
+        if ($("#tflag_"+index).prop("checked")) flags += "t";
+        if ($("#mflag_"+index).prop("checked")) flags += "m";
+        if ($("#lflag_"+index).prop("checked")) flags += "l";
+        if ($("#fflag_"+index).prop("checked")) flags += "f";
+        
+        if ($(this).prop("checked")) flags = "p"+flags;
         else                         flags = "_";
         
         debugfs_data[index].configs[0].lines[subindex].flags = flags;
@@ -292,9 +299,23 @@ function init_ui_controls(record,index){
             }
         });
     });
+        
+    var f0 = $("<span title='Include the function name in the printed message'>");
+    var f1 = $("<span title='Include line number in the printed message'>");
+    var f2 = $("<span title='Include module name in the printed message'>");
+    var f3 = $("<span title='Include thread ID in messages not generated from interrupt context'>");
+    
+    var f0_cb = $("<input>",{id:"fflag_"+index,type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    var f1_cb = $("<input>",{id:"lflag_"+index,type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    var f2_cb = $("<input>",{id:"mflag_"+index,type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    var f3_cb = $("<input>",{id:"tflag_"+index,type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    
+    f0.html("&nbsp;&nbsp;f&nbsp;").append(f0_cb);
+    f1.html("&nbsp;l&nbsp;").append(f1_cb);
+    f2.html("&nbsp;m&nbsp;").append(f2_cb);
+    f3.html("&nbsp;t&nbsp;").append(f3_cb);
     
     var pre_bc1 = $("<span>",{title:"Current config name"}).html("&nbsp;&nbsp;config:&nbsp;");
-    
     
     var dc0_b = $("<button>",{
         class:"btn btn-default btn-sm btn-success dropdown-toggle",
@@ -315,7 +336,7 @@ function init_ui_controls(record,index){
     
     var dc0 = $("<div>",{class:"btn-group",role:"group"}).append(dc0_b).append(dc0_ul);
     
-    controls.find("#controls_td").append(bc0).append(pre_bc1).append(dc0);
+    controls.find("#controls_td").append(bc0).append(f0).append(f1).append(f2).append(f3).append(pre_bc1).append(dc0);
     
     return controls;
 }
