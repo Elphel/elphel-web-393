@@ -2,6 +2,7 @@ var CUT_STRING_LIMIT = 20;
 var NLINES = 30;
 
 var debugfs_data;
+var caret = "&nbsp;<span class='caret'></span>";
 
 function init(){
     
@@ -48,7 +49,22 @@ function init(){
         });
     });    
     
-    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1).append(b2));
+    var f0 = $("<span title='Include the function name in the printed message'>");
+    var f1 = $("<span title='Include line number in the printed message'>");
+    var f2 = $("<span title='Include module name in the printed message'>");
+    var f3 = $("<span title='Include thread ID in messages not generated from interrupt context'>");
+    
+    var f0_cb = $("<input>",{id:"fflag",type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    var f1_cb = $("<input>",{id:"lflag",type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    var f2_cb = $("<input>",{id:"mflag",type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    var f3_cb = $("<input>",{id:"tflag",type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    
+    f0.html("&nbsp;&nbsp;f&nbsp;").append(f0_cb);
+    f1.html("&nbsp;l&nbsp;").append(f1_cb);
+    f2.html("&nbsp;m&nbsp;").append(f2_cb);
+    f3.html("&nbsp;t&nbsp;").append(f3_cb);
+    
+    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1).append(b2).append(f0).append(f1).append(f2).append(f3));
     
     //list header
     var t = $("<table border=\"1\">").html("\
@@ -76,8 +92,14 @@ function init(){
                 content  = init_ui_content(r[i],i);
                 controls = init_ui_controls(r[i],i);                 
                 t.append(l).append(controls).append(content);
+                
+                j = init_ui_dropdown(r[i],i);
+                if (r[i].file=="drivers/elphel/framepars.c"){
+                    console.log("Checkpoint");
+                    console.log(r[i]);
+                }
                 //line walk
-                fill_content(r[i].configs[0].lines,i,content.find("#content_td"));
+                fill_content(r[i].configs[j].lines,i,content.find("#content_td"));
             }
 
             fill_content_rebind_events();
@@ -178,10 +200,10 @@ function fill_content_rebind_events(){
         var subindex = $(this).attr("subindex");
         
         var flags = "";
-        if ($("#tflag_"+index).prop("checked")) flags += "t";
-        if ($("#mflag_"+index).prop("checked")) flags += "m";
-        if ($("#lflag_"+index).prop("checked")) flags += "l";
-        if ($("#fflag_"+index).prop("checked")) flags += "f";
+        if ($("#tflag").prop("checked")) flags += "t";
+        if ($("#mflag").prop("checked")) flags += "m";
+        if ($("#lflag").prop("checked")) flags += "l";
+        if ($("#fflag").prop("checked")) flags += "f";
         
         if ($(this).prop("checked")) flags = "p"+flags;
         else                         flags = "_";
@@ -280,65 +302,62 @@ function init_ui_controls(record,index){
                 //apply existing checkboxes to rec
                 oldrec = debugfs_data[id];
                 
-                lnew = rec.configs[0].lines.length;
-                lold = debugfs_data[id].configs[0].lines.length;
+                j = init_ui_dropdown(rec,id);
+                
+                lnew = rec.configs[j].lines.length;
+                lold = debugfs_data[id].configs[j].lines.length;
                 
                 for(var i=0;i<lnew;i++){
                     if (i<lold) {
-                        rec.configs[0].lines[i].flags=oldrec.configs[0].lines[i].flags;
+                        rec.configs[j].lines[i].flags=oldrec.configs[j].lines[i].flags;
                     }else{
-                        rec.configs[0].lines[i].flags=oldrec.configs[0].lines[lold-1].flags;
+                        rec.configs[j].lines[i].flags=oldrec.configs[j].lines[lold-1].flags;
                     }
                 }
                 
                 //update debugfs_data
-                debugfs_data[id].configs[0] = rec.configs[0];
+                debugfs_data[id].configs[j] = rec.configs[j];
                 
-                fill_content(rec.configs[0].lines,id,target);
+                fill_content(rec.configs[j].lines,id,target);
                 fill_content_rebind_events();
             }
         });
     });
-        
-    var f0 = $("<span title='Include the function name in the printed message'>");
-    var f1 = $("<span title='Include line number in the printed message'>");
-    var f2 = $("<span title='Include module name in the printed message'>");
-    var f3 = $("<span title='Include thread ID in messages not generated from interrupt context'>");
-    
-    var f0_cb = $("<input>",{id:"fflag_"+index,type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
-    var f1_cb = $("<input>",{id:"lflag_"+index,type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
-    var f2_cb = $("<input>",{id:"mflag_"+index,type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
-    var f3_cb = $("<input>",{id:"tflag_"+index,type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
-    
-    f0.html("&nbsp;&nbsp;f&nbsp;").append(f0_cb);
-    f1.html("&nbsp;l&nbsp;").append(f1_cb);
-    f2.html("&nbsp;m&nbsp;").append(f2_cb);
-    f3.html("&nbsp;t&nbsp;").append(f3_cb);
-    
+
     var pre_bc1 = $("<span>",{title:"Current config name"}).html("&nbsp;&nbsp;config:&nbsp;");
     
     var dc0_b = $("<button>",{
         class:"btn btn-default btn-sm btn-success dropdown-toggle",
         type:"button",
+        id:"dropdown_"+index,
+        index: index,
         "data-toggle":"dropdown",
         "aria-haspopup":"true",
         "aria-expanded":"false"
     }).css({
         display:"inline",
         width: "150px",
-    }).html("default <span class='caret'></span>");
+    }).html("defaultum&nbsp;<span class='caret'></span>");
         
     var dc0_ul = $("<ul>",{class:"dropdown-menu"}).css({padding:"5px","min-width":"100px",border:"1px solid rgba(50,50,50,0.5)"});
     
-    dc0_ul.append($("<li>").css({padding:"5px"}).html("<input type='text' style='width:100px;' placeholder='create new'/>"))
-          .append($("<li>").css({padding:"5px"}).html("item 1"))
-          .append($("<li>").css({padding:"5px"}).html("item 2"));
+    dc0_ul.append($("<li>").css({padding:"5px"}).html("<input type='text' style='width:100px;' placeholder='create new'/>"));
     
     var dc0 = $("<div>",{class:"btn-group",role:"group"}).append(dc0_b).append(dc0_ul);
     
-    controls.find("#controls_td").append(bc0).append(f0).append(f1).append(f2).append(f3).append(pre_bc1).append(dc0);
+    controls.find("#controls_td").append(bc0).append(pre_bc1).append(dc0);
     
     return controls;
+}
+
+function init_ui_dropdown(record,index){
+    for(var j=0;j<record.configs.length;j++){
+        if (record.configs[j].state==1){
+            $("#dropdown_"+index).html(record.configs[j].name+caret);
+            break;
+        }
+    }
+    return j;
 }
 
 function update_debugfs_config(){
