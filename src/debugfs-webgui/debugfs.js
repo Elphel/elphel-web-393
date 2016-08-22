@@ -54,17 +54,37 @@ function init(){
     var f2 = $("<span title='Include module name in the printed message'>");
     var f3 = $("<span title='Include thread ID in messages not generated from interrupt context'>");
     
-    var f0_cb = $("<input>",{id:"fflag",type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
-    var f1_cb = $("<input>",{id:"lflag",type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
-    var f2_cb = $("<input>",{id:"mflag",type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
-    var f3_cb = $("<input>",{id:"tflag",type:"checkbox",class:"tp"}).css({position:"relative",top:"3px"});
+    var f0_cb = $("<input>",{id:"fflag",type:"checkbox",class:"tp flags_cb"}).css({position:"relative",top:"3px"});
+    var f1_cb = $("<input>",{id:"lflag",type:"checkbox",class:"tp flags_cb"}).css({position:"relative",top:"3px"});
+    var f2_cb = $("<input>",{id:"mflag",type:"checkbox",class:"tp flags_cb"}).css({position:"relative",top:"3px"});
+    var f3_cb = $("<input>",{id:"tflag",type:"checkbox",class:"tp flags_cb"}).css({position:"relative",top:"3px"});
     
     f0.html("&nbsp;&nbsp;f&nbsp;").append(f0_cb);
     f1.html("&nbsp;l&nbsp;").append(f1_cb);
     f2.html("&nbsp;m&nbsp;").append(f2_cb);
     f3.html("&nbsp;t&nbsp;").append(f3_cb);
+
+    var b3 = $("<button>",{
+        title: "Enable/disable debug messages for selected files"
+    }).css({
+        margin:"0px 0px 0px 10px"
+    }).html("Switch off debug").click(function(){
+        if ($(this).html()=="Switch off debug"){
+            $(this).html("Switch on debug");
+            $.ajax({
+                url: "debugfs.php?cmd=setflag&flag=-p",
+                queue: true
+            });
+        }else{
+            $(this).html("Switch off debug");
+            $.ajax({
+                url: "debugfs.php?cmd=setflag&flag=%2Bp",
+                queue: true
+            });
+        }
+    });
     
-    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1).append(b2).append(f0).append(f1).append(f2).append(f3));
+    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1).append(b2).append(b3).append(f0).append(f1).append(f2).append(f3));
     
     //list header
     var t = $("<table border=\"1\">").html("\
@@ -125,6 +145,22 @@ function init(){
                 }
                 update_debugfs_config();
             });
+            
+            $(".flags_cb").change(function(){
+                if ($(this).prop("checked")) sign = "%2B";
+                else                         sign = "-";
+                    
+                flag = $(this).attr("id")[0];
+                                  
+                $.ajax({
+                    url: "debugfs.php?cmd=setflag&flag="+sign+flag,
+                    queue: true
+                });
+            });
+            
+            //init flags
+            $(".flags_cb").prop("checked",true);
+            $(".flags_cb").change();
             
             //when everything is parsed. do something.
             // unique IDs
@@ -200,10 +236,10 @@ function fill_content_rebind_events(){
         var subindex = $(this).attr("subindex");
         
         var flags = "";
-        if ($("#tflag").prop("checked")) flags += "t";
-        if ($("#mflag").prop("checked")) flags += "m";
-        if ($("#lflag").prop("checked")) flags += "l";
-        if ($("#fflag").prop("checked")) flags += "f";
+        //if ($("#fflag").prop("checked")) flags += "f";
+        //if ($("#lflag").prop("checked")) flags += "l";
+        //if ($("#mflag").prop("checked")) flags += "m";
+        //if ($("#tflag").prop("checked")) flags += "t";
         
         if ($(this).prop("checked")) flags = "p"+flags;
         else                         flags = "_";

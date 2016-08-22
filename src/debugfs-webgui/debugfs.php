@@ -100,6 +100,7 @@ function update_config($data){
 
 function apply_config_to_control(){
     global $tmp_config, $DEBUGFSFILE;
+        
     $arr_config = json_decode(file_get_contents($tmp_config),true);
     foreach($arr_config as $k0 => $v0){
         if ($v0['state']==1){
@@ -121,26 +122,55 @@ function apply_config_to_control(){
     echo "Done";
 }
 
+function apply_flag($flag){
+    global $tmp_config, $DEBUGFSFILE;
+      
+    //echo "<pre>\n";
+      
+    $arr_config = json_decode(file_get_contents($tmp_config),true);
+    foreach($arr_config as $k0 => $v0){
+        if ($v0['state']==1){
+            foreach($v0['configs'] as $k1 => $v1){
+                if ($v1['state']==1){
+                    foreach($v1['lines'] as $k2 => $v2){
+                        $file = $v2['file'];
+                        $lineno = $v2['lineno'];
+                        $cmd = "echo -n 'file $file line $lineno $flag' > $DEBUGFSFILE";
+                        //echo "$cmd\n";
+                        exec($cmd);
+                        //echo "echo -n 'file $file line $lineno ${sign}p'\n";
+                    }
+                }
+            }
+        }
+    }
+    echo "Done";
+    
+}
+
 function sync_from_debugfs_to_config($file,$line,$flags,$sign){
     global $tmp_config;
 
     //$arr_debugfs = get_control("/sys/kernel/debug/dynamic_debug/control");
     $arr_config = json_decode(file_get_contents($tmp_config),true);
-        
+    
+    $err = 0;
+    $dc = 0; $dcc = 0; $dccc = 0;
+    
     foreach($arr_config as $k => $v){
         if ($v['file']==$file) {
             $dc = $k;
+            $err = $err + 1;
             break;
         }
     }
-    
-    echo "DC=$dc\n";
     
     $tmp_arr1 = $arr_config[$dc]['configs'];
     
     foreach($tmp_arr1 as $k => $v){
         if ($v['state']==1) {
             $dcc = $k;
+            $err = $err + 2;
             break;
         }
     }
@@ -150,6 +180,7 @@ function sync_from_debugfs_to_config($file,$line,$flags,$sign){
     foreach($tmp_arr2 as $k => $v){
         if ($v['lineno']==$line) {
             $dccc = $k;
+            $err = $err + 4;
             break;
         }
     }
@@ -157,10 +188,14 @@ function sync_from_debugfs_to_config($file,$line,$flags,$sign){
     if ($sign=="+") $flag = "p";
     else            $flag = "_";
     
-    $arr_config[$dc]['configs'][$dcc]['lines'][$dccc]['flags'] = $flag;
-        
-    update_config(json_encode($arr_config));
-    //print_r($arr_config);
+    echo "file index: $dc, config index: $dcc, line index: $dccc \n";
+    
+    if ($err==7){
+        $arr_config[$dc]['configs'][$dcc]['lines'][$dccc]['flags'] = $flag;   
+        update_config(json_encode($arr_config));
+    }else{
+        echo "error code: $err";
+    }
 }
 
 function filter_record_by_file($a,$f){
@@ -243,6 +278,11 @@ if ($cmd=="reread"){
     $filtered = filter_record_by_file($arr,$file);
     echo json_encode($filtered);
     //echo "<pre>";print_r($filtered);
+}
+
+if ($cmd=="setflag"){
+    $flag = $_GET['flag'];
+    apply_flag($flag);
 }
 
 //single line: echo -n 'file gamma_tables.c +p' > /sys/kernel/debug/dynamic_debug/control
