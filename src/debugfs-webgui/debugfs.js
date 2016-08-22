@@ -293,7 +293,29 @@ function init_ui_controls(record,index){
         });
     });
     
-    controls.find("#controls_td").append(bc0);
+    var pre_bc1 = $("<span>",{title:"Current config name"}).html("&nbsp;&nbsp;config:&nbsp;");
+    
+    
+    var dc0_b = $("<button>",{
+        class:"btn btn-default btn-sm btn-success dropdown-toggle",
+        type:"button",
+        "data-toggle":"dropdown",
+        "aria-haspopup":"true",
+        "aria-expanded":"false"
+    }).css({
+        display:"inline",
+        width: "150px",
+    }).html("default <span class='caret'></span>");
+        
+    var dc0_ul = $("<ul>",{class:"dropdown-menu"}).css({padding:"5px","min-width":"100px",border:"1px solid rgba(50,50,50,0.5)"});
+    
+    dc0_ul.append($("<li>").css({padding:"5px"}).html("<input type='text' style='width:100px;' placeholder='create new'/>"))
+          .append($("<li>").css({padding:"5px"}).html("item 1"))
+          .append($("<li>").css({padding:"5px"}).html("item 2"));
+    
+    var dc0 = $("<div>",{class:"btn-group",role:"group"}).append(dc0_b).append(dc0_ul);
+    
+    controls.find("#controls_td").append(bc0).append(pre_bc1).append(dc0);
     
     return controls;
 }
