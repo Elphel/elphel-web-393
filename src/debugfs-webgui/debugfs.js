@@ -376,8 +376,22 @@ function init_ui_controls(record,index){
     }).html("defaultum&nbsp;<span class='caret'></span>");
         
     var dc0_ul = $("<ul>",{class:"dropdown-menu"}).css({padding:"5px","min-width":"100px",border:"1px solid rgba(50,50,50,0.5)"});
+
+    var dc0_li_in = $("<input>",{
+        type:"text",
+        placeholder:"create new"
+    }).css({
+        width:"100px"
+    });
+
+    dc0_li_in.change(function(){
+        $(this).parent().click();
+        //check ze name if dose note exist add to list and to config then apply config
+    });
     
-    dc0_ul.append($("<li>").css({padding:"5px"}).html("<input type='text' style='width:100px;' placeholder='create new'/>"));
+    var dc0_li = $("<li>").css({padding:"5px"}).append(dc0_li_in);
+    
+    dc0_ul.append(dc0_li);
     
     var dc0 = $("<div>",{class:"btn-group",role:"group"}).append(dc0_b).append(dc0_ul);
     
@@ -388,12 +402,42 @@ function init_ui_controls(record,index){
 
 function init_ui_dropdown(record,index){
     for(var j=0;j<record.configs.length;j++){
+        var res = 0;
+        var lentry = $("<li>",{
+            myindex:index,
+            confindex:j
+        }).html(record.configs[j].name);
+        
+        lentry.css({padding:"5px", cursor:"pointer"})
+              .hover(function(){
+                $(this).addClass("even").removeClass("odd");
+            },function(){
+                $(this).addClass("odd").removeClass("even");
+            });
+
+        lentry.click(function(){
+            var index = $(this).attr("myindex");
+            var confindex = $(this).attr("confindex");
+            var name = $(this).html();
+            var sname = $("#dropdown_"+index).html();
+
+            sname = sname.substr(0,sname.length-caret.length);
+
+            if (name==sname){
+                console.log("Already selected, doing nothing");
+            }else{
+                //select config action here: rename, and restore checkboxes' states
+            }
+        });
+
+        $("#controls_"+index).find("ul").append(lentry);
+
         if (record.configs[j].state==1){
             $("#dropdown_"+index).html(record.configs[j].name+caret);
-            break;
+            res = j;
         }
     }
-    return j;
+    return res;
 }
 
 function update_debugfs_config(){
