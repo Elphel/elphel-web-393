@@ -78,7 +78,7 @@ function init(){
         }else{
             $(this).html("Switch off debug");
             $.ajax({
-                url: "debugfs.php?cmd=setflag&flag=%2Bp",
+                url: "debugfs.php?cmd=restore",
                 queue: true
             });
         }
@@ -408,27 +408,20 @@ function init_ui_controls(record,index){
             }
         }
         if (!exists){
-            //add to debugfs_data - copy current checkboxes - then select
-            //add to list, add to front
-            //apply to debugfs
+
             var arr = debugfs_data[index].configs[active];
             debugfs_data[index].configs[i] = JSON.parse(JSON.stringify(arr));
             debugfs_data[index].configs[i].name = value;
             
             dropdown_add_list_item(record,index,i);
-            //sync for now should be enough
-            //dropdown_clone_new_config(value,active);
-            update_debugfs_config();
+
             existing = i;
         }else{
             //select and restore checkboxes
             console.log("This config already exists, selecting");
         }
         //select anyway
-        debugfs_data[index].configs[active].state = 0;
-        debugfs_data[index].configs[existing].state = 1;
-        
-        $("#dropdown_"+index).html(record.configs[existing].name+caret);
+        dropdown_select_config(index,existing);
         
         $(this).parent().click();
         //check ze name if dose note exist add to list and to config then apply config
@@ -484,24 +477,28 @@ function dropdown_add_list_item(record,index,j){
     lentry.click(function(){
         var index = $(this).attr("myindex");
         var confindex = $(this).attr("confindex");
-        var name = $(this).html();
-        var sname = $("#dropdown_"+index).html();
-
-        sname = sname.substr(0,sname.length-caret.length);
-
-        if (name==sname){
-            console.log("Already selected, doing nothing");
-        }else{
-            //select config action here: rename, and restore checkboxes' states
-            $("#dropdown_"+index).html(record.configs[confindex].name+caret);
-            var ac = dropdown_active_config(record);
-            record.configs[ac].state = 0;
-            record.configs[confindex].state = 1;
-            update_debugfs_config();
-        }
+        dropdown_select_config(index,confindex);
     });
     
     $("#controls_"+index).find("ul").append(lentry);
+}
+
+function dropdown_select_config(index,config_index){
+    var record = debugfs_data[index];
+    var ac = dropdown_active_config(record);
+    
+    var name_new = record.configs[config_index].name;
+    var name_old = record.configs[ac].name;
+    
+    if (name_new==name_old){
+        console.log("Already selected, doing nothing");
+    }else{
+        $("#dropdown_"+index).html(record.configs[config_index].name+caret);
+        record.configs[ac].state = 0;
+        record.configs[config_index].state = 1;
+        //restore checkboxes!
+        update_debugfs_config();
+    }
 }
 
 function update_debugfs_config(){

@@ -125,13 +125,16 @@ function apply_config_to_control(){
 function apply_flag($flag){
     global $tmp_config, $DEBUGFSFILE;
       
-    //echo "<pre>\n";
+    //add short command for all here
       
     $arr_config = json_decode(file_get_contents($tmp_config),true);
     foreach($arr_config as $k0 => $v0){
         if ($v0['state']==1){
             foreach($v0['configs'] as $k1 => $v1){
                 if ($v1['state']==1){
+                    $cmd = "echo -n 'file ".$v0['file']." $flag' > $DEBUGFSFILE";
+                    exec($cmd);
+                    /*
                     foreach($v1['lines'] as $k2 => $v2){
                         $file = $v2['file'];
                         $lineno = $v2['lineno'];
@@ -140,10 +143,12 @@ function apply_flag($flag){
                         exec($cmd);
                         //echo "echo -n 'file $file line $lineno ${sign}p'\n";
                     }
+                    */
                 }
             }
         }
     }
+    
     echo "Done";
     
 }
