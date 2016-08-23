@@ -148,7 +148,7 @@ function apply_flag($flag){
     
 }
 
-function sync_from_debugfs_to_config($file,$line,$flags,$sign){
+function sync_from_debugfs_to_config($config_index,$file,$line,$flags,$sign){
     global $tmp_config;
 
     //$arr_debugfs = get_control("/sys/kernel/debug/dynamic_debug/control");
@@ -239,6 +239,7 @@ if ($cmd=="echo") {
     $file = $_GET['file'];
     $line = $_GET['line'];
     $flags = $_GET['flags'];
+    $config_index = intval($_GET['conf']);
     //$config name
     
     if (strpos($flags,"p")===FALSE){
@@ -247,7 +248,7 @@ if ($cmd=="echo") {
         $sign = "+";
     }
     exec("echo -n 'file $file line $line ${sign}${flags}' > $DEBUGFSFILE");
-    sync_from_debugfs_to_config($file,$line,$flags,$sign);
+    sync_from_debugfs_to_config($config_index,$file,$line,$flags,$sign);
 }
 
 $debugfs_configs = "debugfs_configs";

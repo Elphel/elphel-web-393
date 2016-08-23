@@ -244,10 +244,12 @@ function fill_content_rebind_events(){
         if ($(this).prop("checked")) flags = "p"+flags;
         else                         flags = "_";
         
-        debugfs_data[index].configs[0].lines[subindex].flags = flags;
+        var j = dropdown_active_config(debugfs_data[index]);
+
+        debugfs_data[index].configs[j].lines[subindex].flags = flags;
         //console.log($(this).attr("file")+", "+$(this).attr("line")+", "+$(this).prop("checked"));
         $.ajax({
-            url: "debugfs.php?cmd=echo&file="+$(this).attr("file")+"&line="+$(this).attr("line")+"&flags="+flags,
+            url: "debugfs.php?cmd=echo&conf="+j+"&file="+$(this).attr("file")+"&line="+$(this).attr("line")+"&flags="+flags,
             queue: true
         });
     });
@@ -338,7 +340,7 @@ function init_ui_controls(record,index){
                 //apply existing checkboxes to rec
                 oldrec = debugfs_data[id];
                 
-                j = init_ui_dropdown(rec,id);
+                j = dropdown_active_config(rec,id);
                 
                 lnew = rec.configs[j].lines.length;
                 lold = debugfs_data[id].configs[j].lines.length;
@@ -379,12 +381,55 @@ function init_ui_controls(record,index){
 
     var dc0_li_in = $("<input>",{
         type:"text",
-        placeholder:"create new"
+        placeholder:"create new",
+        myindex:index
     }).css({
         width:"100px"
     });
 
     dc0_li_in.change(function(){
+        //name?
+        var value = $(this).val();
+        var index = $(this).attr("myindex");
+        
+        var configs = debugfs_data[index].configs;
+        
+        var exists = false;
+        var active = 0;
+        var existing = 0;
+        
+        for(var i=0;i<configs.length;i++){
+            if (value==configs[i].name) {
+                exists = true;
+                existing = i;
+            }
+            if (configs[i].state==1){
+                active = i;
+            }
+        }
+        if (!exists){
+            //add to debugfs_data - copy current checkboxes - then select
+            //add to list, add to front
+            //apply to debugfs
+            var arr = debugfs_data[index].configs[active];
+            debugfs_data[index].configs[i] = JSON.parse(JSON.stringify(arr));
+            debugfs_data[index].configs[i].name = value;
+            
+            dropdown_add_list_item(record,index,i);
+            //sync for now should be enough
+            //dropdown_clone_new_config(value,active);
+            update_debugfs_config();
+            existing = i;
+        }else{
+            //select and restore checkboxes
+            console.log("This config already exists, selecting");
+        }
+        //select anyway
+        debugfs_data[index].configs[active].state = 0;
+        debugfs_data[index].configs[existing].state = 1;
+        
+        $("#dropdown_"+index).html(record.configs[existing].name+caret);
+        
         $(this).parent().click();
         //check ze name if dose note exist add to list and to config then apply config
     });
@@ -401,36 +446,10 @@ function init_ui_controls(record,index){
 }
 
 function init_ui_dropdown(record,index){
+    var res = 0;
     for(var j=0;j<record.configs.length;j++){
-        var res = 0;
-        var lentry = $("<li>",{
-            myindex:index,
-            confindex:j
-        }).html(record.configs[j].name);
-        
-        lentry.css({padding:"5px", cursor:"pointer"})
-              .hover(function(){
-                $(this).addClass("even").removeClass("odd");
-            },function(){
-                $(this).addClass("odd").removeClass("even");
-            });
 
-        lentry.click(function(){
-            var index = $(this).attr("myindex");
-            var confindex = $(this).attr("confindex");
-            var name = $(this).html();
-            var sname = $("#dropdown_"+index).html();
-
-            sname = sname.substr(0,sname.length-caret.length);
-
-            if (name==sname){
-                console.log("Already selected, doing nothing");
-            }else{
-                //select config action here: rename, and restore checkboxes' states
-            }
-        });
-
-        $("#controls_"+index).find("ul").append(lentry);
+        dropdown_add_list_item(record,index,j);
 
         if (record.configs[j].state==1){
             $("#dropdown_"+index).html(record.configs[j].name+caret);
@@ -438,6 +457,51 @@ function init_ui_dropdown(record,index){
         }
     }
     return res;
+}
+
+function dropdown_active_config(record){
+    for(var j=0;j<record.configs.length;j++){
+        if (record.configs[j].state==1){
+            return j;
+        }
+    }
+    return 0;
+}
+
+function dropdown_add_list_item(record,index,j){
+    var lentry = $("<li>",{
+        myindex:index,
+        confindex:j
+    }).html(record.configs[j].name);
+    
+    lentry.css({padding:"5px", cursor:"pointer"})
+            .hover(function(){
+            $(this).addClass("even").removeClass("odd");
+        },function(){
+            $(this).addClass("odd").removeClass("even");
+        });
+
+    lentry.click(function(){
+        var index = $(this).attr("myindex");
+        var confindex = $(this).attr("confindex");
+        var name = $(this).html();
+        var sname = $("#dropdown_"+index).html();
+
+        sname = sname.substr(0,sname.length-caret.length);
+
+        if (name==sname){
+            console.log("Already selected, doing nothing");
+        }else{
+            //select config action here: rename, and restore checkboxes' states
+            $("#dropdown_"+index).html(record.configs[confindex].name+caret);
+            var ac = dropdown_active_config(record);
+            record.configs[ac].state = 0;
+            record.configs[confindex].state = 1;
+            update_debugfs_config();
+        }
+    });
+    
+    $("#controls_"+index).find("ul").append(lentry);
 }
 
 function update_debugfs_config(){
