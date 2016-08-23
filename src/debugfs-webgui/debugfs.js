@@ -40,7 +40,7 @@ function init(){
     var b2 = $("<button>",{
         id:"b2",
         title:"Apply configuration of the selected files in GUI to DebugFS"
-    }).css({margin:"0px 0px 0px 10px"}).html("Apply to debugfs (selected files)");
+    }).css({margin:"0px 0px 0px 10px"}).html("Apply to debugfs");
     
     b2.click(function(){
         $.ajax({
@@ -84,10 +84,21 @@ function init(){
         }
     });
     
-    $("body").append($("<div>").css({padding:"0px 0px 10px 0px"}).append(b0).append(b1).append(b2).append(b3).append(f0).append(f1).append(f2).append(f3));
+    $("body").append($("<div>",{id:"control_panel"}).css({
+        padding:"15px 20px 20px 20px",
+        background: "rgba(100,200,100,1)",
+        position: "fixed",
+        "z-index": "100",
+        border: "1px solid rgba(180,180,180,0.5)"
+    }).append(b0).append(b1).append(b2).append(b3).append(f0).append(f1).append(f2).append(f3));
+        
+    var shift = $("#control_panel").outerHeight(true)+parseInt($("#control_panel").css("top"),10)+2;
     
     //list header
-    var t = $("<table border=\"1\">").html("\
+    var t = $("<table border=\"1\">").css({
+        position:"absolute",
+        top: shift+"px"
+    }).html("\
         <tr>\
             <th style='display:none;' class='hidden_rows'>Show</th>\
             <th>File</th>\
@@ -322,9 +333,9 @@ function init_ui_controls(record,index){
     
     var bc0 = $("<button>",{
         id:"bc0_"+index,
-        title:"read config from debugfs - useful when changes were made and the line numbers got shifted from the ones in the stored config",
+        title:"read config from debugfs - updates line numbers, keeps checkboxes from current config",
         file:record.file
-    }).css({margin:"5px 5px 5px 5px","font-size":"14px"}).html("read from debugfs");
+    }).css({margin:"5px 5px 5px 5px","font-size":"14px"}).html("read lines from debugfs");
     
     bc0.click(function(){
         var id = $(this).attr("id");
@@ -364,6 +375,8 @@ function init_ui_controls(record,index){
                 
                 fill_content(oldrec.configs[j].lines,id,target);
                 fill_content_rebind_events();
+                
+                update_debugfs_config(id);
             }
         });
     });
