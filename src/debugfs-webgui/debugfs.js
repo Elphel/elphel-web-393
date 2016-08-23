@@ -143,7 +143,7 @@ function init(){
                     $("#controls_"+index).addClass("hidden_content");
                     debugfs_data[index].state = 0;
                 }
-                update_debugfs_config();
+                update_debugfs_config(index);
             });
             
             $(".flags_cb").change(function(){
@@ -334,29 +334,35 @@ function init_ui_controls(record,index){
             url:"debugfs.php?cmd=reread&file="+file,
             queue: true,
             success:function(data){
+                
+                //console.log("Welcome "+id+" & "+file);
+                
                 rec = jQuery.parseJSON(data);
                 target = $("#content_"+id).find("#content_td");
                 
                 //apply existing checkboxes to rec
                 oldrec = debugfs_data[id];
                 
-                j = dropdown_active_config(rec,id);
+                //to save to active config
+                j = dropdown_active_config(oldrec,id);
                 
-                lnew = rec.configs[j].lines.length;
+                //console.log("Ze Jay is "+j);
+                
+                lnew = rec.configs[0].lines.length;
                 lold = debugfs_data[id].configs[j].lines.length;
                 
+                //restore checkboxes
                 for(var i=0;i<lnew;i++){
                     if (i<lold) {
-                        rec.configs[j].lines[i].flags=oldrec.configs[j].lines[i].flags;
+                        rec.configs[0].lines[i].flags=oldrec.configs[j].lines[i].flags;
                     }else{
-                        rec.configs[j].lines[i].flags=oldrec.configs[j].lines[lold-1].flags;
+                        rec.configs[0].lines[i].flags=oldrec.configs[j].lines[lold-1].flags;
                     }
                 }
+                //copy back
+                oldrec.configs[j].lines = JSON.parse(JSON.stringify(rec.configs[0].lines));
                 
-                //update debugfs_data
-                debugfs_data[id].configs[j] = rec.configs[j];
-                
-                fill_content(rec.configs[j].lines,id,target);
+                fill_content(oldrec.configs[j].lines,id,target);
                 fill_content_rebind_events();
             }
         });
@@ -496,17 +502,23 @@ function dropdown_select_config(index,config_index){
         $("#dropdown_"+index).html(record.configs[config_index].name+caret);
         record.configs[ac].state = 0;
         record.configs[config_index].state = 1;
+        
+        var target = $("#content_"+index).find("#content_td");
+        
+        fill_content(record.configs[config_index].lines,index,target);
+        fill_content_rebind_events();
         //restore checkboxes!
-        update_debugfs_config();
+        update_debugfs_config(index);
     }
 }
 
-function update_debugfs_config(){
+function update_debugfs_config(index){
+    var file = debugfs_data[index].file;
     console.log("syncing debugfs config");
     //console.log(debugfs_data);
     $.ajax({
         type: "POST",
-        url: "debugfs.php?cmd=sync",
+        url: "debugfs.php?cmd=sync&file="+file,
         data: JSON.stringify(debugfs_data),
         dataType: "json"
     });

@@ -100,55 +100,56 @@ function update_config($data){
 
 function apply_config_to_control(){
     global $tmp_config, $DEBUGFSFILE;
-        
+    $longstring = "";
     $arr_config = json_decode(file_get_contents($tmp_config),true);
-    foreach($arr_config as $k0 => $v0){
+    foreach($arr_config as $v0){
         if ($v0['state']==1){
-            foreach($v0['configs'] as $k1 => $v1){
+            foreach($v0['configs'] as $v1){
                 if ($v1['state']==1){
-                    foreach($v1['lines'] as $k2 => $v2){
+                    foreach($v1['lines'] as $v2){
                         $file = $v2['file'];
                         $lineno = $v2['lineno'];
                         $flag = $v2['flags'];
                         if ($flag=="p") $sign = "+";
                         else            $sign = "-";
-                        exec("echo -n 'file $file line $lineno ${sign}p' > $DEBUGFSFILE");
+                        $newstring = "file $file line $lineno ${sign}p;";
+                        //there's a limit
+                        if (strlen($longstring.$newstring)>4095){
+                            exec("echo -n '$longstring' > $DEBUGFSFILE");
+                            $longstring = $newstring;
+                        }else{
+                            $longstring .= $newstring;
+                        }
                         //echo "echo -n 'file $file line $lineno ${sign}p'\n";
                     }
                 }
             }
         }
     }
+    exec("echo -n '$longstring' > $DEBUGFSFILE");
     echo "Done";
 }
 
 function apply_flag($flag){
     global $tmp_config, $DEBUGFSFILE;
-      
-    //add short command for all here
-      
+    $longstring = "";
     $arr_config = json_decode(file_get_contents($tmp_config),true);
-    foreach($arr_config as $k0 => $v0){
+    foreach($arr_config as $v0){
         if ($v0['state']==1){
-            foreach($v0['configs'] as $k1 => $v1){
+            foreach($v0['configs'] as $v1){
                 if ($v1['state']==1){
-                    $cmd = "echo -n 'file ".$v0['file']." $flag' > $DEBUGFSFILE";
-                    exec($cmd);
-                    /*
-                    foreach($v1['lines'] as $k2 => $v2){
-                        $file = $v2['file'];
-                        $lineno = $v2['lineno'];
-                        $cmd = "echo -n 'file $file line $lineno $flag' > $DEBUGFSFILE";
-                        //echo "$cmd\n";
-                        exec($cmd);
-                        //echo "echo -n 'file $file line $lineno ${sign}p'\n";
+                    $newstring = "file ".$v0['file']." $flag;";
+                    if (strlen($longstring.$newstring)>4095){
+                        exec("echo -n '$longstring' > $DEBUGFSFILE");
+                        $longstring = $newstring;
+                    }else{
+                        $longstring .= $newstring;
                     }
-                    */
                 }
             }
         }
     }
-    
+    exec("echo -n '$longstring' > $DEBUGFSFILE");
     echo "Done";
     
 }
@@ -266,8 +267,10 @@ if ($cmd=="save"){
 
 if ($cmd=="sync"){
     //list saved configs here
+    $file = $_GET['file'];
     $data = file_get_contents("php://input");
     update_config($data);
+    apply_config_to_control();
 }
 
 if ($cmd=="savetofs"){
