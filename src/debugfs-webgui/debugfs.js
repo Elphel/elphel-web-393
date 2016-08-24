@@ -174,8 +174,8 @@ function init(){
             $(".flags_cb").change();
             
             //when everything is parsed. do something.
-            // unique IDs
-            // save config
+            // apply config to debugfs
+            $("#b2").click();
         }
     });
 }
