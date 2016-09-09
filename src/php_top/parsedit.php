@@ -124,8 +124,8 @@
     $sensor_port=0; /// TODO: NC393 - add sensor port control, initially will use $sensor_port=0 for all php functions that require it    
     $autocampars='/www/pages/autocampars.php';
     $descriptions=getParDescriptions($autocampars);
-    $default_ahead=3;
-    $maxahead=6; /// maximal ahead of the current frame that tasks can currently be set to driver;
+    $default_ahead=5; // 3;
+    $maxahead=6; /// maximal ahead of the current frame that tasks can currently be set to driver; //NC393 - is it the same?
     $minahead=4; /// skip to frame $minahead from the soonest next task before programming
     $brief=true;
     $ahead_separator='*';
@@ -135,12 +135,15 @@
     $testBefore=2;/// Start compressor $testBefore frames before first task
     $testAfter=2; /// Stop compressor $testAfter frames after the last task
     $framesBeforeStart=2; ///In test mode - compressor will be started theis frames after "now"
-    $imgsrv="http://".$_SERVER['SERVER_ADDR'].":8081";
-/// $imglink="img"; /// use this for faster output (and safer in simultaneous accesses from multiple hosts
+//    $imgsrv="http://".$_SERVER['SERVER_ADDR'].":8081";
+    $imgsrv_base="http://".$_SERVER['SERVER_ADDR'].":";
+    $imgsrv_ports= array ("2323","2324","2325","2326");
+    
+    /// $imglink="img"; /// use this for faster output (and safer in simultaneous accesses from multiple hosts
     $imglink="bimg"; ///It was "img" - faster, but image may get corrupted if buffer is overrun before it is trasferred (network congestion)
     $defaultImgScale=0.2; /// 20% image size
     $defaultImagesPerRow=3;
-    $defaultImagesNumber=9;
+    $defaultImagesNumber= 9; // 12
     $isPost=$_SERVER["REQUEST_METHOD"]=="POST";
     $ignoreVals=$isPost;
     $imagesNumber=$defaultImagesNumber;
@@ -164,6 +167,8 @@
     if (array_key_exists ( 'sensor_port', $_GET )) {
     	$GLOBALS [sensor_port] = (myval($_GET ['sensor_port'])) & 3;
     }
+    
+    $imgsrv = $imgsrv_base.$imgsrv_ports[$GLOBALS [sensor_port]];
     $elp_const=get_defined_constants(true);
     $elp_const=$elp_const["elphel"];
     $immediateMode=parseGetNames(); 
@@ -495,7 +500,7 @@ USAGE;
 
 
 /// show table with last acquired images and meta data
-/// TODO: show chnaged parameters for those frames? ***
+/// TODO: show changed parameters for those frames? ***
 function showImgData($meta,$skipped,$prev,$imgScale,$done) {
   global $imgsrv,$imglink;
   $width= $meta['meta']['width'];
@@ -571,95 +576,106 @@ echo "</pre>";
 
 ///TODO:if $todo is provided in $_GET - try to find the correct images even if they are not the latest
 
-function showLastImages($numImg,$imagesPerRow,$imgScale) {
-  $done= decodeTodo ($_GET['done']);
-//  $this_exif=elphel_get_exif_elphel(0);
-  $circbuf_pointers=elphel_get_circbuf_pointers($GLOBALS [sensor_port],1);
-  $framesAgo=0;
-//echo "<pre>\n";
-  end($circbuf_pointers);
-  if ($done) {
-    end($done);
-    $lastFrameNumber=key($done);
-    $cur_ptr=current($circbuf_pointers);
-    while($cur_ptr['frame'] > $lastFrameNumber) {
-      if (!prev($circbuf_pointers)) { /// failed to find the right frame in circbuf - probably overwritten
-        end($circbuf_pointers);
-        break;
-      }
-      $cur_ptr=current($circbuf_pointers);
-      $framesAgo++;
-    }
-
-  }
-///TODO: If all changes were later than the images shown - disregard $todo
-//print_r($circbuf_pointers);
-//print_r($done);
-
-//echo "</pre>\n";
-  $meta=array();
-//  end($circbuf_pointers);
-  $lastFrameIndex=key($circbuf_pointers);
-  for ($i=0; $i<=min(($numImg-1),$lastFrameIndex);$i++) {
-    $meta[$i]=array('circbuf_pointer'=>$circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['circbuf_pointer'],
-                    'meta'=>elphel_get_interframe_meta($GLOBALS [sensor_port],$circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['circbuf_pointer']),
-                    'Exif'=>elphel_get_exif_elphel    ($GLOBALS [sensor_port],$circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['exif_pointer']));
-    $lastFrameNumber=$circbuf_pointers[$lastFrameIndex-($numImg-1)+$i]['frame'];
-  }
-  $running=(elphel_get_P_value($GLOBALS [sensor_port], ELPHEL_COMPRESSOR_RUN)==ELPHEL_CONST_COMPRESSOR_RUN_CONT) &&
-           (elphel_get_P_value($GLOBALS [sensor_port], ELPHEL_SENSOR_RUN)==ELPHEL_CONST_SENSOR_RUN_CONT);
-  $page_title=sprintf("%s %d images acquired to the circular buffer (circbuf). Acquisition is %s. Last frame is %d"
-                      ,$framesAgo?"$framesAgo frames (stored) ago":"Latest"
-                      ,$numImg
-                      ,$running?"on - these frames are/will be overwritten in the camera memory":"off"
-                      ,$lastFrameNumber);
-/*
-  $page_title=sprintf("%d: %s %d images acquired to the circular buffer (circbuf). Acquisition is %s"
-                      ,$lastFrameNumber
-                      ,$framesAgo?"$framesAgo frames ago":"Latest"
-                      ,$numImg
-                      ,$running?"on - these frames are/will be overwritten in the camera memory":"off"
-                      );
-*/
-  startPage($page_title, "");
-  printf("<h4>%s</h4>\n",$page_title);
-  printf   ("<table>\n");
-  $rowOpen=$false;
-  $lastFrame=0;
-  $done_left=count($done);
-  reset($done);
-  $slice_start=0;
-  $slice_count=0;
-  for ($i=0;$i<$numImg;$i++) {
-    $slice_start+=$slice_count;
-    $slice_count=0;
-    $frame=$meta[$i]['Exif']['FrameNumber'];
-    while($done_left && (key($done) <= $frame)) {
-      $slice_count++;
-      $done_left--;
-      next($done);
-    }
-///$done per image
-    $this_done=array_slice($done,$slice_start,$slice_count,true);
-    if (!($i % $imagesPerRow)) {
-      if ($rowOpen) {
-        printf ("</tr>\n");
-      }
-      printf ("<tr>\n");
-      $rowOpen=true;
-    }
-    printf("<td style='vertical-align: top;'>");
-    $skipped=($i>0)?($frame-$lastFrame-1):0;
-    $lastFrame=$frame;
-    showImgData($meta[$i],$skipped,$numImg-$i-1,$imgScale,$this_done);
-    printf("</td>\n");
-  }
-  while ($i++ % $imagesPerRow) {
-    printf ("<td>&nbsp;</td>\n");
-  }
-  printf ("</tr>\n");
-  printf ("</table>\n");
-  endPage();
+function showLastImages($numImg, $imagesPerRow, $imgScale) {
+//	elphel_update_exif(); // just for testing
+	$done = decodeTodo ( $_GET ['done'] );
+	// $this_exif=elphel_get_exif_elphel(0);
+	$circbuf_pointers = elphel_get_circbuf_pointers ( $GLOBALS [sensor_port], 1 );
+	echo "<!--";
+	var_dump($circbuf_pointers);
+	var_dump($done);
+	var_dump($numImg);
+	echo "-->";
+	$framesAgo = 0;
+	// echo "<pre>\n";
+	end ( $circbuf_pointers );
+	if ($done) {
+		end ( $done );
+		$lastFrameNumber = key ( $done );
+//		$lastFrameNumber = key ( $done ) + 9; // NC393 debugging
+		$cur_ptr = current ( $circbuf_pointers );
+		while ( $cur_ptr ['frame'] > $lastFrameNumber ) {
+			if (! prev ( $circbuf_pointers )) { // / failed to find the right frame in circbuf - probably overwritten
+				end ( $circbuf_pointers );
+				break;
+			}
+			$cur_ptr = current ( $circbuf_pointers );
+			$framesAgo ++;
+		}
+	}
+	// /TODO: If all changes were later than the images shown - disregard $todo
+	// print_r($circbuf_pointers);
+	// print_r($done);
+	
+	// echo "</pre>\n";
+	$meta = array ();
+	// end($circbuf_pointers);
+	$lastFrameIndex = key ( $circbuf_pointers );
+	for($i = 0; $i <= min ( ($numImg - 1), $lastFrameIndex ); $i ++) {
+		$meta [$i] = array (
+				'circbuf_pointer' => $circbuf_pointers [$lastFrameIndex - ($numImg - 1) + $i] ['circbuf_pointer'],
+				'meta' => elphel_get_interframe_meta (
+						$GLOBALS [sensor_port],
+						$circbuf_pointers [$lastFrameIndex - ($numImg - 1) + $i] ['circbuf_pointer'] ),
+				'Exif' => elphel_get_exif_elphel (
+						$GLOBALS [sensor_port],
+						$circbuf_pointers [$lastFrameIndex - ($numImg - 1) + $i] ['exif_pointer'] ) 
+		);
+		$lastFrameNumber = $circbuf_pointers [$lastFrameIndex - ($numImg - 1) + $i] ['frame'];
+	}
+	echo "<!--";
+	var_dump($meta);
+	echo "-->";
+	
+	$running = (elphel_get_P_value ( $GLOBALS [sensor_port], ELPHEL_COMPRESSOR_RUN ) == ELPHEL_CONST_COMPRESSOR_RUN_CONT) && (elphel_get_P_value ( $GLOBALS [sensor_port], ELPHEL_SENSOR_RUN ) == ELPHEL_CONST_SENSOR_RUN_CONT);
+	$page_title = sprintf ( "%s %d images acquired to the circular buffer (circbuf). Acquisition is %s. Last frame is %d", $framesAgo ? "$framesAgo frames (stored) ago" : "Latest", $numImg, $running ? "on - these frames are/will be overwritten in the camera memory" : "off", $lastFrameNumber );
+	/*
+	 * $page_title=sprintf("%d: %s %d images acquired to the circular buffer (circbuf). Acquisition is %s"
+	 * ,$lastFrameNumber
+	 * ,$framesAgo?"$framesAgo frames ago":"Latest"
+	 * ,$numImg
+	 * ,$running?"on - these frames are/will be overwritten in the camera memory":"off"
+	 * );
+	 */
+	startPage ( $page_title, "" );
+	printf ( "<h4>%s</h4>\n", $page_title );
+	printf ( "<table>\n" );
+	$rowOpen = $false;
+	$lastFrame = 0;
+	$done_left = count ( $done );
+	reset ( $done );
+	$slice_start = 0;
+	$slice_count = 0;
+	for($i = 0; $i < $numImg; $i ++) {
+		$slice_start += $slice_count;
+		$slice_count = 0;
+		$frame = $meta [$i] ['Exif'] ['FrameNumber'];
+		while ( $done_left && (key ( $done ) <= $frame) ) {
+			$slice_count ++;
+			$done_left --;
+			next ( $done );
+		}
+		// /$done per image
+		$this_done = array_slice ( $done, $slice_start, $slice_count, true );
+		if (! ($i % $imagesPerRow)) {
+			if ($rowOpen) {
+				printf ( "</tr>\n" );
+			}
+			printf ( "<tr>\n" );
+			$rowOpen = true;
+		}
+		printf ( "<td style='vertical-align: top;'>" );
+		$skipped = ($i > 0) ? ($frame - $lastFrame - 1) : 0;
+		$lastFrame = $frame;
+		showImgData ( $meta [$i], $skipped, $numImg - $i - 1, $imgScale, $this_done );
+		printf ( "</td>\n" );
+	}
+	while ( $i ++ % $imagesPerRow ) {
+		printf ( "<td>&nbsp;</td>\n" );
+	}
+	printf ( "</tr>\n" );
+	printf ( "</table>\n" );
+	endPage ();
 }
 
 /**
@@ -734,7 +750,7 @@ function  showSequence($todo,$frame_zero) {
    printf ("</table>\n"); 
 }
 
-function  applyPost($todo,$noFinalWait=false) {
+function  applyPost_debug($todo,$noFinalWait=false) {
    global $maxahead,$minahead,$frame_zero,$showSeqMode;
    if ($showSeqMode>0) {
      printf("<h4>Running sequence...</h4>\n");
@@ -747,10 +763,12 @@ function  applyPost($todo,$noFinalWait=false) {
 
 /// Skip to the next frame (so more deterministic phase - maximal time till next frame)
    $waitingEnabled=true;
+   /*
    foreach ($todo as $pars) if (array_key_exists('SENSOR', $pars)) {
      $waitingEnabled=false;
      break;
    }
+   */
    if (elphel_get_frame($GLOBALS [sensor_port])< 8) $waitingEnabled=false; /// or is "==0" enough?
    if ($waitingEnabled && !$noFinalWait) elphel_skip_frames($GLOBALS [sensor_port],1); // in GET mode, do not skip any frames
 /// store the current frame number as reference for all actions delays
@@ -762,20 +780,43 @@ function  applyPost($todo,$noFinalWait=false) {
      if (($since-$maxahead) >$frame_since ) { /// too early to program, need to wait
        $frame_since=$since-$minahead;
        $frame_now=$frame_since+$frame_zero;
-       if ($waitingEnabled) {
-         if ($showSeqMode>0) {printf ("waiting frame %d (0x%x) ... ",$frame_now,$frame_now);  ob_flush();  flush();}
-         elphel_wait_frame_abs($GLOBALS [sensor_port], $frame_now);
-         if ($showSeqMode>0) {printf ("done\n");   ob_flush();  flush();}
-       }
+			if ($waitingEnabled) {
+				if ($showSeqMode > 0) {
+					printf ( "waiting frame %d (0x%x) ...s=%d, fs=%d noFinalWait=",
+							$frame_now, $frame_now, $since, $frame_since, $noFinalWait);
+					ob_flush ();
+					flush ();
+				}
+				elphel_wait_frame_abs ( $GLOBALS [sensor_port], $frame_now );
+				if ($showSeqMode > 0) {
+					printf ( "done\n" );
+					ob_flush ();
+					flush ();
+				}
+			}
      }
      elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
+//     if ($showSeqMode > 0) {
+//     	printf ( "frame_zero=%d, since=%d",$frame_zero,$since);
+//     	printf ( "elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)");
+//     	ob_flush ();
+//     	flush ();
+//     }
    }
    if (!$noFinalWait) {
      $frame_now=$since+$frame_zero+1; /// wait just 1 frame longer that the target of the last command in $todo
-//   echo "since=$since\n"; ob_flush();  flush();
-     if ($showSeqMode>0) {printf ("waiting frame %d (0x%x) ... ",$frame_now,$frame_now);  ob_flush();  flush();}
+//     $frame_now+=256;
+     //     if ($showSeqMode > 0) {
+//     	printf ( "frame_zero=%d, since=%d",$frame_zero,$since);
+//     	printf ( "elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)");
+//     	ob_flush ();
+//     	flush ();
+//     }
+      
+     //   echo "since=$since\n"; ob_flush();  flush();
+     if ($showSeqMode>0) {printf ("(final) waiting frame %d (0x%x) ... ",$frame_now,$frame_now);  ob_flush();  flush();}
      if ($waitingEnabled) {
-        elphel_wait_frame_abs($GLOBALS [sensor_port], $frame_now);
+        $rslt = elphel_wait_frame_abs($GLOBALS [sensor_port], $frame_now);
      } else {
        $timeout_step=  100000; /// 0.1 sec
        $timeout=      3000000; /// 3.0sec
@@ -785,10 +826,78 @@ function  applyPost($todo,$noFinalWait=false) {
        }
      }
    }
-   if ($showSeqMode>0) {printf ("done\n");   ob_flush();  flush();}
+//   $rslt2 = elphel_wait_frame_abs($GLOBALS [sensor_port], 100);
+//   $rslt3 = elphel_wait_frame_abs($GLOBALS [sensor_port], $frame_now);
+//   $rslt4 = elphel_skip_frames($GLOBALS [sensor_port],4);
+    
+   if ($showSeqMode>0) {printf ("done, frame is %d, rslt=%d, frame_now was %d, waitingEnabled=%d\n",
+   		elphel_get_frame($GLOBALS [sensor_port]), $rslt, $frame_now, $waitingEnabled);
+   		ob_flush();  flush();
+   }
    if ($showSeqMode>0) echo "</pre>";
 //   exit (0);
 }
+
+function  applyPost($todo,$noFinalWait=false) {
+	global $maxahead,$minahead,$frame_zero,$showSeqMode;
+	if ($showSeqMode>0) {
+		printf("<h4>Running sequence...</h4>\n");
+		echo "<pre>";
+	}
+	//   print_r($_POST);
+	//   print_r($posted_params);
+	//   var_dump($todo);
+	//   print_r($todo);
+	/// Skip to the next frame (so more deterministic phase - maximal time till next frame)
+	$waitingEnabled=true;
+	foreach ($todo as $pars) if (array_key_exists('SENSOR', $pars)) {
+		$waitingEnabled=false;
+		break;
+	}
+	if (elphel_get_frame($GLOBALS [sensor_port])< 8) $waitingEnabled=false; /// or is "==0" enough?
+	if ($waitingEnabled && !$noFinalWait) elphel_skip_frames($GLOBALS [sensor_port],1); // in GET mode, do not skip any frames
+	/// store the current frame number as reference for all actions delays
+	$frame_zero=elphel_get_frame($GLOBALS [sensor_port]);
+	$frame_since=0;
+	$frame_now=$frame_zero;
+	///Iterate through $todo array, programming the parameter changes
+	foreach ($todo as $since=>$pgmpars) {
+		if (($since-$maxahead) >$frame_since ) { /// too early to program, need to wait
+			$frame_since=$since-$minahead;
+			$frame_now=$frame_since+$frame_zero;
+//			$frame_now=$frame_since+$frame_zero+2; // NC393: adding 2 extra
+			if ($waitingEnabled) {
+//			$frame_now=$frame_since+$frame_zero;
+				if ($showSeqMode>0) {printf ("waiting frame %d (0x%x) ... ",$frame_now,$frame_now);  ob_flush();  flush();}
+				elphel_wait_frame_abs($GLOBALS [sensor_port], $frame_now);
+				if ($showSeqMode>0) {printf ("done (%d)\n", elphel_get_frame($GLOBALS [sensor_port]));   ob_flush();  flush();}
+			}
+		}
+		elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
+	}
+	if (!$noFinalWait) {
+		$frame_now=$since+$frame_zero+1; /// wait just 1 frame longer that the target of the last command in $todo
+//		$frame_now=$since+$frame_zero+4; /// wait just 1 frame longer that the target of the last command in $todo
+		//   echo "since=$since\n"; ob_flush();  flush();
+		if ($showSeqMode>0) {printf ("waiting frame %d (0x%x) ... ",$frame_now,$frame_now);  ob_flush();  flush();}
+		if ($waitingEnabled) {
+			elphel_wait_frame_abs($GLOBALS [sensor_port], $frame_now);
+		} else {
+			$timeout_step=  100000; /// 0.1 sec
+			$timeout=      3000000; /// 3.0sec
+			for ($i=0 ; $i < $timeout; $i+=$timeout_step) {
+				if (elphel_get_frame($GLOBALS [sensor_port])>=$frame_now) break;
+				usleep($timeout_step);
+			}
+		}
+//	} else { // just debugging - still waiting
+//		elphel_skip_frames($GLOBALS [sensor_port],8); // skip 8 frames - debugging NC393 - no differnce!
+	}
+	if ($showSeqMode>0) {printf ("done (%d, 0x%x)\n", elphel_get_frame($GLOBALS [sensor_port]), elphel_get_frame($GLOBALS [sensor_port]));   ob_flush();  flush();}
+	if ($showSeqMode>0) echo "</pre>";
+	//   exit (0);
+}
+
 
 function  parsePost() {
    global $_POST,$testMode,$showSeqMode,$posted_params;
@@ -1204,11 +1313,11 @@ function printPage($encoded_todo) {
    printf ("<table border='1' style='font-family: Courier, monospace;'>\n");
 
    if ($embedImageScale) {
-     $fd_circ=fopen("/dev/circbuf","r");
+     $fd_circ=fopen("/dev/circbuf".strval($GLOBALS['sensor_port']),"r");
      fseek($fd_circ, ELPHEL_LSEEK_CIRC_LAST,SEEK_END);
      $circbuf_pointer=ftell($fd_circ);
      fclose($fd_circ);
-//     echo "circbuf_pointer=$circbuf_pointer";
+
      if ($circbuf_pointer>=0) {
        $meta=elphel_get_interframe_meta($GLOBALS [sensor_port], $circbuf_pointer);
        $width= floor($meta['width']*$embedImageScale);

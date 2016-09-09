@@ -418,13 +418,17 @@ CAPTION;
 //							$xml->addChild ( 'compressor_irqon_result', fseek ( $circbuf_file, ELPHEL_LSEEK_INTERRUPT_ON, SEEK_END ) ); // #define LSEEK_INTERRUPT_ON 0x24 /// enable camera interrupts
 //							fclose ( $circbuf_file );
 // Init turn on cmdseq interrupts, but not compressor ones							
+							$xml->addChild ( 'frame_before' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
 							$xml->addChild ('DEBUG_01_'. strval ( $sensor_port ), $GLOBALS ['framepars_paths'] [$sensor_port]);
 							$xml->addChild ( 'LSEEK_FRAMEPARS_INIT' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_FRAMEPARS_INIT, SEEK_END ) );
 							$xml->addChild ( 'elphel_set_P_value' . strval ( $sensor_port ), elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR, 0x00, 0, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ) ); // / will start detection
 							// Seems that next LSEEK_SENSORPROC is not needed as 0->ELPHEL_SENSOR will trigger it anyway
 							// Still try it to make sure new lock handles it
 //							$xml->addChild ( 'LSEEK_SENSORPROC' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_SENSORPROC, SEEK_END ) );
-							$frame = 0;
+                            //$frame = 0 (in NC353)
+							$frame = elphel_get_frame($sensor_port);
+							$xml->addChild ( 'frame' . strval ( $sensor_port ),  $frame);
+							//elphel_get_frame							
 							// gets half-frame
 							
 							elphel_set_P_value ( $sensor_port, ELPHEL_MAXAHEAD, 2, 0, 8 ); // / When servicing interrupts, try programming up to 2 frames ahead of due time)
@@ -436,13 +440,22 @@ CAPTION;
 							
 							elphel_set_P_value ( $sensor_port, ELPHEL_BITS, 8, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_QUALITY, 80, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR, ELPHEL_CONST_COLORMODE_COLOR, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR_SATURATION_BLUE, 200, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR_SATURATION_RED, 200, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_BAYER, 0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_GAING, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_GAINGB, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_GAINR, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_GAINB, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_VIGNET_C, 0x8000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_VIGNET_SHL, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							
+							
+							
 							elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
-							
+							$xml->addChild ( 'frame_after' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
 							fclose ( $framepars_file );
 							$gamma = 57;
 							$black = 10;
@@ -461,6 +474,7 @@ CAPTION;
 							);
 							$frame = elphel_get_frame ( $sensor_port ); // 0
 							elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 3, 0 );
+							$xml->addChild ( 'frame_final' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
 						} else if ($value == "initgamma") {
 							$gammas_file = fopen ( "/dev/gamma_cache", "w+" );
 							$xml->addChild ( 'LSEEK_GAMMA_INIT' . strval ( $sensor_port ), fseek ( $gammas_file, ELPHEL_LSEEK_GAMMA_INIT, SEEK_END ) );
