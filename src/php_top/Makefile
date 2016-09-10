@@ -1,11 +1,11 @@
-DOCUMENTROOT=www/pages
+DOCUMENTROOT=/www/pages
 OWN = -o root -g root
 INSTDOCS = 0644
-INSTALL = install
+#INSTALL = install
 DOCS=       favicon.ico \
             robots.txt
 CONFS=      autocampars.xml            
-SYSCONFDIR   = etc
+SYSCONFDIR   = /etc
 CONFDIR      = $(SYSCONFDIR)/elphel393
 
 PHP_SCRIPTS=camvars.php \
@@ -22,14 +22,14 @@ all:
 
 install:
 	@echo "make install in src"
-	$(INSTALL) $(OWN) -d $(DESTDIR)/$(DOCUMENTROOT)
-	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS) $(DESTDIR)/$(DOCUMENTROOT)
-	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHP_SCRIPTS) $(DESTDIR)/$(DOCUMENTROOT)
-	$(INSTALL) $(OWN) -d $(DESTDIR)/$(SYSCONFDIR)
-	$(INSTALL) $(OWN) -d $(DESTDIR)/$(CONFDIR)
-	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)/$(CONFDIR)/autocampars0.xml
-	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)/$(CONFDIR)/autocampars1.xml
-	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)/$(CONFDIR)/autocampars2.xml
-	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)/$(CONFDIR)/autocampars3.xml
+	$(INSTALL) $(OWN) -d $(DESTDIR)$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS) $(DESTDIR)$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHP_SCRIPTS) $(DESTDIR)$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -d $(DESTDIR)$(SYSCONFDIR)
+	$(INSTALL) $(OWN) -d $(DESTDIR)$(CONFDIR)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars0.xml
+	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars1.xml
+	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars2.xml
+	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars3.xml
 clean:
 	@echo "make clean in src"

@@ -1,7 +1,7 @@
 PYTHONROOT=$(DESTDIR)/usr/local/bin
 OWN = -o root -g root
 INSTPYTHON = 0755
-INSTALL = install
+#INSTALL = install
 PYTHON_SCRIPTS = tests.py
 
 all:

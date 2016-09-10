@@ -1,4 +1,3 @@
-
 # Runs 'make', 'make install', and 'make clean' in specified subdirectories
 SUBDIRS := src/php_top src/python_tests src/debugfs-webgui # src1
 INSTALLDIRS = $(SUBDIRS:%=install-%)
@@ -13,7 +12,7 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 
 install: $(INSTALLDIRS)
-	@echo "make install top"
+	echo "make install top"
 
 $(INSTALLDIRS): 
 	$(MAKE) -C $(@:install-%=%) install
