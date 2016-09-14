@@ -9,4 +9,5 @@ attic/*
 generated*
 sysroots
 bitbake-logs
-/temp/
+temp
+
