@@ -647,7 +647,7 @@
         <WB_SCALE_R>"0x10000"</WB_SCALE_R>
         <WB_SCALE_GB>"0x10000"</WB_SCALE_GB>
         <WB_SCALE_B>"0x10000"</WB_SCALE_B>
-        <GAIN_MIN>"0x10000"</GAIN_MIN>
+        <GAIN_MIN>"0x18000"</GAIN_MIN>
         <GAIN_MAX>"0xfc000"</GAIN_MAX>
         <GAIN_STEP>"0x20"</GAIN_STEP>
         <ANA_GAIN_ENABLE>"1"</ANA_GAIN_ENABLE>
