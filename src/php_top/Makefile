@@ -13,7 +13,9 @@ PHP_SCRIPTS=camvars.php \
             diag_utils.php \
             framepars.php \
             parsedit.php \
-            phpinfo.php
+            phpinfo.php \
+            snapfull.php
+            
 
 all:
 	@echo "make all in src"
