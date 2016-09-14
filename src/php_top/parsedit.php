@@ -364,8 +364,8 @@ $url_wb_only= "embed=0.1&title=White+Balance+controls"
               ."&WB_SCALE_GB=0x10000" /// additional correction for GB (second green) from calulated by white balance (16.16)
               ."&WB_SCALE_B=0x10000"  /// additional correction for B from calulated by white balance (16.16)
               ."&WB_THRESH=500"       /// WB errors are integrated between frame and corrections are scaled when error is below thershold (500)
-              ."&GAIN_MIN=0x10000"      /// minimal sensor analog gain (0x100 - 1.0)
-              ."&GAIN_MAX=0xfc000"     /// maximal sensor analog gain (0x100 - 1.0)
+              ."&GAIN_MIN=0x18000"    /// minimal sensor analog gain (0x100 - 1.0)
+              ."&GAIN_MAX=0xfc000"    /// maximal sensor analog gain (0x100 - 1.0)
 //              ."&GAIN_STEP=0x20"      /// minimal correction to be applied to the analog gain (should be set larger that sensor
 //                                      /// actual gain step to prevent oscillations (0x100 - 1.0, 0x40 - 1/8)
               ."&ANA_GAIN_ENABLE=1"       /// Enable analog gain controls in white balancing

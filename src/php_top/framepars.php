@@ -342,10 +342,14 @@ CAPTION;
 			} else if ($value == "gamma") {
 				$gamma = 60;
 				$black = 10;
+//				$scale_r = ( int ) (1.0 * 1024);
+//				$scale_g = ( int ) (0.9 * 1024);
+//				$scale_b = ( int ) (1.1 * 1024);
+//				$scale_gb = ( int ) (0.9 * 1024);
 				$scale_r = ( int ) (1.0 * 1024);
-				$scale_g = ( int ) (0.9 * 1024);
-				$scale_b = ( int ) (1.1 * 1024);
-				$scale_gb = ( int ) (0.9 * 1024);
+				$scale_g = ( int ) (1.0 * 1024);
+				$scale_b = ( int ) (1.0 * 1024);
+				$scale_gb = ( int ) (1.0 * 1024);
 				elphel_gamma_add ( 0.01 * $gamma, $black );
 				// define P_GTAB_R 138 // combines (P_PIXEL_LOW<<24) | (P_GAMMA <<16) and 16-bit (6.10) scale for gamma tables, individually for each color.
 				// 16Msbs are also "hash16" and do not need to be black level/gamma, just uniquely identify the table for applications
@@ -430,9 +434,12 @@ CAPTION;
 							$xml->addChild ( 'frame' . strval ( $sensor_port ),  $frame);
 							//elphel_get_frame							
 							// gets half-frame
-							
 							elphel_set_P_value ( $sensor_port, ELPHEL_MAXAHEAD, 2, 0, 8 ); // / When servicing interrupts, try programming up to 2 frames ahead of due time)
-							
+// 2016/09/09: Seems that with defualt 63, even on a single-channel autoexposure+ moving WOI breaks acquisition)
+// With increased delay - seems OK
+// Resizing - still breaks, probably for different reason
+							elphel_set_P_value ( $sensor_port, ELPHEL_MEMSENSOR_DLY, 1024, $frame + 2, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+								
 							elphel_set_P_value ( $sensor_port, ELPHEL_FPGA_XTRA, 1000, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // /compressor needs extra 1000 cycles to compress a frame (estimate)
 							elphel_set_P_value ( $sensor_port, ELPHEL_EXTERN_TIMESTAMP, 1, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / only used with async trigger
 							                                                                                                                   
@@ -459,10 +466,14 @@ CAPTION;
 							fclose ( $framepars_file );
 							$gamma = 57;
 							$black = 10;
+//							$scale_r = ( int ) (1.0 * 1024);
+//							$scale_g = ( int ) (0.9 * 1024);
+//							$scale_b = ( int ) (1.1 * 1024);
+//							$scale_gb = ( int ) (0.9 * 1024);
 							$scale_r = ( int ) (1.0 * 1024);
-							$scale_g = ( int ) (0.9 * 1024);
-							$scale_b = ( int ) (1.1 * 1024);
-							$scale_gb = ( int ) (0.9 * 1024);
+							$scale_g = ( int ) (1.0 * 1024);
+							$scale_b = ( int ) (1.0 * 1024);
+							$scale_gb = ( int ) (1.0 * 1024);
 							elphel_gamma_add ( 0.01 * $gamma, $black ); // does not depend on $GLOBALS['sensor_port']
 							                                            // define P_GTAB_R 138 // combines (P_PIXEL_LOW<<24) | (P_GAMMA <<16) and 16-bit (6.10) scale for gamma tables, individually for each color.
 							                                            // 16Msbs are also "hash16" and do not need to be black level/gamma, just uniqualy identify the table for applications
