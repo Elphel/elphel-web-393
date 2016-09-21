@@ -124,7 +124,7 @@
     $sensor_port=0; /// TODO: NC393 - add sensor port control, initially will use $sensor_port=0 for all php functions that require it    
     $autocampars='/www/pages/autocampars.php';
     $descriptions=getParDescriptions($autocampars);
-    $default_ahead=5; // 3;
+    $default_ahead= 3;
     $maxahead=6; /// maximal ahead of the current frame that tasks can currently be set to driver; //NC393 - is it the same?
     $minahead=4; /// skip to frame $minahead from the soonest next task before programming
     $brief=true;
@@ -408,24 +408,26 @@ $url_hdr_exp= "embed=0.1&title=HDR+exposure+controls"
               ."&THIS_FRAME=@"        /// Current frame
               ;
 $url_ext_trigger="embed=0.1&title=External+trigger+controls"
-              ."&TRIG=4"              ///  External trigger mode
+              ."&TRIG=4*5"            ///  External trigger mode (should be set after dealys are set?)
                                       /// bit 0  - "old" external mode (0- internal, 1 - external )
                                       /// bit 1 - enable(1) or disable(0) external trigger to stop clip
                                       /// bit 2 - async (snapshot, ext trigger) mode, 0 - continuous NOTE: Only this bit is used now !
                                       /// bit 3 - no overlap,  single frames: program - acquire/compress same frame
 
-              ."&TRIG_PERIOD=19200000"/// 0.2 sec @96MHz output sync period (32 bits, in pixel clocks)
+              ."&TRIG_PERIOD=20000000"/// 0.2 sec @96MHz output sync period (32 bits, in pixel clocks)
                                       /// >=256 repetitive with specified period.
                                       /// NOTE: Currently there is no verification that period is longer than sensor/compressor can handle
               ."&TRIG_DELAY"          /// trigger delay, 32 bits in pixel clocks (needed when multiple cameras are synchronized)
               ."&EXTERN_TIMESTAMP=1"  /// Use external timestamp if available
-              ."&TRIG_BITLENGTH=255"  /// bit lengh minus 1 in pixel clocks (when sending timestamp over sync line)
+              ."&TRIG_BITLENGTH=31"   /// bit lengh minus 1 in pixel clocks (when sending timestamp over sync line)
               ."&XMIT_TIMESTAMP=1"    /// transmit timestamp when sending sync
               ."&THIS_FRAME=@"        /// Current frame
 ///Next parameters are non-zero only for external connections and should match particular I/O boards/connectors
               ."&TRIG_CONDITION=0"    /// trigger condition, 0 - internal, else dibits ((use<<1) | level) for each GPIO[11:0] pin
-              ."&TRIG_OUT=0"          /// trigger output to GPIO, dibits ((use << 1) | level_when_active). Bit 24 - test mode,
-                                      ///  when GPIO[11:10] are controlled by other internal signals 
+		                              /// 0x0 - from FPGA, 0x80000 - ext, 0x8000 - int, 0x88000 - any, 0x95555 - add ext, 0x59999 - add int 
+              ."&TRIG_OUT=0x65555"    /// trigger output to GPIO, dibits ((use << 1) | level_when_active). Bit 24 - test mode,
+                                      ///  when GPIO[11:10] are controlled by other internal signals
+                                      /// 0x56555 - ext connector, 0x65555  - internal connector 0x66555 - both, 0x55555 - none
               ."&SENSOR_REGS30=@"     /// Sensor register MODE1 (trigger bit)
               ;
 $url_cable_delay="embed=0.3&title=Cable+delay+/+Sensor+phase+adjustment"
