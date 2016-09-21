@@ -157,15 +157,15 @@
       $todo=preparePost();
     }
 
-    $page_title="Default control/test page for the NC353L camera";
-    if (count($_GET)==0) {
+    if (array_key_exists ( 'sensor_port', $_GET )) {
+    	$GLOBALS [sensor_port] = (myval($_GET ['sensor_port'])) & 3;
+    }
+    $page_title="Default control/test page for the NC393L camera, sensor port ".$GLOBALS [sensor_port];
+    if ((count($_GET)==0) || ((count($_GET)==1) && array_key_exists ( 'sensor_port', $_GET ))) {
          startPage($page_title, "");
          printDefaultPage();
          endPage();
          exit (0);
-    }
-    if (array_key_exists ( 'sensor_port', $_GET )) {
-    	$GLOBALS [sensor_port] = (myval($_GET ['sensor_port'])) & 3;
     }
     
     $imgsrv = $imgsrv_base.$imgsrv_ports[$GLOBALS [sensor_port]];
@@ -238,8 +238,9 @@
  */
 
 function printDefaultPage() {
+   $url_port = "sensor_port=".$GLOBALS [sensor_port]."&";	
 //   $imgsrv="http://".$_SERVER['SERVER_ADDR'].":8081";
-   $url_init=  "embed&test&showseq&title=Camera+initialization+parameters"
+   $url_init=  $url_port."embed&test&showseq&title=Camera+initialization+parameters"
               ."&TASKLET_CTL=0*0"          /// at least ELPHEL_CONST_TASKLET_CTL_NOSAME bit should be 0 so initialization will not wait for the frame sync
               ."&MAXAHEAD=2"               /// When servicing interrupts, try programming up to 2 frames ahead of the due to program time)
               ."&FPGA_XTRA=1000"           /// Extra clock cycles needed to compress a frame (in addition to per macroblocs time)
@@ -258,7 +259,7 @@ function printDefaultPage() {
               ."&GTAB_B=0x0a390400"        /// same for blue
               ."&SENSOR=0*0"               /// setting sensor to zero will initiate sensor detection attempt (should be frame 0)
               ;
-   $url_debug= "test&showseq&title=Debug control"
+   $url_debug= $url_port."test&showseq&title=Debug control"
               ."&DEBUG=0x3fc"
               ."&TASKLET_CTL"
               ."&PROFILING_EN"
@@ -270,12 +271,12 @@ function printDefaultPage() {
               ."&HIST_C_FRAME=@"
               ."&CIRCBUFWP=@"
               ;
-   $url_woi_control=  "embed&test&showseq&title=Camera+WOI+Controls".
+   $url_woi_control=  $url_port."embed&test&showseq&title=Camera+WOI+Controls".
                       "&SENSOR_RUN&COMPRESSOR_RUN&WOI_LEFT&WOI_TOP&WOI_WIDTH&WOI_HEIGHT&FLIPH&FLIPV&DCM_HOR&DCM_VERT&THIS_FRAME=@&CIRCBUFWP=@";
-   $url_woi_control_test="embed=.4&test=1&showseq=1&title=Camera+WOI+Controls+(test+mode)".
+   $url_woi_control_test=$url_port."embed=.4&test=1&showseq=1&title=Camera+WOI+Controls+(test+mode)".
                       "&SENSOR_RUN&COMPRESSOR_RUN&WOI_LEFT&WOI_TOP&WOI_WIDTH&WOI_HEIGHT&FLIPH=1*3&FLIPV=1*5&DCM_HOR&DCM_VERT&THIS_FRAME=@&CIRCBUFWP=@";
-   $url_images=       "images=9:3:.2";
-$url_aexp_all= "embed=0.1&title=Autoexposure/White+Balance/HDR+controls+(full)"
+   $url_images=       $url_port."images=9:3:.2";
+$url_aexp_all= $url_port."embed=0.1&title=Autoexposure/White+Balance/HDR+controls+(full)"
               ."&COMPRESSOR_RUN=".ELPHEL_CONST_COMPRESSOR_RUN_CONT /// run compressor in continuous mode
               ."&DAEMON_EN=1"         /// Daemons are controlled by bits in this register. Autoexposure bit is 0 (1<<0 == 1)
               ."&AUTOEXP_ON=1"        /// setting it to 0 will only disable autoexposure, but not HDR modes or white balancing
@@ -322,7 +323,7 @@ $url_aexp_all= "embed=0.1&title=Autoexposure/White+Balance/HDR+controls+(full)"
               ."&HISTWND_TOP=@"       /// Absolute (as written to FPGA) histogram window top  (counted from the top of WOI)
               ;
 
-$url_aexp_only= "embed=0.1&title=Autoexposure+controls"
+$url_aexp_only= $url_port."embed=0.1&title=Autoexposure+controls"
               ."&COMPRESSOR_RUN=".ELPHEL_CONST_COMPRESSOR_RUN_CONT /// run compressor in continuous mode
               ."&DAEMON_EN=1"         /// Daemons are controlled by bits in this register. Autoexposure bit is 0 (1<<0 == 1)
               ."&AUTOEXP_ON=1"        /// setting it to 0 will only disable autoexposure, but not HDR modes or white balancing
@@ -348,7 +349,7 @@ $url_aexp_only= "embed=0.1&title=Autoexposure+controls"
               ."&HISTWND_TOP=@"       /// Absolute (as written to FPGA) histogram window top  (counted from the top of WOI)
               ."&AE_INTEGERR=@"       /// Current integrated error in the AE loop
               ;
-$url_wb_only= "embed=0.1&title=White+Balance+controls"
+$url_wb_only= $url_port."embed=0.1&title=White+Balance+controls"
               ."&COMPRESSOR_RUN=".ELPHEL_CONST_COMPRESSOR_RUN_CONT /// run compressor in continuous mode
               ."&DAEMON_EN=1"         /// Daemons are controlled by bits in this register. Autoexposure bit is 0 (1<<0 == 1)
               ."&THIS_FRAME=@"        /// Current frame
@@ -385,7 +386,7 @@ $url_wb_only= "embed=0.1&title=White+Balance+controls"
               ."&WB_INTEGERR=@"       /// current integrated error in the WB loop
               ;
 
-$url_colors_only= "embed=0.1&title=Color+gains+controls"
+$url_colors_only= $url_port."embed=0.1&title=Color+gains+controls"
 /// Analog gains
               ."&GAINR=0x10000"         /// R  channel gain (mono gain)  8.8 0x100 - 1.0
               ."&GAING=0x10000"         /// G  channel gain (mono gain)  8.8 0x100 - 1.0
@@ -397,7 +398,7 @@ $url_colors_only= "embed=0.1&title=Color+gains+controls"
               ."&SENSOR_REGS44=@"     /// Sensor register gain B
               ;
 
-$url_hdr_exp= "embed=0.1&title=HDR+exposure+controls"
+$url_hdr_exp= $url_port."embed=0.1&title=HDR+exposure+controls"
               ."&COMPRESSOR_RUN=".ELPHEL_CONST_COMPRESSOR_RUN_CONT /// run compressor in continuous mode
               ."&DAEMON_EN=1"         /// Daemons are controlled by bits in this register. Autoexposure bit is 0 (1<<0 == 1)
               ."&AUTOEXP_ON=1"        /// setting it to 0 will only disable autoexposure, but not HDR modes or white balancing
@@ -407,7 +408,7 @@ $url_hdr_exp= "embed=0.1&title=HDR+exposure+controls"
               ."&HDR_VEXPOS=0x40000"  /// if less than 0x10000 - number of lines of exposure, >=10000 - relative to "normal" exposure
               ."&THIS_FRAME=@"        /// Current frame
               ;
-$url_ext_trigger="embed=0.1&title=External+trigger+controls"
+$url_ext_trigger=$url_port."embed=0.1&title=External+trigger+controls"
               ."&TRIG=4*5"            ///  External trigger mode (should be set after dealys are set?)
                                       /// bit 0  - "old" external mode (0- internal, 1 - external )
                                       /// bit 1 - enable(1) or disable(0) external trigger to stop clip
@@ -430,12 +431,13 @@ $url_ext_trigger="embed=0.1&title=External+trigger+controls"
                                       /// 0x56555 - ext connector, 0x65555  - internal connector 0x66555 - both, 0x55555 - none
               ."&SENSOR_REGS30=@"     /// Sensor register MODE1 (trigger bit)
               ;
-$url_cable_delay="embed=0.3&title=Cable+delay+/+Sensor+phase+adjustment"
+$url_cable_delay=$url_port."embed=0.3&title=Cable+delay+/+Sensor+phase+adjustment"
               ."&SENSOR_PHASE"        /// Sensor phase - use | 0x80000 to reset DCM (needed if phase went too far)
               ."&DAEMON_EN=0"         /// disable autoexposure/color balance
               ."&TESTSENSOR=0x10008"  /// 0x10008 - color bars
               ;
-$url_sample="embed=0.3&title=Sample+camera+control+page"
+$url_sample=   $url_port
+			  ."embed=0.3&title=Sample+camera+control+page"
               ."&SENSOR_REGS32=@"
               ."&SENSOR_REGS32__0106"
               ."&SENSOR_REGS160=@"
@@ -443,7 +445,7 @@ $url_sample="embed=0.3&title=Sample+camera+control+page"
               ."&TESTSENSOR=0x10008"
               ."&FPGATEST"
               ;
-$url_ext_photofinish="embed=0.2&&title=Photofinish+and+ oversize+controls"
+$url_ext_photofinish=$url_port."embed=0.2&&title=Photofinish+and+ oversize+controls"
               ."&WOI_TOP"             /// WOI top - here used to adjust the acquisition line to the center of the screen 
               ."&WOI_HEIGHT"          /// Total WOI height (composite image),<16384
               ."&WOI_WIDTH"           /// Just WOI width (image height in photofinish mode)
@@ -1100,6 +1102,7 @@ function parseGetNames() {
        }
      }
    }
+   $page_title.=': port '.$GLOBALS [sensor_port];
    return  $immediateMode;
 }
 function readCurrentParameterValues() {
