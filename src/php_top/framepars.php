@@ -414,6 +414,70 @@ CAPTION;
 							$framepars_file = fopen ( $GLOBALS ['circbuf_paths'] [$sensor_port], "w+" );
 							$xml->addChild ( 'compressor_irqon_result', fseek ( $framepars_file, ELPHEL_LSEEK_INTERRUPT_ON, SEEK_END ) ); // #define LSEEK_INTERRUPT_ON 0x24 /// enable camera interrupts
 							fclose ( $framepars_file );
+						} else if ($value == "min_init") {
+							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+"); //r" );
+							$xml->addChild ( 'frame_before' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
+							$xml->addChild ('DEBUG_01_'. strval ( $sensor_port ), $GLOBALS ['framepars_paths'] [$sensor_port]);
+							$xml->addChild ( 'LSEEK_FRAMEPARS_INIT' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_FRAMEPARS_INIT, SEEK_END ) );
+							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_CFG, 1); // cy22393 does not work on 10359. Not enough 3.3V?
+							$xml->addChild ( 'elphel_set_P_value' . strval ( $sensor_port ), elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR, 0x00, 0, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ) ); // / will start detection
+// Copied from "init" 
+							$frame = elphel_get_frame($sensor_port);
+							$xml->addChild ( 'frame' . strval ( $sensor_port ),  $frame);
+							elphel_set_P_value ( $sensor_port, ELPHEL_MAXAHEAD, 2, 0, 8 ); // / When servicing interrupts, try programming up to 2 frames ahead of due time)
+// 2016/09/09: Seems that with defualt 63, even on a single-channel autoexposure+ moving WOI breaks acquisition)
+// With increased delay - seems OK
+// Resizing - still breaks, probably for different reason
+							elphel_set_P_value ( $sensor_port, ELPHEL_MEMSENSOR_DLY, 1024, $frame + 2, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+								
+							elphel_set_P_value ( $sensor_port, ELPHEL_FPGA_XTRA, 1000, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // /compressor needs extra 1000 cycles to compress a frame (estimate)
+//							elphel_set_P_value ( $sensor_port, ELPHEL_EXTERN_TIMESTAMP, 1, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / only used with async trigger
+							                                                                                                                   
+							// / good (latency should be changed, but for now that will make a correct initialization - maybe obsolete)
+							// SESNOR_PHASE for parallel sensors means quadrants (bits 1:0 - data, 3:2 - hact, 5:4 vact)
+							elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR_PHASE, 3, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+								
+							elphel_set_P_value ( $sensor_port, ELPHEL_BITS, 8, $frame + 3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_QUALITY, 80, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR, ELPHEL_CONST_COLORMODE_COLOR, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR_SATURATION_BLUE, 200, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COLOR_SATURATION_RED, 200, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_BAYER, 0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_GAING, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_GAINGB, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_GAINR, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_GAINB, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_VIGNET_C, 0x8000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_VIGNET_SHL, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
+							
+							elphel_set_P_value ( $sensor_port, ELPHEL_DCM_HOR, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
+							elphel_set_P_value ( $sensor_port, ELPHEL_DCM_VERT,1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
+							elphel_set_P_value ( $sensor_port, ELPHEL_BIN_HOR, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
+							elphel_set_P_value ( $sensor_port, ELPHEL_BIN_VERT, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
+							
+							$xml->addChild ( 'frame_after' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
+							fclose ( $framepars_file );
+							$gamma = 57;
+							$black = 10;
+							$scale_r = ( int ) (1.0 * 1024);
+							$scale_g = ( int ) (1.0 * 1024);
+							$scale_b = ( int ) (1.0 * 1024);
+							$scale_gb = ( int ) (1.0 * 1024);
+							elphel_gamma_add ( 0.01 * $gamma, $black ); // does not depend on $GLOBALS['sensor_port']
+							                                            // define P_GTAB_R 138 // combines (P_PIXEL_LOW<<24) | (P_GAMMA <<16) and 16-bit (6.10) scale for gamma tables, individually for each color.
+							                                            // 16Msbs are also "hash16" and do not need to be black level/gamma, just uniqualy identify the table for applications
+							$gamma_pars = array (
+									"GTAB_R" => ($black << 24) | ($gamma << 16) | ($scale_r & 0xffff),
+									"GTAB_G" => ($black << 24) | ($gamma << 16) | ($scale_g & 0xffff),
+									"GTAB_B" => ($black << 24) | ($gamma << 16) | ($scale_b & 0xffff),
+									"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff) 
+							);
+							$frame = elphel_get_frame ( $sensor_port ); // 0
+							elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 3, 0 );
+							$xml->addChild ( 'frame_final' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
+						
 						} else if ($value == "init") {
 							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+"); //r" );
 							// NC393 - added IRQs ON 
@@ -426,14 +490,8 @@ CAPTION;
 							$xml->addChild ('DEBUG_01_'. strval ( $sensor_port ), $GLOBALS ['framepars_paths'] [$sensor_port]);
 							$xml->addChild ( 'LSEEK_FRAMEPARS_INIT' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_FRAMEPARS_INIT, SEEK_END ) );
 							$xml->addChild ( 'elphel_set_P_value' . strval ( $sensor_port ), elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR, 0x00, 0, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ) ); // / will start detection
-							// Seems that next LSEEK_SENSORPROC is not needed as 0->ELPHEL_SENSOR will trigger it anyway
-							// Still try it to make sure new lock handles it
-//							$xml->addChild ( 'LSEEK_SENSORPROC' . strval ( $sensor_port ), fseek ( $framepars_file, ELPHEL_LSEEK_SENSORPROC, SEEK_END ) );
-                            //$frame = 0 (in NC353)
 							$frame = elphel_get_frame($sensor_port);
 							$xml->addChild ( 'frame' . strval ( $sensor_port ),  $frame);
-							//elphel_get_frame							
-							// gets half-frame
 							elphel_set_P_value ( $sensor_port, ELPHEL_MAXAHEAD, 2, 0, 8 ); // / When servicing interrupts, try programming up to 2 frames ahead of due time)
 // 2016/09/09: Seems that with defualt 63, even on a single-channel autoexposure+ moving WOI breaks acquisition)
 // With increased delay - seems OK
@@ -457,19 +515,12 @@ CAPTION;
 							elphel_set_P_value ( $sensor_port, ELPHEL_GAINB, 0x10000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_VIGNET_C, 0x8000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_VIGNET_SHL, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-							
-							
-							
 							elphel_set_P_value ( $sensor_port, ELPHEL_SENSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
 							$xml->addChild ( 'frame_after' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
 							fclose ( $framepars_file );
 							$gamma = 57;
 							$black = 10;
-//							$scale_r = ( int ) (1.0 * 1024);
-//							$scale_g = ( int ) (0.9 * 1024);
-//							$scale_b = ( int ) (1.1 * 1024);
-//							$scale_gb = ( int ) (0.9 * 1024);
 							$scale_r = ( int ) (1.0 * 1024);
 							$scale_g = ( int ) (1.0 * 1024);
 							$scale_b = ( int ) (1.0 * 1024);
@@ -486,6 +537,7 @@ CAPTION;
 							$frame = elphel_get_frame ( $sensor_port ); // 0
 							elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 3, 0 );
 							$xml->addChild ( 'frame_final' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
+
 						} else if ($value == "initgamma") {
 							$gammas_file = fopen ( "/dev/gamma_cache", "w+" );
 							$xml->addChild ( 'LSEEK_GAMMA_INIT' . strval ( $sensor_port ), fseek ( $gammas_file, ELPHEL_LSEEK_GAMMA_INIT, SEEK_END ) );
