@@ -1,4 +1,5 @@
 DOCUMENTROOT=/www/pages
+INCLUDES=$(DOCUMENTROOT)/include
 OWN = -o root -g root
 INSTDOCS = 0644
 #INSTALL = install
@@ -15,6 +16,8 @@ PHP_SCRIPTS=camvars.php \
             parsedit.php \
             phpinfo.php \
             snapfull.php
+
+PHPINCLUDES=i2c_include.php show_source_include.php
             
 
 all:
@@ -25,8 +28,10 @@ all:
 install:
 	@echo "make install in src"
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -d $(DESTDIR)$(INCLUDES)
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS) $(DESTDIR)$(DOCUMENTROOT)
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHP_SCRIPTS) $(DESTDIR)$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPINCLUDES) $(DESTDIR)$(INCLUDES)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(SYSCONFDIR)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(CONFDIR)
 	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars0.xml
