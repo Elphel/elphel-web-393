@@ -247,7 +247,7 @@ function printDefaultPage() {
               ."&EXTERN_TIMESTAMP=1"       /// Use external timestamp when available
               ."&BITS=8"                   /// 8 bit data mode 
               ."&QUALITY=80"               /// 80 percent JPEG image quality
-              ."&COLOR=1"                  /// regular color mode (not mono or JP4 flavors)
+              ."&COLOR=0"                  /// regular color mode (not mono or JP4 flavors)
               ."&COLOR_SATURATION_BLUE=200"/// 2.0 (200% blue/green color saturation (to compensate for effect of non-unity gamma)
               ."&COLOR_SATURATION_RED=200" /// 2.0 (200% blue/green color saturation
               ."&BAYER=0"                  /// No bayer shift
@@ -414,8 +414,9 @@ $url_ext_trigger=$url_port."embed=0.1&title=External+trigger+controls"
                                       /// bit 1 - enable(1) or disable(0) external trigger to stop clip
                                       /// bit 2 - async (snapshot, ext trigger) mode, 0 - continuous NOTE: Only this bit is used now !
                                       /// bit 3 - no overlap,  single frames: program - acquire/compress same frame
+                                      /// bit 4 - Global reset release mode
 
-              ."&TRIG_PERIOD=20000000"/// 0.2 sec @96MHz output sync period (32 bits, in pixel clocks)
+              ."&TRIG_PERIOD=25000000"/// 0.25 sec @100MHz output sync period (32 bits, in pixel clocks)
                                       /// >=256 repetitive with specified period.
                                       /// NOTE: Currently there is no verification that period is longer than sensor/compressor can handle
               ."&TRIG_DELAY"          /// trigger delay, 32 bits in pixel clocks (needed when multiple cameras are synchronized)

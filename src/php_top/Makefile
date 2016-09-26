@@ -9,7 +9,8 @@ CONFS=      autocampars.xml
 SYSCONFDIR   = /etc
 CONFDIR      = $(SYSCONFDIR)/elphel393
 
-PHP_SCRIPTS=camvars.php \
+PHP_SCRIPTS=i2c.php \
+            camvars.php \
             ccam.php \
             diag_utils.php \
             framepars.php \
