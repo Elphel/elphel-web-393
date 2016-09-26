@@ -456,14 +456,14 @@ CAPTION;
 							elphel_set_P_value ( $sensor_port, ELPHEL_DCM_VERT,1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_BIN_HOR, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_BIN_VERT, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
-							
-//							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
-//							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 8, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
-							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 9, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
-//							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 13, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
+
+							elphel_set_P_value ( $sensor_port, ELPHEL_AUTOEXP_EXP_MAX,200000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+								
+							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
+//							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 9, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
 											
 // Turn external trigger at 4fps
-/*
+
 							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_PERIOD, 25000000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); //0.25 s
 							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_BITLENGTH,    31, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); //0.32 usec
 							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_DELAY,         0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // no delay
@@ -473,7 +473,11 @@ CAPTION;
 							/// change to "internal" (0x8000) when wired
 							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_CONDITION,     0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0x0 - from FPGA, 0x80000 - ext, 0x8000 - int, 0x88000 - any, 0x95555 - add ext, 0x59999 - add int
 //							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame + 6, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
- */
+							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame +10, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
+							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_MODE,         1, $frame +11, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
+							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_SEQUENCE,  0x39, $frame +11, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
+							
+//											
 							$xml->addChild ( 'frame_after' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
 							
 							fclose ( $framepars_file );
