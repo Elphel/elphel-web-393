@@ -103,6 +103,7 @@ function i2c_write256b_sensor($data,         ///< Sring to write
 											 ///< @return number of bytes written
 {
 	$len = 0;
+	if (strlen($data)<256) $data.=chr(0);
 	for ($ra=0;$ra<strlen($data);$ra++){
 		$b = ord(substr($data,$ra,1));
 		if (($d = i2c_send_sensor($name,$sensor_port,$ra,$b,$sa7_offset))<0) break;
