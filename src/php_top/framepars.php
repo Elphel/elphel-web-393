@@ -457,7 +457,7 @@ CAPTION;
 							elphel_set_P_value ( $sensor_port, ELPHEL_BIN_HOR, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 							elphel_set_P_value ( $sensor_port, ELPHEL_BIN_VERT, 1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 
-							elphel_set_P_value ( $sensor_port, ELPHEL_AUTOEXP_EXP_MAX,200000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_AUTOEXP_EXP_MAX,40000, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 								
 							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 5, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
 //							elphel_set_P_value ( $sensor_port, ELPHEL_COMPRESSOR_RUN, 2, $frame + 9, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / run compressor
@@ -471,7 +471,7 @@ CAPTION;
 							elphel_set_P_value ( $sensor_port, ELPHEL_XMIT_TIMESTAMP,     1, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // transmit timestamps, not just pulse
 							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_OUT,     0x65555, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0x56555 - ext connector, 0x65555  - internal connector 0x66555 - both, 0x55555 - none
 							/// change to "internal" (0x8000) when wired
-							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_CONDITION,     0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0x0 - from FPGA, 0x80000 - ext, 0x8000 - int, 0x88000 - any, 0x95555 - add ext, 0x59999 - add int
+							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_CONDITION,     0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0x0 - from FPGA, 0x80000 - ext, 0x8000 - int, 0x88000 - any, 0x95555 - add ext, 0x59555 - add int
 //							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame + 6, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
 							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame +10, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
 							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_MODE,         1, $frame +11, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
