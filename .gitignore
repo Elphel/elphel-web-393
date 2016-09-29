@@ -10,5 +10,4 @@ generated*
 sysroots
 bitbake-logs
 temp
-
-/image/
+image
