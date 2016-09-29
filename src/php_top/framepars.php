@@ -473,12 +473,17 @@ CAPTION;
 							/// change to "internal" (0x8000) when wired
 							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_CONDITION,     0, $frame + 4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0x0 - from FPGA, 0x80000 - ext, 0x8000 - int, 0x88000 - any, 0x95555 - add ext, 0x59555 - add int
 //							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame + 6, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
-							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame +10, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
-							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_MODE,         1, $frame +11, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
-							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_SEQUENCE,  0x39, $frame +11, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
-							
+///							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame +10, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
+//							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_MODE,         1, $frame +4,  ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_SEQUENCE,  0x39, $frame +4,  ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG_CONDITION,0x8000, $frame +4,  ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
 //											
-							$xml->addChild ( 'frame_after' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
+//							$xml->addChild ( 'frame_after_set1' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
+//							$frame = elphel_get_frame($sensor_port);
+//							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame +4, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
+//							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_MODE,         1, $frame +5,  ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+//							$xml->addChild ( 'frame_after_trig' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
+								
 							
 							fclose ( $framepars_file );
 							$gamma = 57;
@@ -497,9 +502,18 @@ CAPTION;
 									"GTAB_GB" => ($black << 24) | ($gamma << 16) | ($scale_gb & 0xffff) 
 							);
 							$frame = elphel_get_frame ( $sensor_port ); // 0
-							elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 3, 0 );
+							elphel_set_P_arr ( $sensor_port, $gamma_pars, $frame + 5, 0 );
 							$xml->addChild ( 'frame_final' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
-						
+						} else if ($value == "eyesis_trig") {
+							$pgmpars = array("TRIG"=>4,"MULTI_MODE"=>1);
+							$frame =   elphel_get_frame($sensor_port);
+							elphel_set_P_arr ($sensor_port, $pgmpars, $frame+3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC);
+											
+//							elphel_set_P_value ( $sensor_port, ELPHEL_TRIG,             0x4, $frame +3, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // 0 - free running, 4 - extrnal ERS, 5 - external GRR
+//							elphel_set_P_value ( $sensor_port, ELPHEL_MULTI_MODE,         1, $frame +3,  ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC );
+							$xml->addChild ( 'frame_before_trig' . strval ( $sensor_port ),  $frame);
+							$xml->addChild ( 'frame_after_trig' . strval ( $sensor_port ),  elphel_get_frame($sensor_port));
+											
 						} else if ($value == "init") {
 							$framepars_file = fopen ( $GLOBALS ['framepars_paths'] [$sensor_port], "w+"); //r" );
 							// NC393 - added IRQs ON 
