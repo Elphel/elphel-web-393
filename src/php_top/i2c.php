@@ -134,9 +134,11 @@ if (count ( $_GET ) == 0) {
 					case "toEEPROM2" :
 					case "fromEEPROM3" :
 					case "toEEPROM3" :
+					case "fromEEPROM4" :
+					case "toEEPROM4" :
 					case "ctl" :
-						$cmd = $value;
-						break;
+					$cmd = $value;
+					break;
 				}
 				break;
 			case "EEPROM_chn" :
@@ -224,8 +226,24 @@ switch ($cmd) {
 	case "fromEEPROM1" :
 	case "fromEEPROM2" :
 	case "fromEEPROM3" :
+	case "fromEEPROM4" :
 		$EEPROM_bus0 = intval ( substr ( $cmd, 10 ) ); // and fall below
 	case "fromEEPROM" :
+		if ($EEPROM_bus0 == 4) { // using FPGA PIO bus (bus=1 in NC353) for IMU, GPS and such
+			$rslt=i2c_read256b(0xa0+($EEPROM_chn * 2), $EEPROM_bus0);
+			$zero=strpos($rslt,chr(0));
+			if ($zero!==false) $rslt=substr($rslt,0, $zero);
+			if (substr($rslt,0,5)=="<?xml") {
+				$xml=simplexml_load_string($rslt);
+				$xml_string=$xml->asXML();
+				header("Content-Type: text/xml");
+				header("Content-Length: ".strlen($xml_string)."\n");
+				header("Pragma: no-cache\n");
+				printf($xml_string);
+				exit (0);
+			}
+			break;
+		}
 		if (($EEPROM_bus0 < 0) || ($EEPROM_bus0 > 3)) {
 			// Not supported in NC393 - TODO: implement with bus=5 for 10389 board serial number
 			break;
@@ -271,8 +289,42 @@ switch ($cmd) {
 	case "toEEPROM1" :
 	case "toEEPROM2" :
 	case "toEEPROM3" :
+	case "toEEPROM4" :
 		$EEPROM_bus0 = intval ( substr ( $cmd, 8 ) ); // and fall below
 	case "toEEPROM" :
+		if ($EEPROM_bus0 == 4) { // using FPGA PIO bus (bus=1 in NC353) for IMU, GPS and such
+			if ($wprot>=0) {
+				i2c_setprot ($EEPROM_bus0, 0xa0+($EEPROM_chn*2),1,(1-$wprot));
+			}
+			if ($data=="") {
+				if ($model  === "") {$rslt="model  not specified"; break;}
+				if ($rev    === "") {$rslt="rev    not specified"; break;}
+				if ($serial === "") {$rslt="serial not specified"; break;}
+				if ($time   === "") {$rslt="time   not specified"; break;}
+				$xml = new SimpleXMLElement("<?xml version='1.0' standalone='yes'?><board/>");
+				if ($brand!='') $xml->addChild ('brand',$brand);
+				if ($model!='') $xml->addChild ('model',$model);
+				if ($rev!='') $xml->addChild ('rev',  $rev);
+				if ($serial!='') $xml->addChild ('serial',$serial);
+				if ($time!='') $xml->addChild ('time',$time);
+				if ($application!="") $xml->addChild ('app',$application);
+				if ($application_mode!="") $xml->addChild ('mode',$application_mode);
+				if ($sensor!='') $xml->addChild ('sensor',$sensor);
+				if ($length!='') $xml->addChild ('len',$length);
+				if ($port!='') $xml->addChild ('port',$port);
+				if ($part!='') $xml->addChild ('part',$part);
+				if ($baud!='') $xml->addChild ('baud',$baud);
+				if ($sync!='') $xml->addChild ('sync',$sync);
+				$data=$xml->asXML();
+			}
+			if (strlen($data)>256) {
+				$rslt="data too long - ".strlen($data)." bytes, only 256 are permitted";
+				break;
+			}
+			$rslt="written ".i2c_write256b($data,0xa0+($EEPROM_chn*2), $EEPROM_bus0);
+			i2c_setprot ($EEPROM_bus0,0xa0+($EEPROM_chn*2),1,0);
+			break;
+		}
 		if (($EEPROM_bus0 < 0) || ($EEPROM_bus0 > 3)) {
 			// Not supported in NC393 - TODO: implement with bus=5 for 10389 board serial number
 			break;
