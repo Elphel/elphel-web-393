@@ -61,7 +61,7 @@ function out1x1gif() {
  }
 /*
 $debugGetPars= var_export($_GET, true);
-$debugFile=fopen('/var/html/ccam.php.log','a+');
+$debugFile=fopen('/var/volatile/html/ccam.php.log','a+');
 fwrite($debugFile,"\n================================\n".$debugGetPars);
 fclose($debugFile);
 */
