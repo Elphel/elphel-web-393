@@ -124,6 +124,16 @@ el10359: 0x8 1 2 500 kHz
 mt9p006: 0x48 1 2 500 kHz
 mt9f002: 0x10 2 2 500 kHz
  */
+/** Convert nc353 addres/width to sa7 and register address */
+function aw_to_sa7r($adr,   ///< composite address, nc353 style (256 bytes for each byte-wide device, 512 bytes for each 16-bit one)
+		$width  ///< Data with 16 or 8
+		)                   ///< @return: array(sa7,ra)
+{
+	$sa7 = ($adr >> (($width == 16) ? 9 : 8)) & 0x7f;
+	$ra =  ($adr >> (($width == 16) ? 1 : 0)) & 0xff;
+	return array(sa7,ra);
+
+}
 
 function getSlowArray($usec=0){
   if ($usec<0) $usec=0;
@@ -191,7 +201,19 @@ function i2c_send($width, $bus, $a, $d, $raw = 0) { // $a<0 - use raw read/write
 		return i2c_send_sensor ( $width, $bus, $a, $d, $raw );
 	else
 		$bus = i2c_bus353 ( $bus );
-	$bus353 = i2c_bus353 ( $bus );
+	if ($bus == 2) { // System i2c in nc393 (was 5)
+		$return = -1;
+		$w = ($width == 16) ?'w' : 'b';
+		$sa7r = aw_to_sa7r($a,$width); // works for raw also, $width is 8 for raw
+		if ($raw){
+			exec ( 'i2cset -y 0 '.$sa7r[0].' '.$d,                     $i2c_data, $return );
+		} else {
+			exec ( 'i2cget -y 0 '.$sa7r[0].' '.$sa7r[1].' '.$d.' '.$w, $i2c_data, $return );
+		}
+		if ($return != 0) return -1;
+		return ($width == 16)?2:1;
+	}
+	
 	$w = ($width == 16) ? 2 : 1;
 	$i2c_fn = '/dev/xi2c' . ($raw ? 'raw' : (($w == 2) ? '16' : '8')) . (($bus == 0) ? '' : '_aux');
 	$i2c = fopen ( $i2c_fn, 'w' );
@@ -204,6 +226,7 @@ function i2c_send($width, $bus, $a, $d, $raw = 0) { // $a<0 - use raw read/write
 	return $res;
 } // end of i2c_send()
 
+// Seems no difference from i2c_send for nc393
 function i2c_send_slow($width, $bus, $a, $d, $raw = 0, $extrausec = -1) { // $a<0 - use raw read/write
 	if ($bus < 4)
 		return i2c_send_sensor ( $width, $bus, $a, $d, $raw );
@@ -213,6 +236,19 @@ function i2c_send_slow($width, $bus, $a, $d, $raw = 0, $extrausec = -1) { // $a<
 		$i2c_old_ctrl = i2c_ctl_arr ( 0 );
 		i2c_ctl_arr ( 0, getSlowArray ( $extrausec ) );
 	}
+	if ($bus == 2) { // System i2c in nc393 (was 5)
+		$return = -1;
+		$w = ($width == 16) ?'w' : 'b';
+		$sa7r = aw_to_sa7r($a,$width); // works for raw also, $width is 8 for raw
+		if ($raw){
+			exec ( 'i2cset -y 0 '.$sa7r[0].' '.$d,                     $i2c_data, $return );
+		} else {
+			exec ( 'i2cget -y 0 '.$sa7r[0].' '.$sa7r[1].' '.$d.' '.$w, $i2c_data, $return );
+		}
+		if ($return != 0) return -1;
+		return ($width == 16)?2:1;
+	}
+
 	$w = ($width == 16) ? 2 : 1;
 	$i2c_fn = '/dev/xi2c' . ($raw ? 'raw' : (($w == 2) ? '16' : '8')) . (($bus == 0) ? '' : '_aux');
 	$i2c = fopen ( $i2c_fn, 'w' );
@@ -241,11 +277,23 @@ function smbus_send($a, $d) { // d - array
 	return $res;
 } // end of i2c_send()
 
+
 function i2c_receive($width, $bus, $a, $raw = 0) {
 	if ($bus < 4)
 		return i2c_receive_sensor ( $width, $bus, $a, $raw );
 	else
 		$bus = i2c_bus353 ( $bus );
+	if ($bus == 2) { // System i2c in nc393 (was 5)
+		$w = ($width == 16) ?'w' : 'b';
+		$sa7r = aw_to_sa7r($a,$width); // works for raw also, $width is 8 for raw
+		if ($raw){
+			exec ( 'i2cget -y 0 '.$sa7r[0],                     $i2c_data, $return );
+		} else {
+			exec ( 'i2cget -y 0 '.$sa7r[0].' '.$sa7r[1].' '.$w, $i2c_data, $return );
+		}
+		if ($return != 0) return -1;			
+		return $i2c_data[0];
+	}
 	$w = ($width == 16) ? 2 : 1;
 	$i2c_fn = '/dev/xi2c' . ($raw ? 'raw' : (($w == 2) ? '16' : '8')) . (($bus == 0) ? '' : '_aux');
 	$i2c = fopen ( $i2c_fn, 'r' );
@@ -257,6 +305,8 @@ function i2c_receive($width, $bus, $a, $raw = 0) {
 	$v = unpack ( ($w == 1) ? 'C' : 'n1', $data );
 	return $v [1];
 } // end of i2c_receive()
+
+// i2c_receive_slow is the same as i2c_receive for nc393
 function i2c_receive_slow($width, $bus, $a, $raw = 0, $extrausec = -1) {
 	if ($bus < 4)
 		return i2c_receive_sensor ( $width, $bus, $a, $raw );
@@ -265,6 +315,17 @@ function i2c_receive_slow($width, $bus, $a, $raw = 0, $extrausec = -1) {
 	if (($bus == 0) && ($extrausec >= 0)) {
 		$i2c_old_ctrl = i2c_ctl_arr ( 0 );
 		i2c_ctl_arr ( 0, getSlowArray ( $extrausec ) );
+	}
+	if ($bus == 2) { // System i2c in nc393 (was 5)
+		$w = ($width == 16) ?'w' : 'b';
+		$sa7r = aw_to_sa7r($a,$width); // works for raw also, $width is 8 for raw
+		if ($raw){
+			exec ( 'i2cget -y 0 '.$sa7r[0],                     $i2c_data, $return );
+		} else {
+			exec ( 'i2cget -y 0 '.$sa7r[0].' '.$sa7r[1].' '.$w, $i2c_data, $return );
+		}
+		if ($return != 0) return -1;
+		return $i2c_data[0];
 	}
 	$w = ($width == 16) ? 2 : 1;
 	$i2c_fn = '/dev/xi2c' . ($raw ? 'raw' : (($w == 2) ? '16' : '8')) . (($bus == 0) ? '' : '_aux');
@@ -282,8 +343,10 @@ function i2c_receive_slow($width, $bus, $a, $raw = 0, $extrausec = -1) {
 } // end of i2c_receive()
 
 function i2c_setprot($bus, $slave, $bit, $value) { // !slave is MSB aligned, LSB==0)
+	if ($bus != 4)
+		return -1; // applicable only to grand-daughter i2c (like imu, gps) 
 	$bus = i2c_bus353 ( $bus );
-	$i2cprot = fopen ( "/dev/xi2cenable", 'r+' );
+	$i2cprot = fopen ("/dev/xi2cenable", 'r+' );
 	
 	fseek ( $i2cprot, ($bus * 128) + ($slave >> 1) );
 	$data = ord ( fread ( $i2cprot, 1 ) );
@@ -344,58 +407,87 @@ function i2c_setCMOSClock(){
    return "OK";
 } // end of i2c_setCMOSClock()
 
-function i2c_read256b($slave=0xa0,$bus=1,$extrausec=0) { //will read 256 bytes from slave (address is 8-bit, includes r/~w)
+function i2c_read256b($slave = 0xa0, $bus = 4, $extrausec = 0) { // will read 256 bytes from slave (address is 8-bit, includes r/~w)
 	if ($bus < 4)
-		return i2c_read256b_sensor ( $slave, $bus, $extrausec); // ($name, $sensor_port, $sa7_offset)
+		return i2c_read256b_sensor ( $slave, $bus, $extrausec ); // ($name, $sensor_port, $sa7_offset)
 	else
 		$bus = i2c_bus353 ( $bus );
-	if (($bus==0) && ($extrausec>=0)){
-     $i2c_old_ctrl= i2c_ctl_arr(0); 
-     i2c_ctl_arr(0,getSlowArray($extrausec));
-   }
-   $i2c_fn='/dev/xi2c8'.(($bus==0)?'':'_aux');
-   $i2c  = fopen($i2c_fn, 'r');
-   fseek ($i2c, $slave*128) ; //256 per slave, but slave are only even
-   $data = fread($i2c, 256);  // full 256 bytes
-   fclose($i2c);
-   if (($bus==0) && ($extrausec>=0)){
-     i2c_ctl_arr(0,$i2c_old_ctrl); /// restore old speed (not thread-safe)
-   }
-   return $data;
+	if (($bus == 0) && ($extrausec >= 0)) {
+		$i2c_old_ctrl = i2c_ctl_arr ( 0 );
+		i2c_ctl_arr ( 0, getSlowArray ( $extrausec ) );
+	}
+	if ($bus == 2) { // System i2c in nc393 (was 5)
+		$sa7 = $slave >> 1;
+		for($i = 0; $i < 256; $i ++)
+			exec ( 'i2cget -y 0 ' . $sa7 . ' ' . $i . ' b', $i2c_data, $return );
+		if ($return != 0)
+			return - 1;
+		$data == "";
+		foreach ($i2c_data as $c) $data.=chr($c);
+		return $data;
+	}
+	
+	$i2c_fn = '/dev/xi2c8' . (($bus == 0) ? '' : '_aux');
+	$i2c = fopen ( $i2c_fn, 'r' );
+	fseek ( $i2c, $slave * 128 ); // 256 per slave, but slave are only even
+	$data = fread ( $i2c, 256 ); // full 256 bytes
+	fclose ( $i2c );
+	if (($bus == 0) && ($extrausec >= 0)) {
+		i2c_ctl_arr ( 0, $i2c_old_ctrl ); // / restore old speed (not thread-safe)
+	}
+	return $data;
 } // end of i2c_read256b ()
 //this EEPROM writes only 4 bytes sequentionally (only 2 LSBs are incremented)
-function i2c_write256b($data, $slave=0xa0,$bus=1,$extrausec=0) { //will write up to 256 bytes $data to slave (address is 8-bit, includes r/~w). EEPROM should be un-protected
+
+function i2c_write256b($data, $slave = 0xa0, $bus = 4, $extrausec = 0) { // will write up to 256 bytes $data to slave (address is 8-bit, includes r/~w). EEPROM should be un-protected
 	if ($bus < 4)
-		return i2c_write256b_sensor ($data, $slave, $bus, $extrausec); // ($data, $name, $sensor_port, $sa7_offset)
+		return i2c_write256b_sensor ( $data, $slave, $bus, $extrausec ); // ($data, $name, $sensor_port, $sa7_offset)
 	else
 		$bus = i2c_bus353 ( $bus );
-	if (($bus==0) && ($extrausec>=0)){
-     $i2c_old_ctrl= i2c_ctl_arr(0); 
-     i2c_ctl_arr(0,getSlowArray($extrausec));
-   }
-   $maxretries=200; //measured - 19
-   if (!is_string($data)) return -1;
-   if (strlen($data)>256) return -2;
-   if (strlen($data)<256) $data.=chr(0);
-   $i2c_fn='/dev/xi2c8'.(($bus==0)?'':'_aux');
-   $i2c  = fopen($i2c_fn, 'w');
-   $len=0;
-   for ($i=0;$i<strlen($data); $i+=4) {
-     for ($retry=0; $retry< $maxretries; $retry++) {
-       fseek ($i2c, $slave*128+$i) ; //256 per slave, but slave are only even
-       $rslt=fwrite($i2c, substr($data,$i,4));
-       if ($rslt>0) break;
-     }
-     if ($rslt<=0) {
-      $len=$rslt;
-      break;
-     }
-     $len+=$rslt;
-   }
-   fclose($i2c);
-   if (($bus==0) && ($extrausec>=0)){
-     i2c_ctl_arr(0,$i2c_old_ctrl); /// restore old speed (not thread-safe)
-   }
-   return $len;
+	if (($bus == 0) && ($extrausec >= 0)) {
+		$i2c_old_ctrl = i2c_ctl_arr ( 0 );
+		i2c_ctl_arr ( 0, getSlowArray ( $extrausec ) );
+	}
+	$maxretries = 200; // measured - 19
+	$len = 0;
+	if (! is_string ( $data ))
+		return - 1;
+	if (strlen ( $data ) > 256)
+		return - 2;
+	if (strlen ( $data ) < 256)
+		$data .= chr ( 0 );
+
+	if ($bus == 2) { // System i2c in nc393 (was 5)
+		$sa7 = $slave >> 1;
+		foreach (str_split($data) as $d) {
+			exec ( 'i2cset -y 0 ' . $sa7 . ' ' .$len . ' ' . ord($d) . ' b', $i2c_data, $return );
+			if ($return != 0)
+				return - 1;
+			usleep ( 10000 );
+			$len ++;
+		}
+		return $len;
+	}
+//foreach (str_split($data) as $d) echo ord($d);		
+	$i2c_fn = '/dev/xi2c8' . (($bus == 0) ? '' : '_aux');
+	$i2c = fopen ( $i2c_fn, 'w' );
+	for($i = 0; $i < strlen ( $data ); $i += 4) {
+		for($retry = 0; $retry < $maxretries; $retry ++) {
+			fseek ( $i2c, $slave * 128 + $i ); // 256 per slave, but slave are only even
+			$rslt = fwrite ( $i2c, substr ( $data, $i, 4 ) );
+			if ($rslt > 0)
+				break;
+		}
+		if ($rslt <= 0) {
+			$len = $rslt;
+			break;
+		}
+		$len += $rslt;
+	}
+	fclose ( $i2c );
+	if (($bus == 0) && ($extrausec >= 0)) {
+		i2c_ctl_arr ( 0, $i2c_old_ctrl ); // / restore old speed (not thread-safe)
+	}
+	return $len;
 } // end of i2c_write256b ()
 ?>

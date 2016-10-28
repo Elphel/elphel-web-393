@@ -136,6 +136,8 @@ if (count ( $_GET ) == 0) {
 					case "toEEPROM3" :
 					case "fromEEPROM4" :
 					case "toEEPROM4" :
+					case "fromEEPROM5" :
+					case "toEEPROM5" :
 					case "ctl" :
 					$cmd = $value;
 					break;
@@ -227,9 +229,10 @@ switch ($cmd) {
 	case "fromEEPROM2" :
 	case "fromEEPROM3" :
 	case "fromEEPROM4" :
+	case "fromEEPROM5" :
 		$EEPROM_bus0 = intval ( substr ( $cmd, 10 ) ); // and fall below
 	case "fromEEPROM" :
-		if ($EEPROM_bus0 == 4) { // using FPGA PIO bus (bus=1 in NC353) for IMU, GPS and such
+		if (($EEPROM_bus0 == 4) || ($EEPROM_bus0 == 5)) { // using FPGA PIO bus (bus=1 in NC353) for IMU, GPS and such, bus = 5 - 10389 eeprom
 			$rslt=i2c_read256b(0xa0+($EEPROM_chn * 2), $EEPROM_bus0);
 			$zero=strpos($rslt,chr(0));
 			if ($zero!==false) $rslt=substr($rslt,0, $zero);
@@ -290,9 +293,11 @@ switch ($cmd) {
 	case "toEEPROM2" :
 	case "toEEPROM3" :
 	case "toEEPROM4" :
+	case "toEEPROM5" :
 		$EEPROM_bus0 = intval ( substr ( $cmd, 8 ) ); // and fall below
 	case "toEEPROM" :
-		if ($EEPROM_bus0 == 4) { // using FPGA PIO bus (bus=1 in NC353) for IMU, GPS and such
+//		echo "<!--  EEPROM_bus0=". $EEPROM_bus0." EEPROM_chn=".$EEPROM_chn."-->";
+		if (($EEPROM_bus0 == 4) || ($EEPROM_bus0 == 5)) { // using FPGA PIO bus (bus=1 in NC353) for IMU, GPS and such
 			if ($wprot>=0) {
 				i2c_setprot ($EEPROM_bus0, 0xa0+($EEPROM_chn*2),1,(1-$wprot));
 			}
@@ -406,6 +411,10 @@ switch ($cmd) {
 		exit ( 0 );
 }
 if ($rslt == "") {
+//	$msg .= "<width1>" . $width . "</width1>\n";
+//	$msg .= "<bus1>" . $bus . "</bus1>\n";
+//	$msg .= "<slave1>" . (sprintf ( "0x%x", ($adr >> (($width == 8) ? 7 : 8)) & 0xfe )) . "</slave1>\n";
+	
 	if ($bus > 3) {
 		if (($adr >= 0) && (($width == 8) || ($width == 16))) {
 			$slave = ($adr >> (($width == 16) ? 8 : 7)) & 0xfe;
