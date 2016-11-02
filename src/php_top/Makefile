@@ -16,7 +16,8 @@ PHP_SCRIPTS=i2c.php \
             framepars.php \
             parsedit.php \
             phpinfo.php \
-            snapfull.php
+            snapfull.php \
+            tuneseq.php
 
 PHPINCLUDES=i2c_include.php show_source_include.php
             

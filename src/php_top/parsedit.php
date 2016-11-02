@@ -1264,6 +1264,7 @@ function  endPage(){
 
 /// Called twice from printPage($encoded_todo)
 function showControlButtonsRow($table_width,$readonly,$testMode,$showSeqMode,$encoded_todo,$imagesNumber,$imagesPerRow,$imgScale,$checkNotUncheck) {
+   $url_port = "sensor_port=".$GLOBALS [sensor_port]."&";
    printf ("<tr style=''><td colspan=%d>",$table_width-($readonly?0:1));
    if (!$readonly) {
      if ($testMode>=0) {
@@ -1287,7 +1288,7 @@ function showControlButtonsRow($table_width,$readonly,$testMode,$showSeqMode,$en
    printf ("<input type='button' value='Refresh'onclick='refreshPage(1);' title='Reload the page, keep camera parameters (does not preserve delays yet)'/>\n");
    printf ("<input type='button' value='Restart'onclick= 'refreshPage(0);' title='Reload the page, keep URL parameters'/>\n");
    if ($encoded_todo) { // show link to last images
-    printf ("<a href='?images=%d:%d:%f&done=%s' target='new'>Last acquired images</a>\n",$imagesNumber,$imagesPerRow,$imgScale,$encoded_todo);
+    printf ("<a href='?".$url_port."images=%d:%d:%f&done=%s' target='new'>Last acquired images</a>\n",$imagesNumber,$imagesPerRow,$imgScale,$encoded_todo);
    }
    if (!$readonly) {
      if ($checkNotUncheck)
