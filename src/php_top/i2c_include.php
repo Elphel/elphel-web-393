@@ -418,15 +418,24 @@ function i2c_read256b($slave = 0xa0, $bus = 4, $extrausec = 0) { // will read 25
 	}
 	if ($bus == 2) { // System i2c in nc393 (was 5)
 		$sa7 = $slave >> 1;
-		for($i = 0; $i < 256; $i ++)
+		/* // very slow
+		for($i = 0; $i < 256; $i ++) {
 			exec ( 'i2cget -y 0 ' . $sa7 . ' ' . $i . ' b', $i2c_data, $return );
-		if ($return != 0)
-			return - 1;
+			if ($return != 0)
+				return - 1;
+			}
 		$data == "";
 		foreach ($i2c_data as $c) $data.=chr($c);
+		*/
+		exec('i2cdump -y 0 ' . $sa7 . ' b', $i2c_data, $return );
+		if ($return != 0) return - 1;
+		// Extract data from dump table
+		$line="";
+		for ($j=0; $j<16; $j++) $line .= substr($i2c_data[$j+1],4,48);
+		$data == "";
+		foreach (explode(' ',$line) as $e) $data.=chr(intval($e,16));
 		return $data;
 	}
-	
 	$i2c_fn = '/dev/xi2c8' . (($bus == 0) ? '' : '_aux');
 	$i2c = fopen ( $i2c_fn, 'r' );
 	fseek ( $i2c, $slave * 128 ); // 256 per slave, but slave are only even

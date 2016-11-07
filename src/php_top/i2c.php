@@ -234,6 +234,9 @@ switch ($cmd) {
 	case "fromEEPROM" :
 		if (($EEPROM_bus0 == 4) || ($EEPROM_bus0 == 5)) { // using FPGA PIO bus (bus=1 in NC353) for IMU, GPS and such, bus = 5 - 10389 eeprom
 			$rslt=i2c_read256b(0xa0+($EEPROM_chn * 2), $EEPROM_bus0);
+			if (!is_string($rslt)){
+				break; // will report error 
+			}
 			$zero=strpos($rslt,chr(0));
 			if ($zero!==false) $rslt=substr($rslt,0, $zero);
 			if (substr($rslt,0,5)=="<?xml") {

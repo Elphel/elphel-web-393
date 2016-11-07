@@ -1468,15 +1468,18 @@ function getDescription ($compositeName,$descriptions){
 
 */
 function getParDescriptions($autocampars) {
+  /*	
   $file=file($autocampars);
   $path="";
-  foreach ($file as $line) if (strpos($line,'$configPath')!==false ){
+  foreach ($file as $line) if ((strpos($line,'$configPath')!==false ) || ((strpos($line,"'configPath'")!==false)){
     $name= strtok ($line,'"');
     if (strpos ($name,'//')===false) {
       $path=strtok ('"');
       break;
     }
   }
+  */
+  $path='/etc/elphel393/autocampars0.xml';
   $path = str_replace("0.",strval($GLOBALS [sensor_port]).".",$path); // NC393: here it does not really matter
   $xml = simplexml_load_file($path);
   $descriptions=array();
