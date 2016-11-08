@@ -5,7 +5,7 @@ INSTDOCS = 0644
 #INSTALL = install
 DOCS=       favicon.ico \
             robots.txt
-CONFS=      autocampars.xml            
+#CONFS=      autocampars.xml            
 SYSCONFDIR   = /etc
 CONFDIR      = $(SYSCONFDIR)/elphel393
 
@@ -36,9 +36,9 @@ install:
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPINCLUDES) $(DESTDIR)$(INCLUDES)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(SYSCONFDIR)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(CONFDIR)
-	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars0.xml
-	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars1.xml
-	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars2.xml
-	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars3.xml
+#	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars0.xml
+#	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars1.xml
+#	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars2.xml
+#	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars3.xml
 clean:
 	@echo "make clean in src"
