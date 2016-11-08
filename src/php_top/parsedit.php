@@ -129,6 +129,7 @@
     $minahead=4; /// skip to frame $minahead from the soonest next task before programming
     $brief=true;
     $ahead_separator='*';
+    $port_mask_separator='!';
     $refreshSig="refresh";
     $testMode=-1; /// don't even show
     $showSeqMode=-1;/// don't even show
@@ -730,29 +731,35 @@ function  showSequence($todo,$frame_zero) {
              "<td colspan=2>Frame</td>".
              "<td rowspan=2>Parameter name</td>".
              "<td colspan=2>Value</td>".
-             "</tr>\n");
+   		     "<td rowspan=2>Broad-<br/>cast</td>".
+   		 "</tr>\n");
    printf   ("<tr style='text-align:center'>".
              "<td>dec</td>".
              "<td>hex</td>".
              "<td>dec</td>".
              "<td>hex</td>".
              "</tr>\n");
-   foreach ($todo as $frame=>$actions) {
-     $first_act=true;
-     printf ("<tr style='text-align:right'>\n");
-     foreach ($actions as $name=>$value) {
-       if ($first_act) {
-         printf ("<td rowspan=%d>%d</td><td rowspan=%d>0x%x</td>",count($actions),($frame+$frame_zero),count($actions),($frame+$frame_zero));
-       }
-       printf ("<td style='text-align:left'>%s</td>".
-               "<td>%d</td>".
-               "<td>0x%x</td>".
-               "</tr>\n",$name,$value,$value);
-       $first_act=false;
-     } 
-   }
-
-   printf ("</table>\n"); 
+	foreach ( $todo as $frame => $actions ) {
+		$first_act = true;
+//		printf ( "<tr style='text-align:right'>\n" );
+		foreach ( $actions as $name => $value ) {
+			if ($name[0] != '*') {
+				printf ( "<tr style='text-align:right'>\n" );
+				if ($first_act) {
+					printf ( "<td rowspan=%d>%d</td><td rowspan=%d>0x%x</td>", count ( $actions ), ($frame + $frame_zero), count ( $actions ), ($frame + $frame_zero) );
+				}
+				if (array_key_exists('*'.$name, $actions)){
+					printf ( "<td style='text-align:left'>%s</td>" . "<td>%d</td>" . "<td>0x%x</td>" . "<td>0x%x</td>" . "</tr>\n",
+							$name, $value, $value, $actions['*'.$name]);
+				} else {
+					printf ( "<td style='text-align:left'>%s</td>" . "<td>%d</td>" . "<td>0x%x</td>" . "<td>&nbsp;</td>" . "</tr>\n", $name, $value, $value );
+				}
+				$first_act = false;
+			}
+		}
+	}
+	
+	printf ( "</table>\n" );
 }
 
 function  applyPost_debug($todo,$noFinalWait=false) {
@@ -800,7 +807,16 @@ function  applyPost_debug($todo,$noFinalWait=false) {
 				}
 			}
      }
-     elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
+     $broadcast_sorted=split_broadcast($pgmpars);
+     ksort($broadcast_sorted);
+     foreach($broadcast_sorted as $bcast=>$params){
+     	if ($bcast){
+     		elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC,$bcast);
+     	} else {
+     		elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
+     	}
+     }
+//     elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
 //     if ($showSeqMode > 0) {
 //     	printf ( "frame_zero=%d, since=%d",$frame_zero,$since);
 //     	printf ( "elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)");
@@ -867,6 +883,10 @@ function  applyPost($todo,$noFinalWait=false) {
 	$frame_now=$frame_zero;
 	///Iterate through $todo array, programming the parameter changes
 	foreach ($todo as $since=>$pgmpars) {
+//		echo "<!--";
+//		echo "since=".$since."\n";
+//		var_dump(split_broadcast($pgmpars));
+//		echo "-->";
 		if (($since-$maxahead) >$frame_since ) { /// too early to program, need to wait
 			$frame_since=$since-$minahead;
 			$frame_now=$frame_since+$frame_zero;
@@ -878,7 +898,22 @@ function  applyPost($todo,$noFinalWait=false) {
 				if ($showSeqMode>0) {printf ("done (%d)\n", elphel_get_frame($GLOBALS [sensor_port]));   ob_flush();  flush();}
 			}
 		}
-		elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
+		$broadcast_sorted=split_broadcast($pgmpars);
+		ksort($broadcast_sorted);
+		echo "<!--";
+		print_r($broadcast_sorted);
+		foreach ( $broadcast_sorted as $bcast => $params ) {
+			if (count ( $params ) > 0) {
+				if ($bcast) {
+					echo "elphel_set_P_arr(" . $GLOBALS [sensor_port] . ", " . print_r ( $params, 1 ) . ", " . ($frame_zero + $since) . ", ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC, " . $bcast . ")\n";
+					elphel_set_P_arr ( $GLOBALS [sensor_port], $params, $frame_zero + $since, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC, $bcast );
+				} else {
+					echo "elphel_set_P_arr(" . $GLOBALS [sensor_port] . ", " . print_r ( $params, 1 ) . ", " . ($frame_zero + $since) . ", ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)\n";
+					elphel_set_P_arr ( $GLOBALS [sensor_port], $params, $frame_zero + $since, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / Are these flags needed?
+				}
+			}
+		}
+		echo "-->";
 	}
 	if (!$noFinalWait) {
 		$frame_now=$since+$frame_zero+1; /// wait just 1 frame longer that the target of the last command in $todo
@@ -903,6 +938,26 @@ function  applyPost($todo,$noFinalWait=false) {
 	//   exit (0);
 }
 
+function split_broadcast($pgmpars){
+	$port_masks=array();
+	foreach ($pgmpars as $name=>$value) {
+		if ($name[0] == '*'){
+			$port_masks[substr($name,1)] = $value;
+			unset ($pgmpars[$name]);
+		}
+	}
+	$broadcast=array(0=>array());
+	foreach ($port_masks as $key=>$value){
+//		if (!in_array($value,$broadcast)) $broadcast[] = $value;
+		if (!array_key_exists($value,$broadcast)) $broadcast[$value] = array();
+	}
+	foreach ($pgmpars as $name=>$value) {
+		if (array_key_exists($name,$port_masks)) $broadcast[$port_masks[$name]][$name] = $value;
+		else $broadcast[0][$name] = $value;
+	}
+	return $broadcast;
+}
+
 
 function  parsePost() {
    global $_POST,$testMode,$showSeqMode,$posted_params;
@@ -920,6 +975,9 @@ function  parsePost() {
        $posted_params[$index][$name]=$value;
      }
    }
+//   file_put_contents("/tmp/parse_post.log",print_r($_POST,1));
+//   file_put_contents("/tmp/posted_params.log",print_r($posted_params,1));
+    
 }
 /// Simulate POST from URL parameters if 'immediate' is present in the URL
 function convertImmediateMode(){
@@ -962,6 +1020,10 @@ function  preparePost() {
      } else $delay=0;
      if (!$todo[$delay]) $todo[$delay]=array();
      $todo[$delay][$par['name']]=(int) $par['paramdec'];
+     $broadcast=intval($par['broadcast'],16);
+     if ($broadcast != 0){
+     	$todo[$delay]['*'.$par['name']]=$broadcast;
+     }
    }
 /// sort $todo using time (key)
    ksort($todo); /// needed to process parameters in temporal sequence
@@ -971,6 +1033,7 @@ function  preparePost() {
      $todo[$framesBeforeStart]=array("COMPRESSOR_RUN"=>ELPHEL_CONST_COMPRESSOR_RUN_CONT);
      ksort($todo); /// re-sort it after adding start/stop
    }
+//   file_put_contents("/tmp/todo.log",print_r($todo,1));
    return $todo;
 }
 
@@ -1010,7 +1073,7 @@ function myval ($s) {
 
 function parseGetNames() {
    global $_GET,$_POST,$isPost,$elp_const,$frame_params,$global_params,
-          $page_title,$default_ahead,$maxahead,$brief,$ahead_separator,
+          $page_title,$default_ahead,$maxahead,$brief,$ahead_separator, $port_mask_separator,
           $refreshSig,$ignoreVals,$testMode,$showSeqMode,$posted_params,$defaultImgScale,$defaultImagesPerRow,$defaultImagesNumber,
           $imagesNumber,$imagesPerRow,$imgScale,$embedImageScale, $defaultEmbedImageScale;
    $index=0;
@@ -1062,6 +1125,12 @@ function parseGetNames() {
           printf($rslt);
           exit (0);
         }
+        $port_mask = 0;
+        if (strpos($value,"!")!==FALSE) {
+        	$port_mask = myval(substr($value,strpos($value,"!")+1),16);
+        	$value = substr($value,strpos($value,"!")+1);
+        }
+
         $write_en=(!($value[0]=="@"));
         if (!$write_en) {
           if (strlen($value)==1) $value="";
@@ -1083,14 +1152,14 @@ function parseGetNames() {
             $ahead=$posted_params[$index]['delay'];
           }
           if (elphel_is_global_par($address)) { // does not need $GLOBALS [sensor_port],
-
             $global_params[$index++]=array("number"=>$address,
                                            "name"=>$key,
                                            "value"=>$value,
                                            "write_en"=>$write_en,
                                            "cur_value"=>"",
                                            'modified'=>$modified,
-                                           'ahead'=>$ahead);
+                                           'ahead'=>$ahead,
+                                           'port_mask'=>$port_mask);
           } else {
             $frame_params [$index++]=array("number"=>$address,
                                            "name"=>$key,
@@ -1098,7 +1167,8 @@ function parseGetNames() {
                                            "write_en"=>$write_en,
                                            "cur_value"=>"",
                                            'modified'=>$modified,
-                                           'ahead'=>$ahead);
+                                           'ahead'=>$ahead,
+                                           'port_mask'=>$port_mask);
           }
        }
      }
@@ -1185,6 +1255,16 @@ function onchangeDelay(elem,id_apply) {
 //  alert ("onchangeDelay("+elem.id+","+id_apply+")");
   var d=document.getElementById(elem.id).value;
   if (d<0) document.getElementById(elem.id).value=0;
+  document.getElementById(id_apply).checked=true;
+}
+function onchangeBroadcast(elem,id_apply) {
+//  alert ("onchangeBroadcast("+elem.id+","+id_apply+")");
+  var d=hex2dec(document.getElementById(elem.id).value);
+  if ((d<0) || (d>15)){
+    if (d<0) document.getElementById(elem.id).value=0;
+    if (d>15) document.getElementById(elem.id).value=15;
+    document.getElementById(elem.id).value=hex2dec(d);
+  }
   document.getElementById(id_apply).checked=true;
 }
 function refreshPage(mode) {
@@ -1312,8 +1392,9 @@ function printPage($encoded_todo) {
       $readonly=false;
       break;
    }
-   $table_width=$readonly?5:9;
-   if ($brief) $table_width-=2;
+//   $table_width=$readonly?5:9;
+   $table_width=$readonly?6:10; // with broadcast mask
+    if ($brief) $table_width-=2;
 //   printf ("<center><h3>$page_title</h3></center>\n");
 ///   printf ("<h3>$page_title</h3>\n");
    printf ("<form action=\"$self\" method=\"post\">");
@@ -1349,7 +1430,8 @@ function printPage($encoded_todo) {
    if (!$readonly) {printf (
             "<td colspan=2>New value</td>".
             "<td rowspan=2>Program<br/>ahead</td>".
-            "<td rowspan=2>Apply</td></tr>");
+   		    "<td rowspan=2>Broadcast<br/>mask</td>".
+   		 "<td rowspan=2>Apply</td></tr>");
    }
    printf   ("</tr>");
    printf ("<tr style='text-align:center'>");
@@ -1386,6 +1468,10 @@ function printPage($encoded_todo) {
                  " onchange='onchangeHex(this,\"id_dec_%d\",\"id_apply_%d\");'/></td>",$num,$par['value'],$num,$num,$num);
          printf ("<td style='text-align:center'><input name='delay_%d' type='text' size='4' value='%d' id='id_delay_%d' style='text-align:right'".
                  " onchange='onchangeDelay(this,\"id_apply_%d\");'/></td>",$num,$par['ahead'],$num,$num);
+
+         printf ("<td style='text-align:center'><input name='broadcast_%d' type='text' size='2' value='%x' id='id_broadcast_%d' style='text-align:center'".
+         		" onchange='onchangeBroadcast(this,\"id_apply_%d\");'/></td>",$num,$par['port_mask'],$num,$num);
+         
          printf ("<td style='text-align:center'><input type='checkbox' name='apply_%d' value='1' %s id='id_apply_%d'/></td>",$num,$par['modified']?'checked':'',$num);
        }else {
          if (!$readonly) printf ("<td colspan='4'>&nbsp;</td>");
