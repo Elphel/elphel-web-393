@@ -900,20 +900,20 @@ function  applyPost($todo,$noFinalWait=false) {
 		}
 		$broadcast_sorted=split_broadcast($pgmpars);
 		ksort($broadcast_sorted);
-		echo "<!--";
-		print_r($broadcast_sorted);
+//		echo "<!--";
+//		print_r($broadcast_sorted);
 		foreach ( $broadcast_sorted as $bcast => $params ) {
 			if (count ( $params ) > 0) {
 				if ($bcast) {
-					echo "elphel_set_P_arr(" . $GLOBALS [sensor_port] . ", " . print_r ( $params, 1 ) . ", " . ($frame_zero + $since) . ", ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC, " . $bcast . ")\n";
+//					echo "elphel_set_P_arr(" . $GLOBALS [sensor_port] . ", " . print_r ( $params, 1 ) . ", " . ($frame_zero + $since) . ", ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC, " . $bcast . ")\n";
 					elphel_set_P_arr ( $GLOBALS [sensor_port], $params, $frame_zero + $since, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC, $bcast );
 				} else {
-					echo "elphel_set_P_arr(" . $GLOBALS [sensor_port] . ", " . print_r ( $params, 1 ) . ", " . ($frame_zero + $since) . ", ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)\n";
+//					echo "elphel_set_P_arr(" . $GLOBALS [sensor_port] . ", " . print_r ( $params, 1 ) . ", " . ($frame_zero + $since) . ", ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)\n";
 					elphel_set_P_arr ( $GLOBALS [sensor_port], $params, $frame_zero + $since, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / Are these flags needed?
 				}
 			}
 		}
-		echo "-->";
+//		echo "-->";
 	}
 	if (!$noFinalWait) {
 		$frame_now=$since+$frame_zero+1; /// wait just 1 frame longer that the target of the last command in $todo
