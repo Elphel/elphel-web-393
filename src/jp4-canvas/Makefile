@@ -5,7 +5,8 @@ INSTALL = install
 DOCS=       jp4-canvas.html \
             jp4-canvas.js 
 
-LIBS=       exif.js \
+LIBS=       elphel.js \
+            exif.js \
             jquery-jp4.js \
             jcanvas.min.js
             
