@@ -9,6 +9,7 @@
     var settings = $.extend({
       port: "",
       image: "test.jp4",
+      refresh: false,
       mosaic: [["Gr","R"],["B" ,"Gb"]],
       fast: false,
       precise: false,
@@ -54,6 +55,7 @@
           var rq = "";
           if (settings.port!=""){
             rq = "get-image.php?port="+settings.port+"&rel=bimg&ts="+Date.now();
+            settings.refresh = true;
           }else{
             rq = settings.image;
           }
@@ -134,7 +136,8 @@
           Elphel.drawScaled(cnv_working,cnv_display,settings.width);
           console.log(elem.attr("id")+" processing finished, total time: "+(Date.now()-t0)/1000+" s");
           $(this).trigger("canvas_ready");
-          //get_image();
+          
+          if (settings.refresh) get_image();
         }
       });
     }
