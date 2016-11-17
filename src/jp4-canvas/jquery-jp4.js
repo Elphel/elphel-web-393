@@ -144,8 +144,9 @@
         
     function quickestPreview(ctx){
       Elphel.reorderJP4Blocks(ctx,"JP4",settings.mosaic,settings.fast);
+      Elphel.applySaturation(ctx,SATURATION[0]);
     }
-            
+
     function parseEXIFMakerNote(src){
       
       var exif_orientation = EXIF.getTag(src,"Orientation");
