@@ -59,9 +59,7 @@
           }else{
             rq = settings.image;
           }
-          
-          console.log("my rq is "+rq);
-          
+                    
           http.open("GET", rq, true);
           
           http.responseType = "blob";
@@ -95,7 +93,6 @@
       $(this).draw({
         fn: function(ctx){
           var t0 = Date.now();
-          console.log("Processing "+elem.attr("id"));
           if ((IMAGE_FORMAT=="JP4")||(IMAGE_FORMAT=="JP46")){
             if (settings.fast){
               quickestPreview(ctx);
@@ -134,7 +131,7 @@
             //saturation(ctx,SATURATION[0]);
           }
           Elphel.drawScaled(cnv_working,cnv_display,settings.width);
-          console.log(elem.attr("id")+" processing finished, total time: "+(Date.now()-t0)/1000+" s");
+          console.log("#"+elem.attr("id")+", time: "+(Date.now()-t0)/1000+" s");
           $(this).trigger("canvas_ready");
           
           if (settings.refresh) get_image();
