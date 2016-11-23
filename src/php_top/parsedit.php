@@ -1565,7 +1565,7 @@ function getParDescriptions($autocampars) {
     }
   }
   */
-  $path='/etc/elphel393/autocampars0.xml';
+  $path='/etc/elphel393/autocampars.xml'; // link to a master channel config
   $path = str_replace("0.",strval($GLOBALS [sensor_port]).".",$path); // NC393: here it does not really matter
   $xml = simplexml_load_file($path);
   $descriptions=array();
