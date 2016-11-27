@@ -1469,7 +1469,7 @@ function printPage($encoded_todo) {
          printf ("<td style='text-align:center'><input name='delay_%d' type='text' size='4' value='%d' id='id_delay_%d' style='text-align:right'".
                  " onchange='onchangeDelay(this,\"id_apply_%d\");'/></td>",$num,$par['ahead'],$num,$num);
 
-         printf ("<td style='text-align:center'><input name='broadcast_%d' type='text' size='2' value='%x' id='id_broadcast_%d' style='text-align:center'".
+         printf ("<td style='text-align:center'>0x<input name='broadcast_%d' type='text' size='2' value='%x' id='id_broadcast_%d' style='text-align:center'".
          		" onchange='onchangeBroadcast(this,\"id_apply_%d\");'/></td>",$num,$par['port_mask'],$num,$num);
          
          printf ("<td style='text-align:center'><input type='checkbox' name='apply_%d' value='1' %s id='id_apply_%d'/></td>",$num,$par['modified']?'checked':'',$num);
