@@ -1,4 +1,12 @@
 <?php
+/*
+FILE NAME  : update_software.php
+DESCRIPTION: update software on nand flash
+REVISION: 1.00
+AUTHOR: Oleg Dzhimiev <oleg@elphel.com>
+LICENSE: AGPL, see http://www.gnu.org/licenses/agpl.txt
+Copyright (C) 2016 Elphel, Inc.
+*/
 
 # hardcoded
 $UPDATE_DIR = "/var/volatile/html/update";
@@ -54,7 +62,20 @@ function verify($v){
     $tmp = "";
     foreach($UPDATE_LIST as $e){
       if($e[0]==0){
-        $tmp .= "<li>${e[1]}</li>";
+        switch($e[1]){
+          case "boot.bin":
+          case "u-boot-dtb.img":
+          case "devicetree.dtb":
+            $comment = "(rarely updated)";
+            break;
+          case "uImage":
+          case "rootfs.ubi":
+            $comment = "(frequently updated)";
+            break;
+          default:
+            $comment = "";
+        }
+        $tmp .= "<li><b>${e[1]}</b> <span style='font-size:0.9em;'>${comment}</span></li>";
       }
     }
     backup_note();
