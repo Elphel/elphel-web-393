@@ -1,6 +1,6 @@
 /*
-FILE NAME  : debugfs.js
-DESCRIPTION: dynamic debug frontend
+FILE NAME  : update_software.js
+DESCRIPTION: update software on nand flash
 REVISION: 1.00
 AUTHOR: Oleg Dzhimiev <oleg@elphel.com>
 LICENSE: AGPL, see http://www.gnu.org/licenses/agpl.txt
