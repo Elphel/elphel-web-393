@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="author" content="?"/>  
+  <link rel="stylesheet" href="js/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="js/fileupload/style.css">
+  <link rel="stylesheet" href="js/fileupload/jquery.fileupload.css">
+  <script src="js/jquery-2.2.3.min.js"></script>
+  <script src="js/jquery-ui/jquery-ui.min.js"></script>
+  <script src="js/fileupload/jquery.iframe-transport.js"></script>
+  <script src="js/fileupload/jquery.fileupload.js"></script>
+  <script src="js/bootstrap/js/bootstrap.min.js"></script>
+  <script src="update_software.js"></script>
+</head>
+<body onload='init()' style='padding-top:0px;'>
+  <h2 id='title' style='padding-left:10px;'>Update software:</h2>
+  <div id='test' style='padding:10px;'>
+    <!-- The fileinput-button span is used to style the file input field as button -->
+    <span class="btn btn-success fileinput-button">
+        <i class="glyphicon glyphicon-plus"></i>
+        <span>Select files...</span>
+        <!-- The file input field used as target for the file upload widget -->
+        <input id="fileupload" type="file" name="files[]" multiple>
+    </span>
+    <span id='btn_remove' class="btn btn-danger"><b>Remove files</b></span>
+    <br>
+    <br>
+    <!-- The global progress bar -->
+    <div id="progress" class="progress" style='width:250px;'>
+        <div class="progress-bar progress-bar-success"></div>
+    </div>
+    <!-- The container for the uploaded files -->
+    <div id="files" class="files"></div>
+  </div>
+  <div style='padding-left:10px;'>
+    <span id='btn_verify' class="btn btn-success"><b>Verify</b></span>
+    <span id='btn_flash' class="btn btn-danger"><b>Flash</b></span>
+    <span style='padding-left:10px;'><a href='var/flash.log'>flash.log</a></span>
+  </div>
+  <div style='padding:10px;'>
+    <div id='status' class='blink'></div>
+  </div>
+</body>
+</html> 
