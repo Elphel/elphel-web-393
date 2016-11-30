@@ -172,7 +172,7 @@ function copy_backup(){
     exec("ubiattach /dev/ubi_ctrl -m 4");
     if (!is_dir($UBI_MNT)) mkdir($UBI_MNT);
     exec("mount -t ubifs /dev/ubi0_0 $UBI_MNT");
-    if (!is_dir("$UBI_MNT${BKP_DIR}/backup")) mkdir("$UBI_MNT${BKP_DIR}/backup");
+    if (!is_dir("$UBI_MNT${BKP_DIR}_bkp")) mkdir("$UBI_MNT${BKP_DIR}_bkp");
     exec("tar -C ${UBI_MNT}${BKP_DIR}_bkp -xzpf var/$BKP_NAME");
     exec("sync");
     exec("umount $UBI_MNT");
