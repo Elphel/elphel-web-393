@@ -144,7 +144,7 @@ function backup(){
     exec("ubiattach /dev/ubi_ctrl -m 4");
     if (!is_dir($UBI_MNT)) mkdir($UBI_MNT);
     exec("mount -t ubifs -o ro /dev/ubi0_0 $UBI_MNT");
-    exec("tar -czvf var/$BKP_NAME -C ${UBI_MNT}${BKP_DIR} . --exclude '${UBI_MNT}${BKP_DIR}/backup'");
+    exec("tar -czvf var/$BKP_NAME -C ${UBI_MNT}${BKP_DIR} .");
     exec("umount $UBI_MNT");
     if (is_dir($UBI_MNT)) rmdir($UBI_MNT);
     exec("ubidetach /dev/ubi_ctrl -m 4");
@@ -173,7 +173,7 @@ function copy_backup(){
     if (!is_dir($UBI_MNT)) mkdir($UBI_MNT);
     exec("mount -t ubifs /dev/ubi0_0 $UBI_MNT");
     if (!is_dir("$UBI_MNT${BKP_DIR}/backup")) mkdir("$UBI_MNT${BKP_DIR}/backup");
-    exec("tar -C ${UBI_MNT}${BKP_DIR}/backup -xzpf var/$BKP_NAME");
+    exec("tar -C ${UBI_MNT}${BKP_DIR}_bkp -xzpf var/$BKP_NAME");
     exec("sync");
     exec("umount $UBI_MNT");
     if (is_dir($UBI_MNT)) rmdir($UBI_MNT);
