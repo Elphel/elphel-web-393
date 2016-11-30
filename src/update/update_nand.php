@@ -161,7 +161,7 @@ function send_backup(){
   print(file_get_contents("var/$BKP_NAME"));
 }
 
-function restore_backup(){
+function copy_backup(){
   global $NAND_PATH;
   global $UBI_MNT;
   global $BKP_NAME;
@@ -172,7 +172,8 @@ function restore_backup(){
     exec("ubiattach /dev/ubi_ctrl -m 4");
     if (!is_dir($UBI_MNT)) mkdir($UBI_MNT);
     exec("mount -t ubifs -o ro /dev/ubi0_0 $UBI_MNT");
-    exec("tar -C ${UBI_MNT}${BKP_DIR} -xzpf var/$BKP_NAME");
+    if (!is_dir("$UBI_MNT${BKP_DIR}/backup")) mkdir("$UBI_MNT${BKP_DIR}/backup");
+    exec("tar -C ${UBI_MNT}${BKP_DIR}/backup -xzpf var/$BKP_NAME");
     exec("sync");
     exec("umount $UBI_MNT");
     if (is_dir($UBI_MNT)) rmdir($UBI_MNT);
@@ -198,7 +199,7 @@ switch($cmd){
     $flash_list = verify(false);
     backup();
     nandflash($flash_list);
-    restore_backup();
+    copy_backup();
     break;
   case "backup":
     backup();
