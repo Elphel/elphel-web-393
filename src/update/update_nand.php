@@ -148,15 +148,36 @@ function backup(){
     exec("umount $UBI_MNT");
     if (is_dir($UBI_MNT)) rmdir($UBI_MNT);
     exec("ubidetach /dev/ubi_ctrl -m 4");
-    
   }else{
     //booted from nand
     exec("tar -czvf var/$BKP_NAME -C ${BKP_DIR} .");
   }
-  
+}
+
+function send_backup(){
+  global $BKP_NAME;
   header("Content-Type: application/octet-stream");
   header('Content-Disposition: attachment; filename='.$BKP_NAME);
   print(file_get_contents("var/$BKP_NAME"));
+}
+
+function restore_backup(){
+  global $NAND_PATH;
+  global $UBI_MNT;
+  global $BKP_NAME;
+  global $BKP_DIR;
+  
+  if (!is_dir($NAND_PATH)){
+    exec("flash_unlock /dev/mtd4");
+    exec("ubiattach /dev/ubi_ctrl -m 4");
+    if (!is_dir($UBI_MNT)) mkdir($UBI_MNT);
+    exec("mount -t ubifs -o ro /dev/ubi0_0 $UBI_MNT");
+    exec("tar -C ${UBI_MNT}${BKP_DIR} -xzpf var/$BKP_NAME");
+    exec("sync");
+    exec("umount $UBI_MNT");
+    if (is_dir($UBI_MNT)) rmdir($UBI_MNT);
+    exec("ubidetach /dev/ubi_ctrl -m 4");
+  }  
 }
 
 function remove(){
@@ -175,10 +196,13 @@ else if (isset($argv[1]))
 switch($cmd){
   case "flash":
     $flash_list = verify(false);
+    backup();
     nandflash($flash_list);
+    restore_backup();
     break;
   case "backup":
     backup();
+    send_backup();
     break;
   case "remove":
     remove();
