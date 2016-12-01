@@ -10,6 +10,7 @@ SYSCONFDIR   = /etc
 CONFDIR      = $(SYSCONFDIR)/elphel393
 
 PHP_SCRIPTS=i2c.php \
+            parallel_requests.php \
             camvars.php \
             ccam.php \
             diag_utils.php \
@@ -20,11 +21,6 @@ PHP_SCRIPTS=i2c.php \
             tuneseq.php
 
 PHPINCLUDES=i2c_include.php show_source_include.php
-            
-PHPSHELL=   phpshell.php \
-            phpshell.css \
-            valid-xhtml10.png \
-            vcss.png
             
 all:
 	@echo "make all in src"
@@ -40,8 +36,7 @@ install:
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPINCLUDES) $(DESTDIR)$(INCLUDES)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(SYSCONFDIR)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(CONFDIR)
-	tar -xzf phpshell.tar.gz
-	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPSHELL) $(DESTDIR)$(DOCUMENTROOT)
+
 #	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars0.xml
 #	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars1.xml
 #	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars2.xml
