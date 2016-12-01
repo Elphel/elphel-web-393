@@ -21,7 +21,11 @@ PHP_SCRIPTS=i2c.php \
 
 PHPINCLUDES=i2c_include.php show_source_include.php
             
-
+PHPSHELL=   phpshell.php \
+            phpshell.css \
+            valid-xhtml10.png \
+            vcss.png
+            
 all:
 	@echo "make all in src"
 	@echo "REMOTE_IP =$(REMOTE_IP)"
@@ -36,6 +40,8 @@ install:
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPINCLUDES) $(DESTDIR)$(INCLUDES)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(SYSCONFDIR)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(CONFDIR)
+	tar -xzf phpshell.tar.gz
+	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPSHELL) $(DESTDIR)$(DOCUMENTROOT)
 #	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars0.xml
 #	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars1.xml
 #	$(INSTALL) $(OWN) -m $(INSTDOCS) -T autocampars.xml $(DESTDIR)$(CONFDIR)/autocampars2.xml
