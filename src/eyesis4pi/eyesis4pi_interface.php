@@ -27,16 +27,17 @@ if (isset($_GET['cmd']))
 else if (isset($argv[1]))
   $cmd = $argv[1];
 
-#hardcoded
+#hardcoded for eyesis4pi
 $symlink = "/www/pages/ssd";
 $mountpoint = "/mnt/sda1";
   
 switch($cmd){
   case "symlink":
-    symlink($mountpoint,$symlink);
+    if (is_link($symlink)) die("already exists");
+    die(symlink($mountpoint,$symlink));
     break;
   default:
-    print("nothing is done");
+    print("nothing has been done");
 }
   
 ?>
