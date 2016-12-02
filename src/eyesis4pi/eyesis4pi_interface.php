@@ -39,6 +39,7 @@ switch($cmd){
     break;
   case "free_space":
     if ($_GET['mountpoint']=="/mnt/sda2"){
+      respond_xml("test");
       //unpartitioned area
     }else{
         if (is_dir($mountpoint)) $res = disk_free_space($mountpoint);
