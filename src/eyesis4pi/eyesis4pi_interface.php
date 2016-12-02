@@ -5,7 +5,6 @@
 *! DESCRIPTION: command interface for the eyesis4pi gui
 *! Copyright (C) 2016 Elphel, Inc.
 *! --------------------------------------------------------------------------
-*!
 *!  This program is free software: you can redistribute it and/or modify
 *!  it under the terms of the GNU General Public License as published by
 *!  the Free Software Foundation, either version 3 of the License, or
@@ -35,6 +34,14 @@ switch($cmd){
   case "symlink":
     if (is_link($symlink)) die("already exists");
     die(symlink($mountpoint,$symlink));
+    break;
+  case "free_space":
+    if ($_GET['mountpoint']=="/mnt/sda2"){
+      //unpartitioned area
+    }else{
+        if (is_dir($mountpoint)) $res = disk_free_space($mountpoint);
+        else                     $res = 0;
+    }
     break;
   default:
     print("nothing has been done");

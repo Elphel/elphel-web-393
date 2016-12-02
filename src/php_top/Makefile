@@ -10,7 +10,6 @@ SYSCONFDIR   = /etc
 CONFDIR      = $(SYSCONFDIR)/elphel393
 
 PHP_SCRIPTS=i2c.php \
-            parallel_requests.php \
             camvars.php \
             ccam.php \
             diag_utils.php \
@@ -20,7 +19,10 @@ PHP_SCRIPTS=i2c.php \
             snapfull.php \
             tuneseq.php
 
-PHPINCLUDES=i2c_include.php show_source_include.php
+PHPINCLUDES=i2c_include.php \
+            show_source_include.php \
+            include_parallel_requests.php \
+            include_response.php
             
 all:
 	@echo "make all in src"
