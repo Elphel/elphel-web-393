@@ -20,6 +20,8 @@
 *! --------------------------------------------------------------------------
 */
 
+include 'include/response.php';
+
 $cmd = "donothing";
 if (isset($_GET['cmd']))
   $cmd = $_GET['cmd'];
@@ -41,6 +43,7 @@ switch($cmd){
     }else{
         if (is_dir($mountpoint)) $res = disk_free_space($mountpoint);
         else                     $res = 0;
+        respond_xml($res);
     }
     break;
   default:
