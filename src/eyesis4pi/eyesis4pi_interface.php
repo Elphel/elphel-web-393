@@ -21,6 +21,7 @@
 */
 
 include 'include/response.php';
+include 'include/devices.php';
 
 $cmd = "donothing";
 if (isset($_GET['cmd']))
@@ -31,6 +32,7 @@ else if (isset($argv[1]))
 #hardcoded for eyesis4pi
 $symlink = "/www/pages/ssd";
 $mountpoint = "/mnt/sda1";
+$camogmdisk = "/home/root/camogm.disk";
   
 switch($cmd){
   case "symlink":
@@ -38,13 +40,25 @@ switch($cmd){
     die(symlink($mountpoint,$symlink));
     break;
   case "free_space":
-    if ($_GET['mountpoint']=="/mnt/sda2"){
+    // /dev/sda2 is not a mountpoint but a device because it does not have a file system
+    if ($_GET['mountpoint']=="/dev/sda2"){
+      //root@elphel393:~# cat /home/root/camogm.disk
+      //Device          Start LBA       Current LBA     End LBA
+      ///dev/sda2       195334335       545641716       976768065
+
+      if (!is_file($camogmdisk)){
+        
+      }else{
+        
+      }
+      
       respond_xml("test");
+      
       //unpartitioned area
     }else{
-        if (is_dir($mountpoint)) $res = disk_free_space($mountpoint);
-        else                     $res = 0;
-        respond_xml($res);
+      if (is_dir($mountpoint)) $res = disk_free_space($mountpoint);
+      else                     $res = 0;
+      respond_xml($res);
     }
     break;
   default:
