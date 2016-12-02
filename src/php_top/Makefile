@@ -21,9 +21,7 @@ PHP_SCRIPTS=i2c.php \
 
 PHPINCLUDES=i2c_include.php \
             show_source_include.php \
-            parallel_requests.php \
-            response.php \
-            devices.php
+            elphel_functions_include.php
             
 all:
 	@echo "make all in src"

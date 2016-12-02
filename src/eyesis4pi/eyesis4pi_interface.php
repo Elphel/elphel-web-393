@@ -20,8 +20,7 @@
 *! --------------------------------------------------------------------------
 */
 
-include 'include/response.php';
-include 'include/devices.php';
+include 'include/elphel_functions_include.php';
 
 $cmd = "donothing";
 if (isset($_GET['cmd']))
@@ -40,26 +39,27 @@ switch($cmd){
     die(symlink($mountpoint,$symlink));
     break;
   case "free_space":
+    // results are in GB
     // /dev/sda2 is not a mountpoint but a device because it does not have a file system
+    $res = 0;
     if ($_GET['mountpoint']=="/dev/sda2"){
       //root@elphel393:~# cat /home/root/camogm.disk
       //Device          Start LBA       Current LBA     End LBA
       ///dev/sda2       195334335       545641716       976768065
-
       if (!is_file($camogmdisk)){
-        
+        $devices = get_raw_dev();
+        foreach($devices as $device=>$size){
+          //size in MB
+          if ($device=="/dev/sda2") $res = round($size/1048576,2);
+        }
       }else{
-        
+        //read camogm.disk file
+        $res = 10;
       }
-      
-      respond_xml("test");
-      
-      //unpartitioned area
     }else{
-      if (is_dir($mountpoint)) $res = disk_free_space($mountpoint);
-      else                     $res = 0;
-      respond_xml($res);
+      if (is_dir($mountpoint)) $res = round(disk_free_space($mountpoint)/1024/1024/1024,2);
     }
+    respond_xml($res);
     break;
   default:
     print("nothing has been done");
