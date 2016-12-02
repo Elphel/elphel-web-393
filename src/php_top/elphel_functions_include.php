@@ -1,7 +1,7 @@
 <?php
 /*!***************************************************************************
-*! FILE NAME  : parallel_requests.php
-*! DESCRIPTION: send out parallel url requests and collect responses
+*! FILE NAME  : elphel_functions_include.php
+*! DESCRIPTION: various functions
 *! Copyright (C) 2016 Elphel, Inc
 *! -----------------------------------------------------------------------------**
 *!
