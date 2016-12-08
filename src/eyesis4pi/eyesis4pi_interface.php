@@ -40,21 +40,27 @@ switch($cmd){
     break;
   case "free_space":
     //sda1
-    if (is_dir($mountpoint)) $sda1 = round(disk_free_space($mountpoint)/1024/1024/1024,2);
+    if (is_dir($mountpoint)){
+      $sda1 = round(disk_free_space($mountpoint)/1024/1024/1024,2);
+      $sda1 .= "G";
+    }
     
     //sda2
     if (!is_file($camogmdisk)){
       $devices = get_raw_dev();
       foreach($devices as $device=>$size){
         //size in MB
-        if ($device=="/dev/sda2") $sda2 = round($size/1048576,2);
+        if ($device=="/dev/sda2") {
+          $sda2 = round($size/1048576,2);
+          $sda2 .= "G";
+        }
       }
     }else{
       //read camogm.disk file
-      $sda2 = 10;
+      $sda2 = "";
     }
     
-    respond_xml("{$sda1}G {$sda2}G");
+    respond_xml("{$sda1} {$sda2}");
     
     break;
   case "free_space_bkp":
