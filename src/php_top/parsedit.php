@@ -1128,7 +1128,7 @@ function parseGetNames() {
           $value=explode($ahead_separator,$value);
           if (count($value)>1) {
             $ahead=myval($value[1]);
-            if ($ahead<0) $ahead=0;
+            //if ($ahead<0) $ahead=0;
           } else {
             $ahead=$default_ahead;
           }
@@ -1240,7 +1240,7 @@ function onchangeHex(elem,id_dec,id_apply) {
 function onchangeDelay(elem,id_apply) {
 //  alert ("onchangeDelay("+elem.id+","+id_apply+")");
   var d=document.getElementById(elem.id).value;
-  if (d<0) document.getElementById(elem.id).value=0;
+  //if (d<0) document.getElementById(elem.id).value=0;
   document.getElementById(id_apply).checked=true;
 }
 function onchangeBroadcast(elem,id_apply) {
