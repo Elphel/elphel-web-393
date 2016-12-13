@@ -809,31 +809,20 @@ function  applyPost_debug($todo,$noFinalWait=false) {
      }
      $broadcast_sorted=split_broadcast($pgmpars);
      ksort($broadcast_sorted);
+     $frame_to_apply = $frame_zero+$since;
+     if ($since<0){
+     	$frame_to_apply = ELPHEL_CONST_FRAME_IMMED;
+     }
      foreach($broadcast_sorted as $bcast=>$params){
      	if ($bcast){
-     		elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC,$bcast);
+     		elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars,$frame_to_apply, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC, $bcast);
      	} else {
-     		elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
+     		elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars,$frame_to_apply, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
      	}
      }
-//     elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC); /// Are these flags needed?
-//     if ($showSeqMode > 0) {
-//     	printf ( "frame_zero=%d, since=%d",$frame_zero,$since);
-//     	printf ( "elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)");
-//     	ob_flush ();
-//     	flush ();
-//     }
    }
    if (!$noFinalWait) {
      $frame_now=$since+$frame_zero+1; /// wait just 1 frame longer that the target of the last command in $todo
-//     $frame_now+=256;
-     //     if ($showSeqMode > 0) {
-//     	printf ( "frame_zero=%d, since=%d",$frame_zero,$since);
-//     	printf ( "elphel_set_P_arr ($GLOBALS [sensor_port], $pgmpars, $frame_zero+$since,ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)");
-//     	ob_flush ();
-//     	flush ();
-//     }
-      
      //   echo "since=$since\n"; ob_flush();  flush();
      if ($showSeqMode>0) {printf ("(final) waiting frame %d (0x%x) ... ",$frame_now,$frame_now);  ob_flush();  flush();}
      if ($waitingEnabled) {
@@ -847,9 +836,6 @@ function  applyPost_debug($todo,$noFinalWait=false) {
        }
      }
    }
-//   $rslt2 = elphel_wait_frame_abs($GLOBALS [sensor_port], 100);
-//   $rslt3 = elphel_wait_frame_abs($GLOBALS [sensor_port], $frame_now);
-//   $rslt4 = elphel_skip_frames($GLOBALS [sensor_port],4);
     
    if ($showSeqMode>0) {printf ("done, frame is %d, rslt=%d, frame_now was %d, waitingEnabled=%d\n",
    		elphel_get_frame($GLOBALS [sensor_port]), $rslt, $frame_now, $waitingEnabled);
