@@ -57,7 +57,15 @@ switch($cmd){
       }
     }else{
       //read camogm.disk file
-      $sda2 = "";
+      //tmp
+      $devices = get_raw_dev();
+      foreach($devices as $device=>$size){
+        //size in MB
+        if ($device=="/dev/sda2") {
+          $sda2 = round($size/1048576,2);
+          $sda2 .= "G";
+        }
+      }
     }
     
     respond_xml("{$sda1} {$sda2}");
