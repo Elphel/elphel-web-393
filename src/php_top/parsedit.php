@@ -808,6 +808,7 @@ function  applyPost_debug($todo,$noFinalWait=false) {
 			}
      }
      $broadcast_sorted=split_broadcast($pgmpars);
+          
      ksort($broadcast_sorted);
      $frame_to_apply = $frame_zero+$since;
      if ($since<0){
@@ -932,6 +933,7 @@ function split_broadcast($pgmpars){
 			unset ($pgmpars[$name]);
 		}
 	}
+	
 	$broadcast=array(0=>array());
 	foreach ($port_masks as $key=>$value){
 //		if (!in_array($value,$broadcast)) $broadcast[] = $value;
@@ -960,34 +962,33 @@ function  parsePost() {
        if (!$posted_params[$index]) $posted_params[$index]=array();
        $posted_params[$index][$name]=$value;
      }
-   }
-//   file_put_contents("/tmp/parse_post.log",print_r($_POST,1));
-//   file_put_contents("/tmp/posted_params.log",print_r($posted_params,1));
-    
+   } 
 }
 /// Simulate POST from URL parameters if 'immediate' is present in the URL
 function convertImmediateMode(){
-   global $posted_params,$global_params,$frame_params;
-   $posted_params=array();
-   $index=0;
-   foreach ($global_params as $param) {
-       $posted_params[$index++]=array(
-                'name'   =>   $param['name'],
-                'oldval' =>   $param['cur_value'],
-                'paramdec' => $param['value'], /// 'paramhex' is not used
-                'delay'=>     $param['ahead'],
-                'apply' =>    $param['write_en'] && $param['modified']
-             );
-   }
-   foreach ($frame_params as $param) {
-       $posted_params[$index++]=array(
-                'name'   =>   $param['name'],
-                'oldval' =>   $param['cur_value'],
-                'paramdec' => $param['value'], /// 'paramhex' is not used
-                'delay'=>     $param['ahead'],
-                'apply' =>    $param['write_en'] && $param['modified']
-             );
-   }
+	global $posted_params,$global_params,$frame_params;
+	$posted_params=array();
+	$index=0;
+	foreach ($global_params as $param) {   
+    	$posted_params[$index++]=array(
+        	'name'   =>   $param['name'],
+            'oldval' =>   $param['cur_value'],
+            'paramdec' => $param['value'], /// 'paramhex' is not used
+            'delay'=>     $param['ahead'],
+    		'broadcast'=> $param['port_mask'],
+            'apply' =>    $param['write_en'] && $param['modified']
+        );
+    }
+   	foreach ($frame_params as $param) {
+		$posted_params[$index++]=array(
+            'name'   =>   $param['name'],
+            'oldval' =>   $param['cur_value'],
+            'paramdec' => $param['value'], /// 'paramhex' is not used
+            'delay'=>     $param['ahead'],
+			'broadcast'=> $param['port_mask'],
+            'apply' =>    $param['write_en'] && $param['modified']
+        );
+    }
 }
 function extractNames($arr){
   $names=array();
@@ -1094,7 +1095,8 @@ function parseGetNames() {
         if (!$embedImageScale) $embedImageScale=$defaultEmbedImageScale;
       } else if ($key=='_time') {
       } else if ($key=='sensor_port') {
-      		 
+      } else if ($key[0]=='*') {
+
       } else {
 /// locate $key among constants, accept numeric values also
         $address=myval ($key);
@@ -1117,6 +1119,10 @@ function parseGetNames() {
         	$value = substr($value,strpos($value,"!")+1);
         }
 
+        if (isset($_GET["*$key"])) {
+        	$port_mask = myval($_GET["*$key"]);
+        }
+        
         $write_en=(!($value[0]=="@"));
         if (!$write_en) {
           if (strlen($value)==1) $value="";
