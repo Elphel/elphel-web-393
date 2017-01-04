@@ -31,8 +31,18 @@ else if (isset($argv[1]))
 #hardcoded for eyesis4pi
 $symlink = "/www/pages/ssd";
 $mountpoint = "/mnt/sda1";
+
 $camogmdisk = "/home/root/camogm.disk";
-  
+$nandbootpath = "/tmp/rootfs.ro";
+
+if (is_dir($nandbootpath)) $camogmdisk = $nandbootpath.$camogmdisk; 
+
+$sysfs_lba_path = "/sys/devices/soc0/amba@0/80000000.elphel-ahci/";
+
+$file_lba_start = $sysfs_lba_path."lba_start";
+$file_lba_current = $sysfs_lba_path."lba_current";
+$file_lba_end = $sysfs_lba_path."lba_end";
+
 switch($cmd){
   case "symlink":
     if (is_link($symlink)) die("already exists");
@@ -45,31 +55,67 @@ switch($cmd){
       $sda1 .= "G";
     }
     
+    
     //sda2
-    if (!is_file($camogmdisk)){
-      $devices = get_raw_dev();
-      foreach($devices as $device=>$size){
-        //size in MB
-        if ($device=="/dev/sda2") {
-          $sda2 = round($size/1048576,2);
-          $sda2 .= "G";
-        }
-      }
+    $lba_start = 0;
+    $lba_current = 0;
+    $lba_end = 0;
+    
+    if (is_file($file_lba_start))   $lba_start   = intval(trim(file_get_contents($file_lba_start)));
+    if (is_file($file_lba_current)) $lba_current = intval(trim(file_get_contents($file_lba_current)));
+    if (is_file($file_lba_end))     $lba_end     = intval(trim(file_get_contents($file_lba_end)));
+    
+    if (($lba_start!=0)&&($lba_current!=0)&&($lba_end!=0)){
+    	$size = ($lba_end - $lba_current)/2/1024/1024;
+    	$sda2 = round($size,2);
+    	$sda2 .= "G";
     }else{
-      //read camogm.disk file
-      //tmp
-      $devices = get_raw_dev();
-      foreach($devices as $device=>$size){
-        //size in MB
-        if ($device=="/dev/sda2") {
-          $sda2 = round($size/1048576,2);
-          $sda2 .= "G";
-        }
-      }
+    	// camogm.disk not found
+    	if (!is_file($camogmdisk)){
+    		$devices = get_raw_dev();
+    		foreach($devices as $device=>$size){
+    			//size in MB
+    			if ($device=="/dev/sda2") {
+    				$sda2 = round($size/1048576,2);
+    				$sda2 .= "G";
+    			}
+    		}
+    	}else{
+    		//read camogm.disk file
+    		$content = file_get_contents($camogmdisk);
+    		$content = trim(preg_replace('/\n|\t{2,}/',"\t",$content));
+    		$content_arr = explode("\t",$content);
+    		
+    		if (count($content_arr)>=8){
+    			$device = $content_arr[4];
+    			$lba_current = $content_arr[6];
+    			$lba_end = $content_arr[7];
+    			$size = ($lba_end - $lba_current)/2/1024/1024;
+    			$sda2 = round($size,2);
+    			$sda2 .= "G";
+    		}else{    		
+	    		//tmp
+	    		$devices = get_raw_dev();
+	    		foreach($devices as $device=>$size){
+	    			//size in MB
+	    			if ($device=="/dev/sda2") {
+	    				$sda2 = round($size/1048576,2);
+	    				$sda2 .= "G";
+	    			}
+	    		}
+    		}
+    	}
     }
-    
     respond_xml("{$sda1} {$sda2}");
+    break;
     
+  case "reset_camogm_fastrec":
+  	//remove file
+  	if (is_file($camogmdisk)){
+  		unlink($camogmdisk);
+  	}
+  	file_put_contents($file_lba_current,file_get_contents($file_lba_start));
+  	print("reset fastrec: ok");
     break;
   case "free_space_bkp":
     // results are in GB
