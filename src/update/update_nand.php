@@ -47,6 +47,8 @@ function verify($v){
   global $NAND_PATH;
   global $UPDATE_LIST;
   
+  $rootfs_uploaded = false;
+  
   $safe_list = array();
   if (is_dir($UPDATE_DIR)){
     foreach(scandir($UPDATE_DIR) as $e){
@@ -89,22 +91,29 @@ TXT;
   }else{
     $tmp = "";
     foreach($safe_list as $e){
+      if ($e[1]=="rootfs.ubi"){
+        $rootfs_uploaded = true;
+      }
       $tmp .= "<li>{$e[1]}</li>";
     }
     if ($v) printf("Files to be flashed:<ul>$tmp</ul>");
   }
   //$safe_list is ready
-  if (is_dir($NAND_PATH)){
+  if (is_dir($NAND_PATH)&&$rootfs_uploaded){
     backup_note();
-    die("<b style='color:red'>ERROR</b>: Please boot from mmc (<a href='http://wiki.elphel.com/index.php?title=Tmp_manual#Boot'>instructions</a>)");
-  }else{    
-    if ($v) {
-      backup_note();
-      printf("<span style='color:green'>Ready for flashing.</span>");
-    }
+    rootfs_warning_note();
   }
+  if ($v) {
+        backup_note();
+        printf("<span style='color:green'>Ready for flashing.</span>");
+  }
+  
   return $safe_list;
 }
+
+function rootfs_warning_note(){
+        printf("<b style='color:orange'>Warning</b>: To update rootfs, please boot from mmc (<a href='http://wiki.elphel.com/index.php?title=Tmp_manual#Boot'>instructions</a>). Will skip <b>rootfs.ubi</b>");
+} 
 
 function backup_note(){
   $tmp = strrpos($_SERVER['SCRIPT_NAME'],"/");
@@ -119,18 +128,28 @@ function nandflash($list){
   global $UPDATE_DIR;
   global $FLASH_LOG;
   global $FLASH_LOG_LINK;
+  global $NAND_PATH;
+  
+  $rootfs_note = "";
   
   foreach($list as $e){
     if ($e[0]==0){
-      exec("flash_unlock ${e[2]} >> $FLASH_LOG");
-      exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
-      if ($e[1]!="rootfs.ubi")
+      if ($e[1]!="rootfs.ubi"){
+        exec("flash_unlock ${e[2]} >> $FLASH_LOG");
+        exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
         exec("nandwrite -n ${e[2]} -p $UPDATE_DIR/${e[1]} >> $FLASH_LOG");
-      else
-        exec("ubiformat ${e[2]} -f $UPDATE_DIR/${e[1]} ${e[4]} >> $FLASH_LOG");
+      }else{
+        if (!is_dir($NAND_PATH)) {
+          exec("flash_unlock ${e[2]} >> $FLASH_LOG");
+          exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
+          exec("ubiformat ${e[2]} -f $UPDATE_DIR/${e[1]} ${e[4]} >> $FLASH_LOG");
+        }else{
+          rootfs_warning_note();
+        }
+      }
     }
   }
-  print("Done. See/Download <a href='$FLASH_LOG_LINK'>flash.log</a>. Then power cycle.");
+  print("Success. See/Download <a href='$FLASH_LOG_LINK'>flash.log</a>. Then power cycle.");
 }
 
 function backup(){
@@ -144,7 +163,9 @@ function backup(){
     exec("ubiattach /dev/ubi_ctrl -m 4");
     if (!is_dir($UBI_MNT)) mkdir($UBI_MNT);
     exec("mount -t ubifs -o ro /dev/ubi0_0 $UBI_MNT");
-    exec("tar -czvf var/$BKP_NAME -C ${UBI_MNT}${BKP_DIR} .");
+    if (is_dir("${UBI_MNT}${BKP_DIR}")){
+      exec("tar -czvf var/$BKP_NAME -C ${UBI_MNT}${BKP_DIR} .");
+    }
     exec("umount $UBI_MNT");
     if (is_dir($UBI_MNT)) rmdir($UBI_MNT);
     exec("ubidetach /dev/ubi_ctrl -m 4");
@@ -172,8 +193,20 @@ function copy_backup(){
     exec("ubiattach /dev/ubi_ctrl -m 4");
     if (!is_dir($UBI_MNT)) mkdir($UBI_MNT);
     exec("mount -t ubifs /dev/ubi0_0 $UBI_MNT");
+    /*
     if (!is_dir("$UBI_MNT${BKP_DIR}_bkp")) mkdir("$UBI_MNT${BKP_DIR}_bkp");
     exec("tar -C ${UBI_MNT}${BKP_DIR}_bkp -xzpf var/$BKP_NAME");
+    */
+    
+    if (is_file("var/$BKP_NAME")){
+    	if (is_dir("$UBI_MNT${BKP_DIR}_defaults")) rmdir("$UBI_MNT${BKP_DIR}_defaults");
+    	rename("$UBI_MNT${BKP_DIR}","$UBI_MNT${BKP_DIR}_defaults");
+    	//restore old configs
+    	exec("tar -C ${UBI_MNT}${BKP_DIR} -xzpf var/$BKP_NAME");
+    }else{
+    	exec("cp -r $UBI_MNT${BKP_DIR} $UBI_MNT${BKP_DIR}_defaults");
+    }
+    
     exec("sync");
     exec("umount $UBI_MNT");
     if (is_dir($UBI_MNT)) rmdir($UBI_MNT);
@@ -212,4 +245,4 @@ switch($cmd){
     verify(true);
 }
 
-?> 
+?>
