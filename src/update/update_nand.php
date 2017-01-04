@@ -204,6 +204,8 @@ function copy_backup(){
     	//restore old configs
     	exec("mkdir -p ${UBI_MNT}${BKP_DIR}");
     	exec("tar -C ${UBI_MNT}${BKP_DIR} -xzpf var/$BKP_NAME");
+    	//take package versions from defaults
+    	exec("cp ${UBI_MNT}${BKP_DIR}_defaults/packages/* ${UBI_MNT}${BKP_DIR}/packages/");
     }else{
     	exec("cp -r $UBI_MNT${BKP_DIR} $UBI_MNT${BKP_DIR}_defaults");
     }
