@@ -202,6 +202,7 @@ function copy_backup(){
     	if (is_dir("$UBI_MNT${BKP_DIR}_defaults")) rmdir("$UBI_MNT${BKP_DIR}_defaults");
     	rename("$UBI_MNT${BKP_DIR}","$UBI_MNT${BKP_DIR}_defaults");
     	//restore old configs
+    	exec("mkdir -p ${UBI_MNT}${BKP_DIR}");
     	exec("tar -C ${UBI_MNT}${BKP_DIR} -xzpf var/$BKP_NAME");
     }else{
     	exec("cp -r $UBI_MNT${BKP_DIR} $UBI_MNT${BKP_DIR}_defaults");
