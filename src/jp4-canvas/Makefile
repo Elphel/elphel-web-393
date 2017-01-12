@@ -8,7 +8,7 @@ DOCS=       jp4-canvas.html \
 LIBS=       elphel.js \
             exif.js \
             jquery-jp4.js \
-            jcanvas.min.js
+            jcanvas.js
             
 PHP_SCRIPTS=get-image.php
 
