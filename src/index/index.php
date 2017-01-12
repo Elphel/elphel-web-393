@@ -34,11 +34,14 @@
     if (is_file($sensor)){
       $c = trim(file_get_contents($sensor));
       if ($c!="none"){
-        $href = "http://{$_SERVER["SERVER_ADDR"]}:".($port0+$i)."/bimg";
+        $sandp = "http://{$_SERVER["SERVER_ADDR"]}:".($port0+$i);
+        $href1 = "$sandp/bimg";
+        $href2 = "$sandp/mimg";
+        
         $table_contents .= "<td>";
         $table_contents .= "<div class='port_window img_window'>";
-        $table_contents .= "<div><a href=\"$href\"><img class='img_window' src='$href' style='width:300px'/></a></div>";
-        $table_contents .= "<div style='text-align:center;'>port $i</div>";
+        $table_contents .= "<div><a href=\"$href1\"><img class='img_window' src='$href1' style='width:300px'/></a></div>";
+        $table_contents .= "<div style='text-align:center;'>port $i: <a title='single image' href='$href1'>bimg</a>, <a title='multi-part image stream (M-JPEG)' href='$href2'>mimg</a></div>";
         $table_contents .= "</div>";
         $table_contents .= "</td>";
         
