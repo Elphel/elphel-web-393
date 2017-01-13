@@ -236,7 +236,11 @@ function filter_record_by_file($a,$f){
     return $res;
 }
 
+// default CT is text/html - LibreJS can add extra tags: <html><head></head><body>response</body></html>
+header("Content-Type: text/plain");
+
 if ($cmd=="do_nothing"){
+
     if (isset($_GET['file'])) $file = $_GET['file'];
     else                      $file = $DEBUGFSFILE;
     
