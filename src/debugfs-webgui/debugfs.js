@@ -25,6 +25,10 @@
  *  for the JavaScript code in this page.
  */
 
+window.onload = function(){
+  init();
+}
+
 var CUT_STRING_LIMIT = 20;
 var NLINES = 30;
 
