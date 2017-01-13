@@ -1,11 +1,24 @@
 <?php
-/*
-FILE NAME  : update_software.php
-DESCRIPTION: update software on nand flash
-REVISION: 1.00
-AUTHOR: Oleg Dzhimiev <oleg@elphel.com>
-LICENSE: AGPL, see http://www.gnu.org/licenses/agpl.txt
-Copyright (C) 2016 Elphel, Inc.
+/**
+ * @file update_software.php
+ * @brief update software on nand flash
+ * @version 1.0
+ * @copyright Copyright (C) 2016 Elphel Inc.
+ * @author Oleg Dzhimiev <oleg@elphel.com>
+ *
+ * @par <b>License</b>:
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 # hardcoded
@@ -230,6 +243,9 @@ if (isset($_GET['cmd']))
 else if (isset($argv[1]))
   $cmd = $argv[1];
 
+// default Content-Type is text/html - LibreJS (if turned on) can add extra tags: <html><head></head><body>response</body></html>
+header("Content-Type: text/plain");
+  
 switch($cmd){
   case "flash":
     $flash_list = verify(false);
