@@ -1,0 +1,61 @@
+
+tr {
+  padding:5px;
+}
+
+td, th{
+  padding: 0px 5px;
+  text-align: center;
+}
+
+.buffer{
+  background:red;
+  width:240px;
+  height:15px;
+  border-radius:3px;
+  margin:0px 10px 0px 10px;
+}
+
+.buffer_free, .buffer_used{
+  float:left;
+  width:120px;
+  height: 1em;
+  
+  text-align:center;
+  font-size:0.8em;
+  color:white;
+  
+  overflow:hidden;
+  height:15px;
+  line-height:15px;
+  font-weight: bold;
+}
+
+.buffer_free{  
+  background:-webkit-gradient(linear, 0% 0%, 0% 100%, from(green), to(#00cc00));
+  background:-moz-linear-gradient(0% 90% 90deg, #00cc00, green);
+  border-radius:3px 0px 0px 3px;
+}
+
+.buffer_used{  
+  background:red;
+  border-radius:0px 3px 3px 0px;
+}
+
+.pointers{
+  width: 100px;
+}
+
+.states{
+  font-size: 0.9em;
+}
+
+.buffer_invalid{
+  border: 1px solid red;
+  color: red;
+  font-weight: bold;
+  background: white;
+  border-radius:3px;
+  font-size:0.9em;
+  line-height:15px;
+}
