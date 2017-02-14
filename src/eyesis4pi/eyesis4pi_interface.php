@@ -44,6 +44,14 @@ $file_lba_current = $sysfs_lba_path."lba_current";
 $file_lba_end = $sysfs_lba_path."lba_end";
 
 switch($cmd){
+  case "external_drive":
+  	switch_sata_connection("external");
+  	echo "$cmd ok";
+  	break;
+  case "internal_drive":
+  	switch_sata_connection("internal");
+  	echo "$cmd ok";
+  	break;
   case "symlink":
     if (is_link($symlink)) die("already exists");
     die(symlink($mountpoint,$symlink));
@@ -61,11 +69,12 @@ switch($cmd){
     $lba_current = 0;
     $lba_end = 0;
     
-    if (is_file($file_lba_start))   $lba_start   = intval(trim(file_get_contents($file_lba_start)));
-    if (is_file($file_lba_current)) $lba_current = intval(trim(file_get_contents($file_lba_current)));
-    if (is_file($file_lba_end))     $lba_end     = intval(trim(file_get_contents($file_lba_end)));
+    if (is_file($file_lba_start))   $lba_start   = floatval(trim(file_get_contents($file_lba_start)));
+    if (is_file($file_lba_current)) $lba_current = floatval(trim(file_get_contents($file_lba_current)));
+    if (is_file($file_lba_end))     $lba_end     = floatval(trim(file_get_contents($file_lba_end)));
     
     if (($lba_start!=0)&&($lba_current!=0)&&($lba_end!=0)){
+    	//$size = ((($lba_end>>10)&0x003fffff) - (($lba_current>>10)&0x003fffff))/2/1024;
     	$size = ($lba_end - $lba_current)/2/1024/1024;
     	$sda2 = round($size,2);
     	$sda2 .= "G";
@@ -143,5 +152,23 @@ switch($cmd){
   default:
     print("nothing has been done");
 }
-  
+ 
+function switch_sata_connection($mode){
+	
+	global $mountpoint;
+	
+	exec("umount $mountpoint");
+	exec("rmmod ahci_elphel");
+	
+	if       ($mode=="external"){
+	  exec("/usr/local/bin/x393sata_control.py set_zynq_esata");
+	}else if ($mode=="internal"){
+	  exec("/usr/local/bin/x393sata_control.py set_zynq_ssd");
+	}
+	
+	exec("modprobe ahci_elphel >/dev/null 2>&1 &");
+	sleep(2);
+	exec("echo 1 > /sys/devices/soc0/amba@0/80000000.elphel-ahci/load_module");
+}
+
 ?>
