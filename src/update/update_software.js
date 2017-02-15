@@ -67,10 +67,14 @@ function init(){
   });
   
   $('#btn_flash').click(function(){
+	  
+	var restore = "";
+	if ($("#chk_restore").prop("checked")) restore="&restore";
+	  
     $("#status").html("Flashing...");
     blink_intvl = setInterval(blink,1000);
     $.ajax({
-      url: "update_nand.php?cmd=flash",
+      url: "update_nand.php?cmd=flash"+restore,
       success: function(result){
         clearInterval(blink_intvl);
         $("#status").html(result);

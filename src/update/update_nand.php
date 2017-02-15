@@ -251,12 +251,15 @@ switch($cmd){
     $flash_list = verify(false);
     backup();
     nandflash($flash_list);
-    copy_backup();
+    if (isset($_GET['restore'])) copy_backup();
     break;
   case "backup":
     backup();
     send_backup();
     break;
+  case "restore":
+  	copy_backup();
+  	break;
   case "remove":
     remove();
     break;
