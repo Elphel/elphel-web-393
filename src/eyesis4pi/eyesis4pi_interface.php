@@ -44,6 +44,28 @@ $file_lba_current = $sysfs_lba_path."lba_current";
 $file_lba_end = $sysfs_lba_path."lba_end";
 
 switch($cmd){
+  case "camogm_debug":
+        exec("echo 'debug=/tmp/camogm.log;debuglev=6' > /var/state/camogm_cmd");
+        echo "$cmd ok";
+        break;
+  case "camogm_kill":
+        exec("killall -9 camogm");
+        echo "$cmd ok";
+        break;
+  case "logs_download":
+  
+        header("Content-Type: application/octet-stream");
+        header("Content-Disposition: attachment; filename=\"{$_SERVER["SERVER_ADDR"]}.logs\"");
+  
+        echo_file($sysfs_lba_path."io_error");
+        echo_file($file_lba_start);
+        echo_file($file_lba_current);
+        echo_file($file_lba_end);
+        echo_file($camogmdisk);
+        echo_file("/var/log/messages");
+        echo_file("/var/tmp/camogm.log");
+        
+        break;
   case "external_drive":
   	switch_sata_connection("external");
   	echo "$cmd ok";
@@ -152,23 +174,27 @@ switch($cmd){
   default:
     print("nothing has been done");
 }
- 
+
+function echo_file($f){
+  if (is_file($f)){
+    echo "$f:\n";
+    echo file_get_contents($f)."\n";
+  }else{
+    echo "$f: missing\n";
+  }
+  return 0;
+}
+
 function switch_sata_connection($mode){
-	
-	global $mountpoint;
-	
-	exec("umount $mountpoint");
-	exec("rmmod ahci_elphel");
-	
-	if       ($mode=="external"){
-	  exec("/usr/local/bin/x393sata_control.py set_zynq_esata");
-	}else if ($mode=="internal"){
-	  exec("/usr/local/bin/x393sata_control.py set_zynq_ssd");
-	}
-	
-	exec("modprobe ahci_elphel >/dev/null 2>&1 &");
-	sleep(2);
-	exec("echo 1 > /sys/devices/soc0/amba@0/80000000.elphel-ahci/load_module");
+
+  global $mountpoint;
+
+  if       ($mode=="external"){
+    exec("/usr/local/bin/x393sata_eyesis4pi_control.py set_zynq_esata");
+  }else if ($mode=="internal"){
+    exec("/usr/local/bin/x393sata_eyesis4pi_control.py set_zynq_ssd");
+  }
+
 }
 
 ?>
