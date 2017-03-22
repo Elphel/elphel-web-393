@@ -61,9 +61,21 @@ switch($cmd){
         echo_file($file_lba_start);
         echo_file($file_lba_current);
         echo_file($file_lba_end);
+        
         echo_file($camogmdisk);
-        echo_file("/var/log/messages");
+      
+        echo_file("/var/log/init_elphel393.log");
+        echo_file("/var/log/x393sata_control.log");
+        echo_file("/var/log/x393sata_eyesis4pi.log");
+        
+        echo_file("/var/log/autocampars.log");
+        
+        echo_file("/var/log/lighttpd.error.log");
+        echo_file("/var/log/lighttpd_stderr.log");
+        
         echo_file("/var/tmp/camogm.log");
+        echo_file("/var/log/messages");
+        echo_file("/var/log/access.log");
         
         break;
   case "external_drive":
