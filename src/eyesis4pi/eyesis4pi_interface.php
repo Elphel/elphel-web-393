@@ -59,6 +59,8 @@ switch($cmd){
         break;
   case "logs_download":
   
+        ini_set('memory_limit','512M');
+  
         header("Content-Type: application/octet-stream");
         header("Content-Disposition: attachment; filename=\"{$_SERVER["SERVER_ADDR"]}.logs\"");
   
@@ -73,7 +75,7 @@ switch($cmd){
                 
         echo_file("/var/log/init_elphel393.log");
         echo_file("/var/log/x393sata_control.log");
-        echo_file("/var/log/x393sata_eyesis4pi.log");
+        //echo_file("/var/log/x393sata_eyesis4pi.log");
       
         echo_file("/var/state/ssd");
       
@@ -82,9 +84,10 @@ switch($cmd){
         echo_file("/var/log/lighttpd.error.log");
         echo_file("/var/log/lighttpd_stderr.log");
         
-        echo_file("/var/tmp/camogm.log");
         echo_file("/var/log/messages");
         echo_file("/var/log/access.log");
+        
+        echo_file("/var/tmp/camogm.log");
         
         break;
   case "external_drive":
