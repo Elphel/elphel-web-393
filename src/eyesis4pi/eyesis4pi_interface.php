@@ -44,6 +44,11 @@ $file_lba_current = $sysfs_lba_path."lba_current";
 $file_lba_end = $sysfs_lba_path."lba_end";
 
 switch($cmd){
+  case "check_imu":
+        if (is_link("/dev/imu")) $res = 1;
+        else                     $res = 0;
+        echo $res;
+        break;
   case "camogm_debug":
         exec("echo 'debug=/tmp/camogm.log;debuglev=6' > /var/state/camogm_cmd");
         echo "$cmd ok";
