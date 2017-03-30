@@ -32,7 +32,8 @@ else if (isset($argv[1]))
 $symlink = "/www/pages/ssd";
 $mountpoint = "/mnt/sda1";
 
-$camogmdisk = "/home/root/camogm.disk";
+//$camogmdisk = "/home/root/camogm.disk";
+$camogmdisk = "/mnt/sda1/camogm.disk";
 $nandbootpath = "/tmp/rootfs.ro";
 
 if (is_dir($nandbootpath)) $camogmdisk = $nandbootpath.$camogmdisk; 
@@ -182,7 +183,7 @@ switch($cmd){
   	if (is_file($camogmdisk)){
   		unlink($camogmdisk);
   	}
-  	file_put_contents($file_lba_current,file_get_contents($file_lba_start));
+  	//file_put_contents($file_lba_current,file_get_contents($file_lba_start));
   	print("reset fastrec: ok");
     break;
   case "free_space_bkp":
