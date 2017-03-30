@@ -50,7 +50,19 @@ switch($cmd){
         echo $res;
         break;
   case "camogm_debug":
-        exec("echo 'debug=/tmp/camogm.log;debuglev=6' > /var/state/camogm_cmd");
+        if (isset($_GET['debuglev'])){
+          $debuglev = $_GET['debuglev'];
+        }else{
+          $debuglev = 3;
+        }
+        
+        if (isset($_GET['debug'])){
+          $debug = $_GET['debug'];
+        }else{
+          $debug = "/tmp/camogm.log";
+        }        
+        
+        exec("echo 'debug=$debug;debuglev=$debuglev' > /var/state/camogm_cmd");
         echo "$cmd ok";
         break;
   case "camogm_kill":
