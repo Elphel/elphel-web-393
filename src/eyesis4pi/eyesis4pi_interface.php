@@ -99,7 +99,7 @@ switch($cmd){
         echo_file("/var/log/messages");
         echo_file("/var/log/access.log");
         
-        echo_file("/var/tmp/camogm.log");
+        echo_file("/tmp/camogm.log");
         
         break;
   case "external_drive":
@@ -173,7 +173,8 @@ switch($cmd){
     		}
     	}
     }
-    respond_xml("{$sda1} {$sda2}");
+    //respond_xml("{$sda1} {$sda2}");
+    respond_xml("{$sda1}");
     break;
     
   case "reset_camogm_fastrec":
