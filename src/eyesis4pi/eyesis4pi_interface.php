@@ -36,7 +36,7 @@ $mountpoint = "/mnt/sda1";
 $camogmdisk = "/mnt/sda1/camogm.disk";
 $nandbootpath = "/tmp/rootfs.ro";
 
-if (is_dir($nandbootpath)) $camogmdisk = $nandbootpath.$camogmdisk; 
+//if (is_dir($nandbootpath)) $camogmdisk = $nandbootpath.$camogmdisk; 
 
 $sysfs_lba_path = "/sys/devices/soc0/amba@0/80000000.elphel-ahci/";
 
@@ -181,7 +181,7 @@ switch($cmd){
   case "reset_camogm_fastrec":
   	// remove file
   	if (is_file($camogmdisk)){
-  		unlink($camogmdisk);
+          unlink($camogmdisk);
   	}
   	// reset pointers
   	exec("echo 'rawdev_path=/dev/sda2' > /var/state/camogm_cmd");
