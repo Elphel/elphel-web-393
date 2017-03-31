@@ -188,6 +188,10 @@ switch($cmd){
   	//file_put_contents($file_lba_current,file_get_contents($file_lba_start));
   	print("reset fastrec: ok");
     break;
+  case "refresh_camogm_fastrec":
+    exec("echo 'rawdev_path=/dev/sda2' > /var/state/camogm_cmd");
+    print("refresh fastrec: ok");
+    break;
   case "free_space_bkp":
     // results are in GB
     // /dev/sda2 is not a mountpoint but a device because it does not have a file system
