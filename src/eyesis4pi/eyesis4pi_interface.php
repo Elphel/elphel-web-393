@@ -179,10 +179,12 @@ switch($cmd){
     break;
     
   case "reset_camogm_fastrec":
-  	//remove file
+  	// remove file
   	if (is_file($camogmdisk)){
   		unlink($camogmdisk);
   	}
+  	// reset pointers
+  	exec("echo 'rawdev_path=/dev/sda2' > /var/state/camogm_cmd");
   	//file_put_contents($file_lba_current,file_get_contents($file_lba_start));
   	print("reset fastrec: ok");
     break;
