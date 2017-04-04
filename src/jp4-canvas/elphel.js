@@ -1,7 +1,7 @@
 /** 
  * @file elphel.js
- * @brief functions for pixel manipulation (canvas)
- * @copyright Copyright (C) 2016 Elphel Inc.
+ * @brief functions for pixel manipulation and drawing on canvas
+ * @copyright Copyright (C) 2017 Elphel Inc.
  * @author Oleg Dzhimiev <oleg@elphel.com>
  *
  * @licstart  The following is the entire license notice for the 
@@ -26,41 +26,114 @@
  */
 
 var Elphel = {
+  
+  // Drawing
+  Canvas:{
 
-    /* Name: reorderJP4Blocks
-     * Description: clear from the function's name
-     * 
-     * ctx - canvas 2D context
-     * format:
-     *   'jpeg' - skip reordering
-     *   'jp4' - jp4 reordeing
-     *   'jp46' - jp46 reordering
-     * mosaic - [["Gr","R"],["B","Gb"]] = 
-     *    odd lines:  Gr,R,Gr,R
-     *    even lines: B,Gb,B,Gb
-     * nwd - true/false - demosaicing: 'Nearest Neighbor' with 1/2 scale - 
-     *    put mosaic (different channels) for GrRBGb into one pixel for 
-     *    faster performance
-     */
-    reorderJP4Blocks: function(ctx, format="JP4", mosaic=[["Gr","R"],["B" ,"Gb"]], nwd=false) {
+    /**
+      * Name: putImageData - the same but not the same
+      * Description: -
+      */
+    putImageData: function(ctx,px,width,height){
       
       var t0 = Date.now();
       
-      var width = ctx.canvas.width;
-      var height = ctx.canvas.height;
-
-      var inputImage = ctx.getImageData(0,0,width,height);
-      var iPixels = inputImage.data;
-
-      var outputImage = ctx.createImageData((nwd)?width/2:width,(nwd)?height/2:height);
-      var oPixels = outputImage.data;
+      ctx.canvas.width = width;
+      ctx.canvas.height = height;
       
-      // img.data is a long 1-D array with the following structure:
+      var imgdata = new ImageData(new Uint8ClampedArray(px), width, height);
+      ctx.putImageData(imgdata,0,0);
+
+      console.log("drawImageData(): "+(Date.now()-t0)/1000+" s");
+      
+      /*
+      // new: http://stackoverflow.com/questions/15908179/draw-image-from-pixel-array-on-canvas-with-putimagedata
+      // obsolete:
+       
+      //var img = ctx.createImageData(ctx.canvas.width,ctx.canvas.height);
+      //var imgdata = img.data;
+      
+      // byte-copy?!!
+      for(var i=0;i<(imgdata.length>>2);i++){
+        imgdata[4*i+0] = px[4*i+0];
+        imgdata[4*i+1] = px[4*i+1];
+        imgdata[4*i+2] = px[4*i+2];
+        imgdata[4*i+3] = px[4*i+3];
+      }
+      ctx.putImageData(img,0,0);
+      */
+
+    },
+    
+    /**
+    * Name: drawScaled
+    * Description: Plugin specific. Takes source canvas - draws a scaled 
+    *              version on destination canvas
+    */
+    drawScaled: function(cnv_src,cnv_dst,width){
+      var t0 = Date.now();
+      
+      var ctx = cnv_src[0].getContext('2d');
+      
+      var tw = ctx.canvas.width;
+      var th = ctx.canvas.height;
+      var tr = tw/th;
+      
+      var sctx = cnv_dst[0].getContext('2d');
+      
+      var w = Math.round(width);
+      var h = Math.round(w/tr);
+      
+      sctx.canvas.width = w;
+      sctx.canvas.height = h;
+      
+      cscale = Math.round(w/tw*100)/100;
+      
+      sctx.scale(cscale,cscale);
+      sctx.drawImage(cnv_src[0],0,0);
+
+      console.log("drawScaled(): "+(Date.now()-t0)/1000+" s");
+    }
+    
+  },
+  
+  // Pixel manipulation
+  Pixels:{
+    
+    /**
+    * Name: reorderJP4Blocks
+    * Description: clear from the function's name
+    * 
+    * @pixels - pixel array, read from origin canvas
+    *  pixels is a long 1-D array with the following structure:
+    *  pix[i+0] - red
+    *  pix[i+1] - green
+    *  pix[i+2] - blue
+    *  pix[i+3] - alpha
+    * @width - origin canvas width
+    * @height - origin canvas height
+    * @format - value comes from exif.js function
+    *   'jpeg' - skip reordering
+    *   'jp4' - jp4 reordeing
+    *   'jp46' - jp46 reordering
+    * @mosaic - [["Gr","R"],["B","Gb"]] - value comes from application
+    *    odd lines:  Gr,R,Gr,R
+    *    even lines: B,Gb,B,Gb
+    * @nwd - true/false - comes from application - demosaicing: 'Nearest Neighbor' with 1/2 scale - 
+    *    put mosaic (different channels) for GrRBGb into one pixel for 
+    *    faster performance
+    */
+    reorderBlocksJPx: function(pixels,width,height,format="JP4",mosaic=[["Gr","R"],["B" ,"Gb"]],nwd=false){
+    
+      var t0 = Date.now();
+      
+      // pixels is a long 1-D array with the following structure:
       // pix[i+0] - red
       // pix[i+1] - green
       // pix[i+2] - blue
       // pix[i+3] - alpha
-
+      var oPixels = new Uint8Array((nwd)?pixels.length/4:pixels.length);
+      
       // buffer for reordering pixels
       var macroblock = new Array(); //16x16
       for (var y=0;y<16;y++) macroblock[y]=new Array();
@@ -84,7 +157,7 @@ var Elphel = {
                 //offset=(((yb<<4)+y)*width)+(nb<<3)+((xb>=(width>>5))?(((xb<<5)-width)+(width<<3)):(xb<<5));
                 offset=(((yb<<4)+y)*width)+(nb<<3)+(xb<<5)+((xb>=(width>>5))?((width<<3)-width):0);
                 for (x=0;x<8;x++) {
-                  macroblock[(y<<1)|ybyr][(x<<1)|xbyr]=iPixels[4*(offset+x)];
+                  macroblock[(y<<1)|ybyr][(x<<1)|xbyr]=pixels[4*(offset+x)];
                 }
               }
             }
@@ -94,7 +167,7 @@ var Elphel = {
               offset=((yb<<4)+y)*width+(xb<<4);
               for (x=0;x<16;x++) {
                 //Red value only
-                macroblock[((y<<1)&0xe)|((y>>3)&0x1)][((x<<1)&0xe)|((x>>3)&0x1)]=iPixels[4*(offset+x)];
+                macroblock[((y<<1)&0xe)|((y>>3)&0x1)][((x<<1)&0xe)|((x>>3)&0x1)]=pixels[4*(offset+x)];
               }
             }
           }    
@@ -134,47 +207,42 @@ var Elphel = {
           }
         }
       }
-      if (nwd) {
-        ctx.canvas.width = width/2;
-        ctx.canvas.height = height/2;
-      }
-      ctx.putImageData(outputImage,0,0);
-      
-      console.log("reorderJP4Blocks(): "+(Date.now()-t0)/1000+" s");
+      console.log("reorderJP4Blocks: "+(Date.now()-t0)/1000+" s");
+      return oPixels;
     },
+    
+    /**
+    * Name: demosaicNearestNeighbor with downscale
+    * Description: A separate function, just in case, same as in
+    *              reorderJP4Blocks
+    *
+    * @pixels - pixel array, read from origin canvas
+    *  pixels is a long 1-D array with the following structure:
+    *  pix[i+0] - red
+    *  pix[i+1] - green
+    *  pix[i+2] - blue
+    *  pix[i+3] - alpha
+    * @width - origin canvas width
+    * @height - origin canvas height
+    * @mosaic - [["Gr","R"],["B","Gb"]] - value comes from application
+    *    odd lines:  Gr,R,Gr,R
+    *    even lines: B,Gb,B,Gb
+    */
+    demosaicNearestNeighbor: function(pixels,width,height,mosaic=[["Gr","R"],["B" ,"Gb"]]){
 
-    /* Name: demosaicNearestNeighbor
-     * Description: A separate function, just in case, same as in
-     *              reorderJP4Blocks
-     *
-     * ctx - canvas 2D context
-     * mosaic - [["Gr","R"],["B","Gb"]] = 
-     *    odd lines:  Gr,R,Gr,R
-     *    even lines: B,Gb,B,Gb
-     */
-    demosaicNearestNeighbor: function(ctx, mosaic=[["Gr","R"],["B" ,"Gb"]]){
-
-      
       var t0 = Date.now();
       
-      var width = ctx.canvas.width;
-      var height = ctx.canvas.height;
-
-      var inputImage = ctx.getImageData(0,0,width,height);
-      var iPixels = inputImage.data;
-
-      var outputImage = ctx.createImageData(width/2,height/2);
-      var oPixels = outputImage.data;
+      var oPixels = new Uint8Array(pixels.length/4);
       
       for(var y=0;y<height/2;y++){
         for(var x=0;x<width/2;x++){
           for(var k=0;k<4;k++){
             y0 = (k>>1)&1;
             x0 = k&1;
-            if      (mosaic[y0&1][x0&1]=="R")  r  = iPixels[4*(width*(2*y+y0)+2*x+x0)+0];
-            else if (mosaic[y0&1][x0&1]=="Gr") gr = iPixels[4*(width*(2*y+y0)+2*x+x0)+1];
-            else if (mosaic[y0&1][x0&1]=="Gb") gb = iPixels[4*(width*(2*y+y0)+2*x+x0)+1];
-            else if (mosaic[y0&1][x0&1]=="B")  b  = iPixels[4*(width*(2*y+y0)+2*x+x0)+2];
+            if      (mosaic[y0&1][x0&1]=="R")  r  = pixels[4*(width*(2*y+y0)+2*x+x0)+0];
+            else if (mosaic[y0&1][x0&1]=="Gr") gr = pixels[4*(width*(2*y+y0)+2*x+x0)+1];
+            else if (mosaic[y0&1][x0&1]=="Gb") gb = pixels[4*(width*(2*y+y0)+2*x+x0)+1];
+            else if (mosaic[y0&1][x0&1]=="B")  b  = pixels[4*(width*(2*y+y0)+2*x+x0)+2];
           }
           g = (gr+gb)>>1;
           oPixels[4*(width/2*y+x)+0] = r;
@@ -183,36 +251,36 @@ var Elphel = {
           oPixels[4*(width/2*y+x)+3] = 255;
         }
       }
-      ctx.canvas.width = width/2;
-      ctx.canvas.height = height/2;
-      ctx.putImageData(outputImage,0,0);
       
       console.log("demosaicNearestNeighbor(): "+(Date.now()-t0)/1000+" s");
+      return oPixels;
     },
-      
-    /* Name: demosaicBilinear
-     * Description: a simple bilinear demosaicing
-     *
-     * ctx - canvas 2D context
-     * px - pixel array as in "ctx.getImageData(0,0,width,height)"
-     *      or use pixelsToArray(ctx,true) to get linear array from canvas
-     * mosaic - [["Gr","R"],["B","Gb"]] = 
-     *    odd lines:  Gr,R,Gr,R
-     *    even lines: B,Gb,B,Gb
-     * precise - true/false:
-     *    true  - calculate values then apply gamma - provide linear pixel array
-     *            px_linear (8bit) = px^gamma (32bit), gamma=2
-     *    false - calculate values from gamma encoded pixels - 2-4x times faster
-     */
-    demosaicBilinear: function(ctx, px, mosaic=[["Gr","R"],["B" ,"Gb"]], precise=false){
+    
+    /** 
+    * Name: demosaicBilinear
+    * Description: a simple bilinear demosaicing
+    *
+    * @pixels - pixel array, read from origin canvas
+    *  pixels is a long 1-D array with the following structure:
+    *  pix[i+0] - red
+    *  pix[i+1] - green
+    *  pix[i+2] - blue
+    *  pix[i+3] - alpha
+    * @width - origin canvas width
+    * @height - origin canvas height
+    * @mosaic - [["Gr","R"],["B","Gb"]] - value comes from application
+    *    odd lines:  Gr,R,Gr,R
+    *    even lines: B,Gb,B,Gb
+    * @precise - true/false:
+    *    true  - calculate values then apply gamma - provide linear pixel array
+    *            px_linear (8bit) = px^gamma (32bit), gamma=2
+    *    false - calculate values from gamma encoded pixels - 2-4x times faster
+    */
+    demosaicBilinear: function(pixels, width, height, mosaic=[["Gr","R"],["B" ,"Gb"]], precise=false){
 
       var t0 = Date.now();
       
-      var width = ctx.canvas.width;
-      var height = ctx.canvas.height;
-      
-      var outputImage = ctx.getImageData(0,0,width,height);
-      var oPixels = outputImage.data; 
+      var oPixels = new Uint8Array(pixels.length);
       
       var x_l = 0, x_r = 0;
       var y_t = 0, y_b = 0;
@@ -229,16 +297,16 @@ var Elphel = {
           
           //Gr
           if (mosaic[y%2][x%2]=="Gr"){
-            Pr_y0xl = px[4*(width*(y+0)+(x_l))+0];
-            Pr_y0xr = px[4*(width*(y+0)+(x_r))+0];
-            Pb_ybx0 = px[4*(width*(y_b)+(x+0))+2];
-            Pb_ytx0 = px[4*(width*(y_t)+(x+0))+2];
+            Pr_y0xl = pixels[4*(width*(y+0)+(x_l))+0];
+            Pr_y0xr = pixels[4*(width*(y+0)+(x_r))+0];
+            Pb_ybx0 = pixels[4*(width*(y_b)+(x+0))+2];
+            Pb_ytx0 = pixels[4*(width*(y_t)+(x+0))+2];
             
             if (precise){
               //Pr = pixel_l2g(1/2*(pixel_g2l(Pr_y0xl)+pixel_g2l(Pr_y0xr)));
               //Pb = pixel_l2g(1/2*(pixel_g2l(Pb_ybx0)+pixel_g2l(Pb_ytx0)));
-              Pr = this.l2g(1/2*(Pr_y0xl+Pr_y0xr));
-              Pb = this.l2g(1/2*(Pb_ybx0+Pb_ytx0));
+              Pr = this.Functions.l2g(1/2*(Pr_y0xl+Pr_y0xr));
+              Pb = this.Functions.l2g(1/2*(Pb_ybx0+Pb_ytx0));
             }else{
               Pr = 1/2*(Pr_y0xl+Pr_y0xr);
               Pb = 1/2*(Pb_ybx0+Pb_ytx0);
@@ -250,19 +318,19 @@ var Elphel = {
           //R
           if (mosaic[y%2][x%2]=="R"){
               
-            Pg_ytx0 = px[4*(width*(y_t)+(x+0))+1];
-            Pg_y0xl = px[4*(width*(y+0)+(x_l))+1];
-            Pg_y0xr = px[4*(width*(y+0)+(x_r))+1];
-            Pg_ybx0 = px[4*(width*(y_b)+(x+0))+1];
+            Pg_ytx0 = pixels[4*(width*(y_t)+(x+0))+1];
+            Pg_y0xl = pixels[4*(width*(y+0)+(x_l))+1];
+            Pg_y0xr = pixels[4*(width*(y+0)+(x_r))+1];
+            Pg_ybx0 = pixels[4*(width*(y_b)+(x+0))+1];
             
-            Pb_ytxl = px[4*(width*(y_t)+(x_l))+2];
-            Pb_ytxr = px[4*(width*(y_t)+(x_r))+2];
-            Pb_ybxl = px[4*(width*(y_b)+(x_l))+2];
-            Pb_ybxr = px[4*(width*(y_b)+(x_r))+2];
+            Pb_ytxl = pixels[4*(width*(y_t)+(x_l))+2];
+            Pb_ytxr = pixels[4*(width*(y_t)+(x_r))+2];
+            Pb_ybxl = pixels[4*(width*(y_b)+(x_l))+2];
+            Pb_ybxr = pixels[4*(width*(y_b)+(x_r))+2];
             
             if (precise){
-              Pg = this.l2g(1/4*(Pg_ytx0+Pg_y0xl+Pg_y0xr+Pg_ybx0));
-              Pb = this.l2g(1/4*(Pb_ytxl+Pb_ytxr+Pb_ybxl+Pb_ybxr));
+              Pg = this.Functions.l2g(1/4*(Pg_ytx0+Pg_y0xl+Pg_y0xr+Pg_ybx0));
+              Pb = this.Functions.l2g(1/4*(Pb_ytxl+Pb_ytxr+Pb_ybxl+Pb_ybxr));
             }else{
               Pg = 1/4*(Pg_ytx0+Pg_y0xl+Pg_y0xr+Pg_ybx0);
               Pb = 1/4*(Pb_ytxl+Pb_ytxr+Pb_ybxl+Pb_ybxr);
@@ -275,19 +343,19 @@ var Elphel = {
           //B
           if (mosaic[y%2][x%2]=="B"){
               
-            Pr_ytxl = px[4*(width*(y_t)+(x_l))+0];
-            Pr_ytxr = px[4*(width*(y_t)+(x_r))+0];
-            Pr_ybxl = px[4*(width*(y_b)+(x_l))+0];
-            Pr_ybxr = px[4*(width*(y_b)+(x_r))+0];
+            Pr_ytxl = pixels[4*(width*(y_t)+(x_l))+0];
+            Pr_ytxr = pixels[4*(width*(y_t)+(x_r))+0];
+            Pr_ybxl = pixels[4*(width*(y_b)+(x_l))+0];
+            Pr_ybxr = pixels[4*(width*(y_b)+(x_r))+0];
             
-            Pg_ytx0 = px[4*(width*(y_t)+(x+0))+1];
-            Pg_y0xl = px[4*(width*(y+0)+(x_l))+1];
-            Pg_y0xr = px[4*(width*(y+0)+(x_r))+1];
-            Pg_ybx0 = px[4*(width*(y_b)+(x+0))+1];
+            Pg_ytx0 = pixels[4*(width*(y_t)+(x+0))+1];
+            Pg_y0xl = pixels[4*(width*(y+0)+(x_l))+1];
+            Pg_y0xr = pixels[4*(width*(y+0)+(x_r))+1];
+            Pg_ybx0 = pixels[4*(width*(y_b)+(x+0))+1];
             
             if (precise){
-              Pr = this.l2g(1/4*(Pr_ytxl+Pr_ytxr+Pr_ybxl+Pr_ybxr));
-              Pg = this.l2g(1/4*(Pg_ytx0+Pg_y0xl+Pg_y0xr+Pg_ybx0));
+              Pr = this.Functions.l2g(1/4*(Pr_ytxl+Pr_ytxr+Pr_ybxl+Pr_ybxr));
+              Pg = this.Functions.l2g(1/4*(Pg_ytx0+Pg_y0xl+Pg_y0xr+Pg_ybx0));
             }else{
               Pr = 1/4*(Pr_ytxl+Pr_ytxr+Pr_ybxl+Pr_ybxr);
               Pg = 1/4*(Pg_ytx0+Pg_y0xl+Pg_y0xr+Pg_ybx0);
@@ -299,14 +367,14 @@ var Elphel = {
           //Gb
           if (mosaic[y%2][x%2]=="Gb"){
             
-            Pr_ytx0 = px[4*(width*(y_t)+(x+0))+0];
-            Pr_ybx0 = px[4*(width*(y_b)+(x+0))+0];
-            Pb_y0xl = px[4*(width*(y+0)+(x_l))+2];
-            Pb_y0xr = px[4*(width*(y+0)+(x_r))+2];
+            Pr_ytx0 = pixels[4*(width*(y_t)+(x+0))+0];
+            Pr_ybx0 = pixels[4*(width*(y_b)+(x+0))+0];
+            Pb_y0xl = pixels[4*(width*(y+0)+(x_l))+2];
+            Pb_y0xr = pixels[4*(width*(y+0)+(x_r))+2];
             
             if (precise){
-              Pr = this.l2g(1/2*(Pr_ytx0+Pr_ybx0));
-              Pb = this.l2g(1/2*(Pb_y0xl+Pb_y0xr));
+              Pr = this.Functions.l2g(1/2*(Pr_ytx0+Pr_ybx0));
+              Pb = this.Functions.l2g(1/2*(Pb_y0xl+Pb_y0xr));
             }else{
               Pr = 1/2*(Pr_ytx0+Pr_ybx0);
               Pb = 1/2*(Pb_y0xl+Pb_y0xr);
@@ -317,66 +385,73 @@ var Elphel = {
           }
         }
       }
-      ctx.putImageData(outputImage,0,0);
       console.log("demosaicBilinear(): "+(Date.now()-t0)/1000+" s");
+      return oPixels;
     },
     
-    /* Name: showSingleColorChannel
-     * Description: make a BW from selected channel
-     * 
-     * ctx - canvas 2D context
-     * channel - "red","green","blue"
-     */
-    showSingleColorChannel: function(ctx, channel){
-      var width = ctx.canvas.width;
-      var height = ctx.canvas.height;
-      var inputImage = ctx.getImageData(0,0,width,height);
-      var iPixels = inputImage.data;
+    /**
+    * Name: showSingleColorChannel
+    * Description: make a BW from selected channel
+    * 
+    * @pixels - pixel array, read from origin canvas
+    *  pixels is a long 1-D array with the following structure:
+    *  pix[i+0] - red
+    *  pix[i+1] - green
+    *  pix[i+2] - blue
+    *  pix[i+3] - alpha
+    * @width - origin canvas width (not really needed)
+    * @height - origin canvas height (not really needed)
+    * @channel - string - "red","green","blue"
+    */
+    showSingleColorChannel: function(pixels, width, height, channel){
       for(var y=0;y<height;y++){
         for(var x=0;x<width;x++){
-            r = iPixels[4*(width*y+x)+0];
-            g = iPixels[4*(width*y+x)+1];
-            b = iPixels[4*(width*y+x)+2];
+            r = pixels[4*(width*y+x)+0];
+            g = pixels[4*(width*y+x)+1];
+            b = pixels[4*(width*y+x)+2];
             
             if (channel=="red"){
-                iPixels[4*(width*y+x)+0]=r;
-                iPixels[4*(width*y+x)+1]=r;
-                iPixels[4*(width*y+x)+2]=r;
+                pixels[4*(width*y+x)+0]=r;
+                pixels[4*(width*y+x)+1]=r;
+                pixels[4*(width*y+x)+2]=r;
             }else if (channel=="green"){
-                iPixels[4*(width*y+x)+0]=g;
-                iPixels[4*(width*y+x)+1]=g;
-                iPixels[4*(width*y+x)+2]=g;
+                pixels[4*(width*y+x)+0]=g;
+                pixels[4*(width*y+x)+1]=g;
+                pixels[4*(width*y+x)+2]=g;
             }else if (channel=="blue"){
-                iPixels[4*(width*y+x)+0]=b;
-                iPixels[4*(width*y+x)+1]=b;
-                iPixels[4*(width*y+x)+2]=b;
+                pixels[4*(width*y+x)+0]=b;
+                pixels[4*(width*y+x)+1]=b;
+                pixels[4*(width*y+x)+2]=b;
             }
         }
       }
-      ctx.putImageData(inputImage,0,0);
+      return pixels;
     },
     
-    /* Name: applySaturation
-     * Description: get data from ctx saturate and redraw
-     * 
-     * ctx - canvas 2D context
-     * s - value
-     */
-    applySaturation: function(ctx,s){
-      var width = ctx.canvas.width;
-      var height = ctx.canvas.height;
-      
-      var inputImage = ctx.getImageData(0,0,width,height);
-      var iPixels = inputImage.data;
-      
+    /**
+    * Name: applySaturation
+    * Description: get data from ctx saturate and redraw
+    * 
+    * @pixels - pixel array, read from origin canvas
+    *  pixels is a long 1-D array with the following structure:
+    *  pix[i+0] - red
+    *  pix[i+1] - green
+    *  pix[i+2] - blue
+    *  pix[i+3] - alpha
+    * @width - origin canvas width
+    * @height - origin canvas height
+    * @s - saturation coefficient
+    */
+    applySaturation: function(pixels,width,height,s){
+
       var r,g,b;
       var Y,Cb,Cr;
       
       for(var y=0;y<height;y++){
         for(var x=0;x<width;x++){
-          r = iPixels[4*(width*y+x)+0];
-          g = iPixels[4*(width*y+x)+1];
-          b = iPixels[4*(width*y+x)+2];
+          r = pixels[4*(width*y+x)+0];
+          g = pixels[4*(width*y+x)+1];
+          b = pixels[4*(width*y+x)+2];
           
           Y =  0.299*r+0.5870*g+ 0.144*b;
           
@@ -394,117 +469,21 @@ var Elphel = {
           if (g<0) g=0; if (g>255) g=255;
           if (b<0) b=0; if (b>255) b=255;
           
-          iPixels[4*(width*y+x)+0]=r;
-          iPixels[4*(width*y+x)+1]=g;
-          iPixels[4*(width*y+x)+2]=b;
-          iPixels[4*(width*y+x)+3]=255;
+          pixels[4*(width*y+x)+0]=r;
+          pixels[4*(width*y+x)+1]=g;
+          pixels[4*(width*y+x)+2]=b;
+          pixels[4*(width*y+x)+3]=255;
         }
       }
-      ctx.putImageData(inputImage,0,0);
+      return pixels;
     },
 
-    /* Name: l2g
-     * Desctiptin: convert a value from linear to gamma encoded,
-     *             close to square root
-     */
-    l2g: function(pv){
-      // assuming gamma=2
-      var tmp = Math.sqrt(pv);
-      if (tmp>255) tmp = 255;
-      return tmp;
-    },
-
-    /* Name: g2l
-     * Desctiptin: convert a value gamma encoded to linear,
-     *             close to square
-     */    
-    g2l: function(pv){
-        // assuming gamma = 2
-        var tmp = pv*pv;
-        return tmp;
-    },
-    
-    /* Name: pixelsToArray
-     * Desctiptin: get pixel data from canvas context and copy to
-     *             an array. The array will be Uint8ClampedArray
-     */
-    pixelsToArray: function(ctx){
-      t0 = Date.now();
-      
-      var px = [];
-      
-      var width = ctx.canvas.width;
-      var height = ctx.canvas.height;
-      
-      var image = ctx.getImageData(0,0,width,height);
-      var pixels = image.data;
-      
-      px = pixels.slice(0);
-
-      console.log("pixelsToArray(): "+(Date.now()-t0)/1000+" s");
-      return px;
-    },
-    
-    /* Name: pixelsToArrayLinear
-     * Desctiptin: get pixel data from canvas context, convert to linear,
-     *             then copy to an array.
-     */
-    pixelsToArrayLinear: function(ctx){
-      t0 = Date.now();
-      
-      var px = [];
-      
-      var width = ctx.canvas.width;
-      var height = ctx.canvas.height;
-      
-      var image = ctx.getImageData(0,0,width,height);
-      var pixels = image.data;
-      
-      for(var i=0;i<pixels.length;i+=4){
-        px[i+0] = this.g2l(pixels[i+0]);
-        px[i+1] = this.g2l(pixels[i+1]);
-        px[i+2] = this.g2l(pixels[i+2]);
-        px[i+3] = pixels[i+3]; //alpha
-      }
-
-      console.log("pixelsToArrayLinear(): "+(Date.now()-t0)/1000+" s");
-      return px;
-    },
-    
-    /* Name: drawScaled
-     * Description: Plugin specific. Takes source canvas - draws a scaled 
-     *              version on destination canvas
-     */
-    drawScaled: function(cnv_src,cnv_dst,width){
-      var t0 = Date.now();
-      
-      var ctx = cnv_src[0].getContext('2d');
-      
-      var tw = ctx.canvas.width;
-      var th = ctx.canvas.height;
-      var tr = tw/th;
-      
-      var sctx = cnv_dst[0].getContext('2d');
-      
-      var w = Math.round(width);
-      var h = Math.round(w/tr);
-      
-      sctx.canvas.width = w;
-      sctx.canvas.height = h;
-      
-      cscale = Math.round(w/tw*100)/100;
-      
-      sctx.scale(cscale,cscale);
-      sctx.drawImage(cnv_src[0],0,0);
-
-      console.log("drawScaled(): "+(Date.now()-t0)/1000+" s");
-    },
-    
-    /* Name: diffColorChannels
-     * Description: color channel difference
-     * 
-     */
-    diffColorChannels: function(px,chn1,chn2,k=1){
+    /**
+    * Name: diffColorChannels
+    * Description: color channel difference
+    * 
+    */
+    diffColorChannels: function(pixels,chn1,chn2,k=1){
       
       var t0 = Date.now();
       
@@ -516,37 +495,38 @@ var Elphel = {
       if (chn2=="green") i2 = 1;
       if (chn2=="blue")  i2 = 2;
       
-      for(var i=0;i<(px.length>>2);i++){
-        diff = k*px[4*i+i1] - px[4*i+i2];
-        px[4*i+0] = diff;
-        px[4*i+1] = diff;
-        px[4*i+2] = diff;
-        px[4*i+3] = 255;
+      for(var i=0;i<(pixels.length>>2);i++){
+        diff = k*pixels[4*i+i1] - pixels[4*i+i2];
+        pixels[4*i+0] = diff;
+        pixels[4*i+1] = diff;
+        pixels[4*i+2] = diff;
+        pixels[4*i+3] = 255;
       }
       
       console.log("diffColorChannels(): "+(Date.now()-t0)/1000+" s");
-      return px;
+      return pixels;
     },
     
-    /* Name: ndvi
-     * Description: get ndvi
-     */
-    ndvi: function(px){
+    /**
+    * Name: ndvi_experimental
+    * Description: get ndvi
+    */
+    ndvi_experimental: function(pixels){
       var r,g,b;
       var NIR,RED,NDVI;
-      for(var i=0;i<(px.length>>2);i++){
-        r = px[4*i+0];
-        g = px[4*i+1];
-        b = px[4*i+2];
+      for(var i=0;i<(pixels.length>>2);i++){
+        r = pixels[4*i+0];
+        g = pixels[4*i+1];
+        b = pixels[4*i+2];
         
         if ((b>r)||(g>r)) {
           console.log("Color error!");
           NIR = 0;
           RED = 1;
-          //if (b>r) px[4*(width*y+x)+2]=255;
-          if (b>r) px[4*i+2]=0;
-          if (g>r) px[4*i+1]=0;
-          px[4*i+0]=200;
+          //if (b>r) pixels[4*(width*y+x)+2]=255;
+          if (b>r) pixels[4*i+2]=0;
+          if (g>r) pixels[4*i+1]=0;
+          pixels[4*i+0]=200;
         }else{
           if ((r-b)<20) b = 0;
           k = 0.6;
@@ -563,58 +543,72 @@ var Elphel = {
           }
           
           //console.log("RED="+RED+" NIR="+NIR);
-          px[4*i+0]=r;
-          px[4*i+1]=g;
-          px[4*i+2]=b;
+          pixels[4*i+0]=r;
+          pixels[4*i+1]=g;
+          pixels[4*i+2]=b;
         }
       }
-      return px;
+      return pixels;
     },
     
-    /* Name: gammaEncode
-     * Description: -
-     */
-    gammaEncode: function(px){
-      for(var i=0;i<(px.length>>2);i++){
-        px[4*i+0] = this.l2g(px[4*i+0]);
-        px[4*i+1] = this.l2g(px[4*i+1]);
-        px[4*i+2] = this.l2g(px[4*i+2]);
+    /** 
+    * Name: gammaEncode
+    * Description: -
+    */
+    gammaEncode: function(pixels){
+      for(var i=0;i<(pixels.length>>2);i++){
+        pixels[4*i+0] = this.Functions.l2g(pixels[4*i+0]);
+        pixels[4*i+1] = this.Functions.l2g(pixels[4*i+1]);
+        pixels[4*i+2] = this.Functions.l2g(pixels[4*i+2]);
       }
-      return px;
+      return pixels;
     },
     
-    /* Name: gammaDecode
-     * Description: -
-     */
-    gammaDecode: function(px){
-      for(var i=0;i<(px.length>>2);i++){
-        px[4*i+0] = this.g2l(px[4*i+0]);
-        px[4*i+1] = this.g2l(px[4*i+1]);
-        px[4*i+2] = this.g2l(px[4*i+2]);
+    /**
+    * Name: gammaDecode
+    * Description: -
+    */
+    gammaDecode: function(pixels){
+      for(var i=0;i<(pixels.length>>2);i++){
+        pixels[4*i+0] = this.Functions.g2l(pixels[4*i+0]);
+        pixels[4*i+1] = this.Functions.g2l(pixels[4*i+1]);
+        pixels[4*i+2] = this.Functions.g2l(pixels[4*i+2]);
       }
-      return px;      
-    },
-    
-    /* Name: drawImageData
-     * Description: -
-     */
-    drawImageData: function(ctx,px){
-      var t0 = Date.now();
-      
-      var img = ctx.createImageData(ctx.canvas.width,ctx.canvas.height);
-      
-      var imgdata = img.data;
-      
-      for(var i=0;i<(imgdata.length>>2);i++){
-        imgdata[4*i+0] = px[4*i+0];
-        imgdata[4*i+1] = px[4*i+1];
-        imgdata[4*i+2] = px[4*i+2];
-        imgdata[4*i+3] = px[4*i+3];
-      }
-      
-      ctx.putImageData(img,0,0);
-      
-      console.log("drawImageData(): "+(Date.now()-t0)/1000+" s");
+      return pixels;      
     }
+    
+  },
+    
+  // simple funcitons
+  Functions:{
+    
+    /** 
+    * Name: l2g
+    * Desctiptin: convert a value from linear to gamma encoded,
+    *             close to square root
+    */
+    l2g: function(pv){
+      // assuming gamma=2
+      var tmp = Math.sqrt(pv);
+      if (tmp>255) tmp = 255;
+      return tmp;
+    },
 
-};
+    /* 
+    * Name: g2l
+    * Desctiptin: convert a value gamma encoded to linear,
+    *             close to square
+    */
+    g2l: function(pv){
+        // assuming gamma = 2
+        var tmp = pv*pv;
+        return tmp;
+    }
+    
+  },
+  
+  test: function(){
+    console.log("Test message from elphel.js: ok");
+  }
+  
+}

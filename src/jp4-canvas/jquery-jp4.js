@@ -59,71 +59,75 @@
 
     var PIXELS = [];
 
-    var cnv_working = $("<canvas>",{id:"result"}).css({
-      display:"none"
-    });
-    var cnv_display = $("<canvas>",{id:"scaled"});
+    var cnv_working = $("<canvas>",{id:"working"});
+    var cnv_display = $("<canvas>",{id:"display"});
     
-    elem.append(cnv_working).append(cnv_display);
+    // hide working canvas
+    cnv_working.css({display:"none"});
+    
+    elem.append(cnv_working);
+    elem.append(cnv_display);
         
     get_image(); 
     //end
 
     function get_image(){
-          
-          var canvas = cnv_working;
-          var scaled_canvas = cnv_display;
-          
-          //reset format
-          IMAGE_FORMAT = "JPEG";
-            
-          var http = new XMLHttpRequest();
-          
-          var rq = "";
-          if (settings.port!=""){
-            rq = "get-image.php?port="+settings.port+"&rel=bimg&ts="+Date.now();
-            settings.refresh = true;
-          }else{
-            rq = settings.image;
-          }
-                    
-          http.open("GET", rq, true);
-          
-          http.responseType = "blob";
-          http.onload = function(e) {
-            if (this.status === 200) {
-              var heavyImage = new Image();
-              heavyImage.onload = function(){
-                EXIF.getData(this, function() {
-                  //update canvas size
-                  canvas.attr("width",this.width);
-                  canvas.attr("height",this.height);
+    
+      var canvas = cnv_working;
+      
+      //reset format
+      IMAGE_FORMAT = "JPEG";
 
-                  parseEXIFMakerNote(this);
-                          
-                  canvas.drawImage({
-                    x:0, y:0,
-                    source: heavyImage,
-                    load: redraw,
-                    //scale: 1,
-                    fromCenter: false
-                  });
-                });
-              };
-              heavyImage.src = URL.createObjectURL(http.response);
-            }
+      var http = new XMLHttpRequest();
+      var rq = "";
+
+      if (settings.port!=""){
+        rq = "get-image.php?port="+settings.port+"&rel=bimg&ts="+Date.now();
+        settings.refresh = true;
+      }else{
+        rq = settings.image;
+      }
+
+      http.open("GET", rq, true);
+
+      http.responseType = "blob";
+      http.onload = function(e) {
+        if (this.status === 200) {
+          var heavyImage = new Image();
+          heavyImage.onload = function(){
+            EXIF.getData(this, function() {
+              //update canvas size
+              canvas.attr("width",this.width);
+              canvas.attr("height",this.height);
+
+              parseEXIFMakerNote(this);
+                      
+              canvas.drawImage({
+                x:0, y:0,
+                source: heavyImage,
+                load: redraw,
+                fromCenter: false
+              });
+            });
           };
-          http.send();
+          heavyImage.src = URL.createObjectURL(http.response);
         }
+      };
+      
+      http.send();
+      
+    }
         
     function redraw(){
       $(this).draw({
         fn: function(ctx){
+          
           var t0 = Date.now();
+          
           if ((IMAGE_FORMAT=="JP4")||(IMAGE_FORMAT=="JP46")){
             if (settings.fast){
               quickestPreview(ctx);
-            }else{
+            }/*else{
               Elphel.reorderJP4Blocks(ctx,"JP4");
               
               if (settings.precise){
@@ -153,12 +157,15 @@
               }
 
             }
+            */
             // RGB -> YCbCr x SATURATION -> RGB
             // Taking SATURATION[0] = 1/GAMMA[0] (green pixel of GR-line)
             //saturation(ctx,SATURATION[0]);
           }
-          Elphel.drawScaled(cnv_working,cnv_display,settings.width);
+          
           console.log("#"+elem.attr("id")+", time: "+(Date.now()-t0)/1000+" s");
+          
+          // custom event
           $(this).trigger("canvas_ready");
           
           if (settings.refresh) get_image();
@@ -167,10 +174,50 @@
     }
         
     function quickestPreview(ctx){
-      Elphel.reorderJP4Blocks(ctx,"JP4",settings.mosaic,settings.fast);
-      Elphel.applySaturation(ctx,SATURATION[0]);
+
+      var worker = new Worker('js/webworker.js');
+      
+      var width = ctx.canvas.width;
+      var height = ctx.canvas.height;
+      var image = ctx.getImageData(0,0,width,height);
+      var pixels = image.data;
+      
+      worker.postMessage({
+        mosaic: settings.mosaic,
+        format: IMAGE_FORMAT,
+        width:ctx.canvas.width,
+        height:ctx.canvas.height,
+        pixels:pixels.buffer,
+        settings: {
+          fast:    settings.fast,
+          channel: settings.channel,
+          diff:    settings.diff,
+          ndvi:    settings.ndvi
+        },
+      },[pixels.buffer]);
+      
+      worker.onmessage = function(e){
+        
+        var pixels = new Uint8Array(e.data.pixels);
+        var working_context = cnv_working[0].getContext('2d');
+        
+        var width = e.data.width;
+        var height = e.data.height;
+        
+        Elphel.Canvas.putImageData(working_context,pixels,width,height);
+        Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
+      }
+      
     }
 
+    /**
+     * plugin globals get changed
+     * @FLIPV - not used
+     * @FLIPH - not used
+     * @BAYER - not used
+     * @IMAGE_FORMAT - used
+     * @SATURATION[i] - not used
+     */
     function parseEXIFMakerNote(src){
       
       var exif_orientation = EXIF.getTag(src,"Orientation");
@@ -239,7 +286,7 @@
         */
         for (i=0;i<4;i++) {
           //SATURATION[i] = 1/gammas[i];
-          //SATURATION[i] = 1.75; //nightmate time
+          //SATURATION[i] = 1.75; // nightmarish time
           SATURATION[i] = 2;
         }
         //console.log("MakerNote: Saturations: "+SATURATION[0]+" "+SATURATION[1]+" "+SATURATION[2]+" "+SATURATION[3]);
