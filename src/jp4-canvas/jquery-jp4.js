@@ -51,6 +51,9 @@
       }
     },options);
 
+    // working time
+    var T0;
+    
     var BAYER = settings.mosaic;
     var FLIPV = 0;
     var FLIPH = 0;
@@ -122,7 +125,7 @@
       $(this).draw({
         fn: function(ctx){
           
-          var t0 = Date.now();
+          T0 = Date.now();
           
           if ((IMAGE_FORMAT=="JP4")||(IMAGE_FORMAT=="JP46")){
             if (settings.fast){
@@ -163,10 +166,10 @@
             //saturation(ctx,SATURATION[0]);
           }
           
-          console.log("#"+elem.attr("id")+", time: "+(Date.now()-t0)/1000+" s");
-          
+          // too early
+          //console.log("#"+elem.attr("id")+", time: "+(Date.now()-t0)/1000+" s");
           // custom event
-          $(this).trigger("canvas_ready");
+          //$(this).trigger("canvas_ready");
           
           if (settings.refresh) get_image();
         }
@@ -206,6 +209,11 @@
         
         Elphel.Canvas.putImageData(working_context,pixels,width,height);
         Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
+        
+        // report time
+        console.log("#"+elem.attr("id")+", time: "+(Date.now()-T0)/1000+" s");
+        //trigger here
+        cnv_working.trigger("canvas_ready");
       }
       
     }
