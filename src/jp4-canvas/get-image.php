@@ -30,13 +30,18 @@ if (isset($_GET['rel']))
 else
     die();
 
+if (isset($_GET['ip']))
+    $ip = $_GET['ip'];
+else
+    $ip = "localhost";
+    
 /*
 header("Location: http://{$_SERVER['HTTP_HOST']}:$port/$rel");
 die();
 */
 
 header('Content-type:image/jpeg');
-echo file_get_contents("http://localhost:$port/$rel");
+echo file_get_contents("http://$ip:$port/$rel");
 
 die();
 

@@ -87,10 +87,15 @@ var Elphel = {
       sctx.canvas.width = w;
       sctx.canvas.height = h;
       
-      cscale = Math.round(w/tw*100)/100;
+      //cscale = Math.round(w/tw*100)/100;
       
-      sctx.scale(cscale,cscale);
-      sctx.drawImage(cnv_src[0],0,0);
+      //option 1
+      //cscale = w/tw;
+      //sctx.scale(cscale,cscale);
+      //sctx.drawImage(cnv_src[0],0,0);
+      
+      // option 2
+      sctx.drawImage(cnv_src[0],0,0,ctx.canvas.width,ctx.canvas.height,0,0,sctx.canvas.width,sctx.canvas.height);
 
       console.log("drawScaled(): "+(Date.now()-t0)/1000+" s");
     }
