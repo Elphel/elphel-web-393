@@ -53,6 +53,7 @@
 
     // working time
     var T0;
+    var TX;
     
     var BAYER = settings.mosaic;
     var FLIPV = 0;
@@ -81,6 +82,9 @@
       //reset format
       IMAGE_FORMAT = "JPEG";
 
+      TX = Date.now();
+      T0 = Date.now();
+      
       var http = new XMLHttpRequest();
       var rq = "";
 
@@ -90,11 +94,16 @@
       }else{
         rq = settings.image;
       }
-
+      
       http.open("GET", rq, true);
-
+      
       http.responseType = "blob";
+      
       http.onload = function(e) {
+        
+        console.log("#"+elem.attr("id")+", file load time: "+(Date.now()-TX)/1000+" s");
+        TX = Date.now();
+        
         if (this.status === 200) {
           var heavyImage = new Image();
           heavyImage.onload = function(){
@@ -125,9 +134,18 @@
       $(this).draw({
         fn: function(ctx){
           
-          T0 = Date.now();
+          console.log("#"+elem.attr("id")+", raw image drawn time: "+(Date.now()-TX)/1000+" s");
+          TX = Date.now();
           
-          if ((IMAGE_FORMAT=="JP4")||(IMAGE_FORMAT=="JP46")){
+          if (IMAGE_FORMAT=="JPEG"){
+            
+            // if JP4/JP46 it will work through webworker and exit later on workers message
+            Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
+            
+            $(this).trigger("canvas_ready");
+            
+          }else if ((IMAGE_FORMAT=="JP4")||(IMAGE_FORMAT=="JP46")){
+            
             if (settings.fast){
               quickestPreview(ctx);
             }/*else{
@@ -185,6 +203,9 @@
       var image = ctx.getImageData(0,0,width,height);
       var pixels = image.data;
       
+      console.log("#"+elem.attr("id")+", data from canvas for webworker time: "+(Date.now()-TX)/1000+" s");
+      TX = Date.now();
+      
       worker.postMessage({
         mosaic: settings.mosaic,
         format: IMAGE_FORMAT,
@@ -207,11 +228,14 @@
         var width = e.data.width;
         var height = e.data.height;
         
+        console.log("#"+elem.attr("id")+", worker time: "+(Date.now()-TX)/1000+" s");
+        TX = Date.now();
+        
         Elphel.Canvas.putImageData(working_context,pixels,width,height);
         Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
         
         // report time
-        console.log("#"+elem.attr("id")+", time: "+(Date.now()-T0)/1000+" s");
+        console.log("#"+elem.attr("id")+", Total time: "+(Date.now()-T0)/1000+" s");
         //trigger here
         cnv_working.trigger("canvas_ready");
       }
