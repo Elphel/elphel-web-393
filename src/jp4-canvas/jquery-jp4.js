@@ -90,7 +90,7 @@
 
       if (settings.port!=""){
         rq = "get-image.php?port="+settings.port+"&rel=bimg&ts="+Date.now();
-        settings.refresh = true;
+        //settings.refresh = true;
       }else{
         rq = settings.image;
       }
