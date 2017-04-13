@@ -142,6 +142,8 @@
             // if JP4/JP46 it will work through webworker and exit later on workers message
             Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
             
+            console.log("#"+elem.attr("id")+", Total time: "+(Date.now()-T0)/1000+" s");
+            
             $(this).trigger("canvas_ready");
             
           }else if ((IMAGE_FORMAT=="JP4")||(IMAGE_FORMAT=="JP46")){
