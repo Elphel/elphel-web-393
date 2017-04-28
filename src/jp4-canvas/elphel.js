@@ -105,6 +105,55 @@ var Elphel = {
   // Pixel manipulation
   Pixels:{
     
+    reorderBlocksJP4_lowres: function(pixels,width,height,format="JP4",mosaic=[["Gr","R"],["B" ,"Gb"]],lowres){
+      
+      var oPixels = new Uint8Array(pixels.length/4);
+      
+      // check
+      if ((lowres!=1)&&(lowres!=2)&&(lowres!=4)&&(lowres!=8)){
+        lowres = 4;
+      }
+      
+      var K0 = 3-Math.log(lowres)/Math.log(2);
+      var K1 = 1<<K0;
+      var K2 = K1-1;
+      
+      for(var y=0;y<height/2;y++){
+        for(var x=0;x<width/2;x++){
+          
+          offset = y*width/2+x;
+
+          y0 = 2*K1*(y>>K0)+(y&K2);
+          x0 = 4*K1*(x>>K0)+(x&K2);
+                      
+          if (x0>=width){
+            x0 = x0 - width;
+            y0 = y0 + K1;
+          }
+          
+          offset0 = width*y0 + x0;
+          
+          for(var k=0;k<4;k++){
+            ym = (k>>1)&1;
+            xm = k&1;
+            if      (mosaic[ym][xm]=="R")   r = pixels[4*(offset0+K1*k)+0];
+            else if (mosaic[ym][xm]=="Gr") gr = pixels[4*(offset0+K1*k)+0];
+            else if (mosaic[ym][xm]=="Gb") gb = pixels[4*(offset0+K1*k)+0];
+            else if (mosaic[ym][xm]=="B")   b = pixels[4*(offset0+K1*k)+0];
+          }
+          g = (gr+gb)>>1;
+          
+          oPixels[4*(offset)+0] = r;//pixels[4*(4*offset+1)+0];
+          oPixels[4*(offset)+1] = g;//pixels[4*(4*offset+0)+0];
+          oPixels[4*(offset)+2] = b;//pixels[4*(4*offset+2)+0];
+          oPixels[4*(offset)+3] = 255;
+        }
+      }
+
+      return oPixels;
+      
+    },
+    
     /**
     * Name: reorderJP4Blocks
     * Description: clear from the function's name
@@ -130,6 +179,8 @@ var Elphel = {
     */
     reorderBlocksJPx: function(pixels,width,height,format="JP4",mosaic=[["Gr","R"],["B" ,"Gb"]],nwd=false){
     
+      var nwd2 = true;
+      
       var t0 = Date.now();
       
       // pixels is a long 1-D array with the following structure:
