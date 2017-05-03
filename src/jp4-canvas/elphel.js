@@ -36,7 +36,7 @@ var Elphel = {
       */
     putImageData: function(ctx,px,width,height){
       
-      var t0 = Date.now();
+      //var t0 = Date.now();
       
       ctx.canvas.width = width;
       ctx.canvas.height = height;
@@ -44,7 +44,7 @@ var Elphel = {
       var imgdata = new ImageData(new Uint8ClampedArray(px), width, height);
       ctx.putImageData(imgdata,0,0);
 
-      console.log("drawImageData(): "+(Date.now()-t0)/1000+" s");
+      //console.log("drawImageData(): "+(Date.now()-t0)/1000+" s");
       
       /*
       // new: http://stackoverflow.com/questions/15908179/draw-image-from-pixel-array-on-canvas-with-putimagedata
@@ -71,7 +71,7 @@ var Elphel = {
     *              version on destination canvas
     */
     drawScaled: function(cnv_src,cnv_dst,width){
-      var t0 = Date.now();
+      //var t0 = Date.now();
       
       var ctx = cnv_src[0].getContext('2d');
       
@@ -97,7 +97,7 @@ var Elphel = {
       // option 2
       sctx.drawImage(cnv_src[0],0,0,ctx.canvas.width,ctx.canvas.height,0,0,sctx.canvas.width,sctx.canvas.height);
 
-      console.log("drawScaled(): "+(Date.now()-t0)/1000+" s");
+      //console.log("drawScaled(): "+(Date.now()-t0)/1000+" s");
     }
     
   },
@@ -181,7 +181,7 @@ var Elphel = {
     
       var nwd2 = true;
       
-      var t0 = Date.now();
+      //var t0 = Date.now();
       
       // pixels is a long 1-D array with the following structure:
       // pix[i+0] - red
@@ -263,7 +263,7 @@ var Elphel = {
           }
         }
       }
-      console.log("reorderJP4Blocks: "+(Date.now()-t0)/1000+" s");
+      //console.log("reorderJP4Blocks: "+(Date.now()-t0)/1000+" s");
       return oPixels;
     },
     
@@ -286,7 +286,7 @@ var Elphel = {
     */
     demosaicNearestNeighbor: function(pixels,width,height,mosaic=[["Gr","R"],["B" ,"Gb"]]){
 
-      var t0 = Date.now();
+      //var t0 = Date.now();
       
       var oPixels = new Uint8Array(pixels.length/4);
       
@@ -308,7 +308,7 @@ var Elphel = {
         }
       }
       
-      console.log("demosaicNearestNeighbor(): "+(Date.now()-t0)/1000+" s");
+      //console.log("demosaicNearestNeighbor(): "+(Date.now()-t0)/1000+" s");
       return oPixels;
     },
     
@@ -334,7 +334,7 @@ var Elphel = {
     */
     demosaicBilinear: function(pixels, width, height, mosaic=[["Gr","R"],["B" ,"Gb"]], precise=false){
 
-      var t0 = Date.now();
+      //var t0 = Date.now();
       
       var oPixels = new Uint8Array(pixels.length);
       
@@ -441,7 +441,7 @@ var Elphel = {
           }
         }
       }
-      console.log("demosaicBilinear(): "+(Date.now()-t0)/1000+" s");
+      //console.log("demosaicBilinear(): "+(Date.now()-t0)/1000+" s");
       return oPixels;
     },
     
@@ -541,7 +541,7 @@ var Elphel = {
     */
     diffColorChannels: function(pixels,chn1,chn2,k=1){
       
-      var t0 = Date.now();
+      //var t0 = Date.now();
       
       var i1 = 0;
       if (chn1=="green") i1 = 1;
@@ -559,7 +559,7 @@ var Elphel = {
         pixels[4*i+3] = 255;
       }
       
-      console.log("diffColorChannels(): "+(Date.now()-t0)/1000+" s");
+      //console.log("diffColorChannels(): "+(Date.now()-t0)/1000+" s");
       return pixels;
     },
     
