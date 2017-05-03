@@ -67,7 +67,12 @@
     var SATURATION = [0,0,0,0];
 
     var PIXELS = [];
-
+    
+    // only valid values are allowed otherwise - disable
+    if ((settings.lowres!=0)&&(settings.lowres!=1)&&(settings.lowres!=2)&&(settings.lowres!=4)&&(settings.lowres!=8)){
+      settings.lowres = 0;
+    }
+    
     var cnv_working = $("<canvas>",{id:"working"});
     var cnv_display = $("<canvas>",{id:"display"});
     

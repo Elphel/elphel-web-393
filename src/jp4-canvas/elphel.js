@@ -105,8 +105,33 @@ var Elphel = {
   // Pixel manipulation
   Pixels:{
     
+    /**
+    * Name: reorderJP4Blocks_lowres
+    * Description: clear from the function's name except for the image must
+    *              be already scaled to W/lowres x H/lowres
+    *              the image is passed as an array of pixels from <canvas>  
+    * 
+    * @pixels - pixel array, read from origin canvas
+    *  pixels is a long 1-D array with the following structure:
+    *  pix[i+0] - red
+    *  pix[i+1] - green
+    *  pix[i+2] - blue
+    *  pix[i+3] - alpha
+    * @width - origin canvas width
+    * @height - origin canvas height
+    * @format - value comes from exif.js function
+    *   'jpeg' - skip reordering
+    *   'jp4' - jp4 reordeing
+    *   'jp46' - jp46 reordering
+    * @mosaic - [["Gr","R"],["B","Gb"]] - value comes from application
+    *    odd lines:  Gr,R,Gr,R
+    *    even lines: B,Gb,B,Gb
+    * @lowres - valid values: 1 (not scaled), 2, 4, 8 (lowest resolution) 
+    *    
+    */
     reorderBlocksJP4_lowres: function(pixels,width,height,format="JP4",mosaic=[["Gr","R"],["B" ,"Gb"]],lowres){
       
+      // the output image is 1/4 because demosaicing = 4 single color channel pixels are put into 1 rgb pixel 
       var oPixels = new Uint8Array(pixels.length/4);
       
       // check
@@ -640,7 +665,7 @@ var Elphel = {
     
     /** 
     * Name: l2g
-    * Desctiptin: convert a value from linear to gamma encoded,
+    * Description: convert a value from linear to gamma encoded,
     *             close to square root
     */
     l2g: function(pv){
@@ -650,9 +675,9 @@ var Elphel = {
       return tmp;
     },
 
-    /* 
+    /** 
     * Name: g2l
-    * Desctiptin: convert a value gamma encoded to linear,
+    * Description: convert a value gamma encoded to linear,
     *             close to square
     */
     g2l: function(pv){
