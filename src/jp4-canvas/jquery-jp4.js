@@ -37,6 +37,7 @@
       ip: "",
       port: "",
       image: "test.jp4",
+      fromhtmlinput: false,
       refresh: false,
       mosaic: [["Gr","R"],["B" ,"Gb"]],
       fast: false,
@@ -88,19 +89,29 @@
     
     elem.append(cnv_working);
     elem.append(cnv_display);
-        
-    get_image(); 
+    
+    if (DEBUG){
+        TX = Date.now();
+        T0 = Date.now();
+    }
+    
+    if (settings.fromhtmlinput){
+        /*
+         * if image is being loaded from <input type='file'>
+         * make sure the image data starts with: "data:image/jpeg;base64," 
+         * EXIF.js does not like empty data type: "data:;base64,"
+         */
+        process_image(settings.image);
+    }else{
+        send_request();
+    }
     //end
 
-    function get_image(){
-    
-      var canvas = cnv_working;
-      
-      //reset format
-      IMAGE_FORMAT = "JPEG";
+    function send_request(){
 
-      var http = new XMLHttpRequest();
       var rq = "";
+        
+      var http = new XMLHttpRequest();
 
       if (settings.port!=""&&settings.ip!=""){
         rq = "get-image.php?ip="+settings.ip+"&port="+settings.port+"&rel=bimg&ts="+Date.now();
@@ -111,12 +122,6 @@
       }
 
       http.open("GET", rq, true);
-
-      if (DEBUG){
-    	TX = Date.now();
-        T0 = Date.now();
-      }
-
       http.responseType = "blob";
       http.onload = function(e) {
 
@@ -126,31 +131,45 @@
         }
 
         if (this.status === 200) {
+            var imgdata = URL.createObjectURL(http.response);
+            process_image(imgdata);
+        }
+      };
+      
+      http.send();
+      
+    }
+    
+    function process_image(imagedata){
+        
+        var canvas = cnv_working;
+        //reset format
+        IMAGE_FORMAT = "JPEG";
+        
+        var heavyImage = new Image();
 
-          var heavyImage = new Image();
+        heavyImage.onload = function(){
 
-          heavyImage.onload = function(){
-
-            EXIF.getData(this, function() {
-              
-              var cnv_w;
-              var cnv_h;
-              
-              if (settings.lowres!=0){
+        EXIF.getData(this, function() {
+            
+            var cnv_w;
+            var cnv_h;
+            
+            if (settings.lowres!=0){
                 cnv_w = this.width/settings.lowres;
                 cnv_h = this.height/settings.lowres;
-              }else{
+            }else{
                 cnv_w = this.width;
                 cnv_h = this.height;
-              }
-              
-              //update canvas size
-              canvas.attr("width",cnv_w);
-              canvas.attr("height",cnv_h);
-              
-              parseEXIFMakerNote(this);
-                      
-              canvas.drawImage({
+            }
+            
+            //update canvas size
+            canvas.attr("width",cnv_w);
+            canvas.attr("height",cnv_h);
+            
+            parseEXIFMakerNote(this);
+                    
+            canvas.drawImage({
                 x:0, y:0,
                 source: this,
                 width: cnv_w,
@@ -163,18 +182,14 @@
                 sHeight: this.height,
                 //scale: scale,
                 fromCenter: false
-              });
             });
+        });
 
-          };
-          heavyImage.src = URL.createObjectURL(http.response);
-        }
-      };
-      
-      http.send();
-      
-    }
+        };
+        heavyImage.src = imagedata;
         
+    }
+    
     function redraw(){
       
       //for debugging
