@@ -214,6 +214,14 @@
             
             $(this).trigger("canvas_ready");
             
+            if (settings.refresh) {
+                if (DEBUG){
+                    TX = Date.now();
+                    T0 = Date.now();
+                }
+                send_request();
+            }
+            
           }else if ((IMAGE_FORMAT=="JP4")||(IMAGE_FORMAT=="JP46")){
             
             if (settings.fast){
@@ -256,8 +264,6 @@
           
           // too early
           //console.log("#"+elem.attr("id")+", time: "+(Date.now()-t0)/1000+" s");
-          
-          if (settings.refresh) get_image();
         }
       });
     }
@@ -323,6 +329,14 @@
         }
         //trigger here
         cnv_working.trigger("canvas_ready");
+        
+        if (settings.refresh) {
+            if (DEBUG){
+                TX = Date.now();
+                T0 = Date.now();
+            }
+            send_request();
+        }
       }
       
     }
