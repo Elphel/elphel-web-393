@@ -78,18 +78,21 @@
             font-family: "Helvetica Neue", Helvetica;
         }
     
-        #snapshot{
-            background-color: #CF4040; /* not Green */
-            border: none;
-            color: white;
-            padding: 32px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 20px;
+        .button{
             font-weight: bold;
             border-radius:3px;
             outline:none;
+            border: none;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+    
+        #snapshot{
+            background-color: #CF4040; /* not Green */
+            padding: 32px 32px;
+            font-size: 20px;
         }
 
         #snapshot:hover{
@@ -104,6 +107,26 @@
             background-color: #A0A0A0; /* not Green */
         }        
         
+        #synced{
+            width:25px;
+            height:25px;
+        }
+        
+        #help_button{
+            background-color: #404040; /* not Green */
+            padding: 3px 7px;
+            font-size: 15px;
+        }
+        
+        #help_button:hover{
+            background-color: #303030; /* not Green */
+        }
+        
+        #help_button:active{
+            background-color: #202020; /* not Green */
+        }
+        
+        
     </style>
 
     <script>
@@ -115,8 +138,31 @@
     
   </head>
   <body>
-    
-    <button title='Download images (synced) from all channels over network' id='snapshot' onclick='take_snapshot()'>Snapshot</button>
-    
+    <div>
+      <button title='Download images from all channels over network' id='snapshot' onclick='take_snapshot()' class='button'>Snapshot</button>
+    </div>
+    <br/>
+    <div>
+      <table>
+      <tr>
+        <td valign='middle'><span style='font-size:20px;line-height:25px;'>sync</span></td>
+        <td valign='middle'><input type='checkbox' id='synced' checked/></td>
+        <td valign='middle'><button id='help_button' class='button' onclick='toggle_help()' >?</button></td>
+      </tr>
+      </table>
+    </div>
+    <br/>
+    <div id='help' style='display:none;'>
+      <b>if checked</b>: 
+      <ul>
+        <li>all ports - same timestamp</li>
+        <li>fps will be reprogrammed - set to single trigger mode then restored - careful if some other program is doing recording</li>
+      </ul>
+      <b>if unchecked</b>:
+      <ul>
+        <li>timestamps can be different</li>
+        <li>fps will not be reprogrammed - no intereference with other recording programs, only network load.</li>
+      </ul>
+    </div>
   </body>
 </html>

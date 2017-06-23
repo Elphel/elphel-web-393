@@ -6,7 +6,13 @@ function take_snapshot(){
   $("#snapshot").attr("disabled",true);
   
   if(ports.length!=0){
-    read_trig_master();
+    
+    if ($("#synced").attr("checked")){
+      read_trig_master();
+    }else{
+      download_all(false);
+    }
+    
   }else{
     console.log("No ports detected");
   }
@@ -50,18 +56,16 @@ function trigger(){
     url:ip+"/snapshot.php?trig",
     success:function(){
       
-      setTimeout(download_all,200);
+      setTimeout(function(){
+        download_all(true);
+      },200);
       
     }
   });
 }
 
-function download_all(){
+function restore_trig_period(){
   
-    ports.forEach(function(c,i){
-        download_single(ip+":"+c+"/bimg");
-    });
-    
     $.ajax({
       url: ip+"/parsedit.php?immediate&TRIG_PERIOD="+(tp_old+1)+"*-2&sensor_port="+trig_master,
       success: function(){
@@ -81,6 +85,16 @@ function download_all(){
     
 }
 
+function download_all(rtp){
+  
+    ports.forEach(function(c,i){
+        download_single(ip+":"+c+"/bimg");
+    });
+    
+    if (rtp) restore_trig_period();
+    
+}
+
 function download_single(addr){
   
   var link = document.createElement('a');
@@ -96,3 +110,10 @@ function download_single(addr){
   document.body.removeChild(link);
   
 }
+
+function toggle_help(){
+  
+  $("#help").toggle();
+  
+}
+
