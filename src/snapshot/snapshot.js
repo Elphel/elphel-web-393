@@ -58,7 +58,7 @@ function trigger(){
       
       setTimeout(function(){
         download_all(true);
-      },200);
+      },500);
       
     }
   });
@@ -95,7 +95,7 @@ function download_all(rtp){
     if (rtp) {
       setTimeout(function(){
         restore_trig_period();
-      },500);
+      },200);
     }
     
 }
