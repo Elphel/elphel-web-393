@@ -111,6 +111,7 @@
   <br />
   <a title="autocampars.php" href="autocampars.php">Parameter Editor</a><br />
   <a title="camogmgui.php" href="camogmgui.php">Recorder</a><br />
+  <a title="save snapshots" href="snapshot/">Take snapshot</a><br />
   <a title="hwmon.html" href="hwmon.html">Temperature monitor</a><br />
   <a title="update NAND flash" href="update_software.html">Update</a><br />
   <br />
