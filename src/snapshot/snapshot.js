@@ -53,7 +53,7 @@ function read_par(param,callback){
 
 function trigger(){
   $.ajax({
-    url:ip+"/snapshot.php?trig",
+    url:ip+"?trig",
     success:function(){
       
       setTimeout(function(){
@@ -88,10 +88,15 @@ function restore_trig_period(){
 function download_all(rtp){
   
     ports.forEach(function(c,i){
-        download_single(ip+":"+c+"/bimg");
+        download_single(ip+":"+c+"/img");
     });
     
-    if (rtp) restore_trig_period();
+    // give 500ms (?)
+    if (rtp) {
+      setTimeout(function(){
+        restore_trig_period();
+      },500);
+    }
     
 }
 
@@ -104,7 +109,7 @@ function download_single(addr){
   
   document.body.appendChild(link);
   
-  link.setAttribute('href', addr+"/img");
+  link.setAttribute('href', addr);
   link.click();
   
   document.body.removeChild(link);
