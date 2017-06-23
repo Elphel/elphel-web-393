@@ -45,9 +45,9 @@
   if(!empty($available_ports)){
     $trig_master = intval(elphel_get_P_value($available_ports[0]-$port0,ELPHEL_TRIG_MASTER));
     $trig_master_port = $trig_master + $port0;
-  } 
+  }
   
-  if ($trig_master>0){
+  if ($trig_master>=0){
     if (isset($_GET['trig'])){
     
       // just in case one wants to override master
@@ -57,7 +57,7 @@
     
       $f = fopen("http://{$_SERVER['SERVER_ADDR']}:$trig_master_port/trig/pointers", 'r');
       fclose($f);
-      die();
+      die("trigger ok: http://{$_SERVER['SERVER_ADDR']}:$trig_master_port/trig/pointers");
       
     }
   }
@@ -131,6 +131,7 @@
 
     <script>
         var ip = location.origin;
+        var href = location.href;
         var ports = [<?php echo implode(",",$available_ports);?>];
         var trig_master = <?php echo $trig_master;?>;
         var trig_master_port = <?php echo $trig_master_port;?>;
