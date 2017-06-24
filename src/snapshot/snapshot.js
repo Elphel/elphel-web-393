@@ -87,13 +87,11 @@ function read_tp(){
 
 function restore_trig_period(){
   
-    console.log("restore period");
-  
     $.ajax({
       url: ip+"/parsedit.php?immediate&TRIG_PERIOD="+(tp_old)+"*-2&sensor_port="+trig_master,
       success: function(){
         
-        console.log("Done!");
+        console.log("Done");
         $("#snapshot").attr("disabled",false);
         
       }
