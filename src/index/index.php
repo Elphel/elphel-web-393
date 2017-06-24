@@ -112,8 +112,9 @@
   <a title="autocampars.php" href="autocampars.php">Parameter Editor</a><br />
   <a title="camogmgui.php" href="camogmgui.php">Recorder</a><br />
   <a title="save snapshots" href="snapshot/">Take snapshot</a><br />
+  <a title="preview jp4 images (drag and drop from PC)" href="jp4-viewer/?width=1200&quality=1">JP4 Viewer</a><br />
   <a title="hwmon.html" href="hwmon.html">Temperature monitor</a><br />
-  <a title="update NAND flash" href="update_software.html">Update</a><br />
+  <a title="update NAND flash" href="update_software.html">Update firmware</a><br />
   <br />
   <a title="docs" href="http://wiki.elphel.com/index.php?title=Tmp_manual">User manual</a><br />
 </div>

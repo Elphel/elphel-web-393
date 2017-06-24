@@ -1,0 +1,32 @@
+#up_wrapper{
+    position:absolute;
+    top:0px;
+    left:0px;
+    height:0px;
+    width: 100%;
+    height: 100%;
+/*     background: rgba(200,210,200,1); */
+}
+
+#up_input{
+    
+    position: absolute;
+    top:0px;
+    left:0px;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    z-index: 2;
+    
+}
+
+#help{
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    position: absolute;
+    left:0px;
+    top:50%;
+    width:100%;
+    height:100%;
+    text-align:center;
+    font-size:20px;
+}

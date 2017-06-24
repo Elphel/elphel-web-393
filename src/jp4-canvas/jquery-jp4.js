@@ -49,6 +49,7 @@
       chn1: "red",
       chn2: "green",
       ndvi: false,
+      webworker_path: "js",
       debug: false,
       callback: function(){
         console.log("callback");
@@ -270,7 +271,7 @@
         
     function quickestPreview(ctx){
       
-      var worker = new Worker('js/webworker.js');
+      var worker = new Worker(settings.webworker_path+'/webworker.js');
       
       if (DEBUG){
         TX = Date.now();
