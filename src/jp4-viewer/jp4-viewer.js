@@ -26,6 +26,13 @@ function parseURL(){
  
 $(function(){
     
+    $.ajax({
+      url: "http://192.168.0.9:2323",
+      success: function(){
+        console.log("success");
+      }
+    });
+  
     parseURL();
     init();
     
