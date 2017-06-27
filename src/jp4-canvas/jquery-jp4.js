@@ -107,7 +107,7 @@
         send_request();
     }
     //end
-
+    
     function send_request(){
 
       var rq = "";
@@ -139,6 +139,36 @@
       
       http.send();
       
+    }
+    
+    this.refresh = function(){
+      send_request();
+    }
+    
+    this.resize = function(w){
+      
+      settings.width = w;
+      send_request();
+      
+    }
+    
+    this.setAddr = function(url,port){
+      
+      settings.port = port;
+      settings.url = ip;
+      
+      return 0;
+      
+    }
+    
+    this.getFormat = function(){
+      
+      return this.format;
+      
+    }
+    
+    this.getAddr = function(){
+      return Array(settings.ip,settings.port);
     }
     
     function process_image(imagedata){
@@ -203,7 +233,7 @@
             console.log("#"+elem.attr("id")+", raw image drawn time: "+(Date.now()-TX)/1000+" s");
             TX = Date.now();
           }
-                    
+          
           if (IMAGE_FORMAT=="JPEG"){
             
             // if JP4/JP46 it will work through webworker and exit later on workers message
@@ -386,6 +416,8 @@
         case 5: IMAGE_FORMAT = "JP4"; break;
         //default:
       }
+      
+      obj.format = IMAGE_FORMAT;
       
       //var gains = Array();
       //var blacks = Array();
