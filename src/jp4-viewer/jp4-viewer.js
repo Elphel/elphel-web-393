@@ -59,10 +59,7 @@ function handleImage(e) {
 
         //data:image/jpeg;base64,  
         myimg = event.target.result;
-        
-        if (myimg.indexOf("data:image")==-1){
-            myimg = "data:image/jpeg;base64,"+myimg.substr(13);
-        }
+        myimg = myimg.replace(/^data:;base64,/ig,"data:image/jpeg;base64,");
 
         //console.log(SETTINGS.width);
         
