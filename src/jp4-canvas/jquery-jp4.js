@@ -155,7 +155,7 @@
     this.setAddr = function(url,port){
       
       settings.port = port;
-      settings.url = ip;
+      settings.ip = url;
       
       return 0;
       
