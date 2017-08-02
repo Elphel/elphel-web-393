@@ -1,5 +1,6 @@
 
 var tp_old = 0;
+var DLC = 0;
 
 function take_snapshot(){
 
@@ -32,33 +33,26 @@ function trigger(){
   $.ajax({
     url:href+"?trig",
     success:function(){
-      
+
       setTimeout(function(){
         download_all(true);
       },200);
-      
+
     }
   });
 }
 
 function download_all(rtp){
-  
+
+    DLC = 0;
     ports.forEach(function(c,i){
-        download_single(ip+":"+c+"/img");
+        download_single(ip+":"+c+"/timestamp_name/img");
     });
-    
-    if (rtp) {
-      setTimeout(function(){
-        read_tp();
-      },200);
-    }else{
-      $("#snapshot").attr("disabled",false);
-    }
-    
+
 }
 
 function download_single(addr){
-  
+
   // get ze blob
   var http = new XMLHttpRequest();
   http.open("GET", addr, true);
@@ -66,41 +60,36 @@ function download_single(addr){
   http.onload = function(e){
 
     if (this.status === 200) {
-      // To access the header, had to add 
+
+      // To access the header, had to add
       // printf("Access-Control-Expose-Headers: Content-Disposition\r\n");
       // to imgsrv
       var filename = this.getResponseHeader("Content-Disposition");
-      
+
       pass_to_file_reader(filename,http.response);
-      
+
+      DLC++;
+      if (DLC==ports.length){
+        if ($("#synced").prop("checked")) {
+            read_tp();
+        }else{
+          $("#snapshot").attr("disabled",false);
+        }
+      }
+
     }
-    
+
   }
   http.send();
-  
-  /*
-  return 0;
-  
-  var link = document.createElement('a');
-  
-  link.setAttribute('download', null);
-  link.style.display = 'none';
-  
-  link.download = addr;
-  link.href = addr;
-  
-  document.body.appendChild(link);
-  link.click();
-  
-  document.body.removeChild(link);
-  */
+
 }
 
 
 // from here:
 //   https://diegolamonica.info/multiple-files-download-on-single-link-click/
 //   http://jsfiddle.net/diegolamonica/ssk8z9pa/
-function pass_to_file_reader(filename,filedata){
+//   (helped a lot) https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
+function pass_to_file_reader(filename,fileblob){
 
   var parameters = filename.split(";");
   for (var i=0;i<parameters.length;i++) parameters[i]=parameters[i].split("=");
@@ -110,33 +99,67 @@ function pass_to_file_reader(filename,filedata){
       filename = filename.trim();
     }
   }
-  
+
+  var url = window.URL.createObjectURL(fileblob);
+
+  var a = $('<a>')
+    .attr('href', url)
+    .attr('download',filename)
+    // Firefox does not fire click if the link is outside
+    // the DOM
+    .appendTo('body');
+
+  a[0].click();
+  //a.click();
+
+  // delay?
+  setTimeout(function(){
+    a.remove();
+  },200);
+
+  //return;
+
+  // The code below will not work because .readAsDataURL() is limited in Chrome to 2MB, but no limit in FF.
+
+  /*
   var reader = new FileReader();
   reader.filename = filename;
-  
+
   reader.onloadend = function(e){
 
+      //console.log("Load ended!");
+
       var file = [this.filename,e.target.result];
-      
-      var theAnchor = $('<a />')
+
+      var theAnchor = $('<a>')
         .attr('href', file[1])
         .attr('download',file[0])
-        // Firefox does not fires click if the link is outside
+        // Firefox does not fire click if the link is outside
         // the DOM
         .appendTo('body');
-            
+
       theAnchor[0].click();
       //theAnchor.click();
-      theAnchor.remove();
-    
+
+      //delay
+
+      setTimeout(function(){
+        theAnchor.remove();
+      },200);
+
   };
-  
+
+  reader.onload = function(e){
+    //console.log("onload");
+  };
+
   reader.readAsDataURL(filedata);
-  
+  */
+
 }
 
 function read_tp(){
-  
+
     var param = "TRIG_PERIOD";
     $.ajax({
       url: ip+"/parsedit.php?immediate&"+param,
@@ -148,22 +171,22 @@ function read_tp(){
 }
 
 function restore_trig_period(){
-  
+
     $.ajax({
       url: ip+"/parsedit.php?immediate&TRIG_PERIOD="+(tp_old)+"*-2&sensor_port="+trig_master,
       success: function(){
-        
+
         console.log("Done");
         $("#snapshot").attr("disabled",false);
-        
+
       }
     });
-    
+
 }
 
 function toggle_help(){
-  
+
   $("#help").toggle();
-  
+
 }
 
