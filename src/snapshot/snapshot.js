@@ -1,6 +1,8 @@
 
 var tp_old = 0;
 var DLC = 0;
+var DLC_exif = 0;
+var filenames = [];
 
 function take_snapshot(){
 
@@ -31,7 +33,7 @@ function read_trig_master(){
 
 function trigger(){
   $.ajax({
-    url:href+"?trig",
+    url:"?trig",
     success:function(){
 
       setTimeout(function(){
@@ -46,7 +48,8 @@ function download_all(rtp){
 
     DLC = 0;
     ports.forEach(function(c,i){
-        download_single(ip+":"+c+"/timestamp_name/img");
+      //download_single(ip+":"+c+"/timestamp_name/img");
+      download_single(ip+":"+c+"/timestamp_name/bimg");
     });
 
 }
@@ -71,7 +74,12 @@ function download_single(addr){
       DLC++;
       if (DLC==ports.length){
         if ($("#synced").prop("checked")) {
-            read_tp();
+	  if (dl_exif_histories==1){
+	    console.log("getting exif histories");
+	    get_exifs();
+	  }else{
+	    read_tp();
+	  }
         }else{
           $("#snapshot").attr("disabled",false);
         }
@@ -99,6 +107,8 @@ function pass_to_file_reader(filename,fileblob){
       filename = filename.trim();
     }
   }
+
+  filenames.push(filename);
 
   var url = window.URL.createObjectURL(fileblob);
 
@@ -155,6 +165,55 @@ function pass_to_file_reader(filename,fileblob){
 
   reader.readAsDataURL(filedata);
   */
+
+}
+
+function get_exifs(){
+
+  DLC_exif = 0;
+
+  filenames.forEach(function(c,i){
+
+    var base = c.split(".");
+    base = base[0];
+
+    var port = base.split("_");
+    port = port[2];
+    var filename = base+"_exifs.txt";
+    var addr = "?exifs&sensor_port="+port;
+
+    var http = new XMLHttpRequest();
+    http.open("GET", addr, true);
+    http.responseType = "blob";
+
+    http.onload = function(e){
+
+      if (this.status === 200) {
+
+        // To access the header, had to add
+        // printf("Access-Control-Expose-Headers: Content-Disposition\r\n");
+        // to imgsrv
+        //var filename = this.getResponseHeader("Content-Disposition");
+
+        pass_to_file_reader(filename,http.response);
+
+        DLC_exif++;
+        if (DLC_exif==ports.length){
+          if ($("#synced").prop("checked")) {
+	    // empty
+	    filenames = [];
+            read_tp();
+          }else{
+            $("#snapshot").attr("disabled",false);
+          }
+        }
+
+      }
+
+    }
+    http.send();
+
+  });
 
 }
 
