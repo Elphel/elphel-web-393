@@ -27,12 +27,12 @@
   <meta charset="utf-8"/>
   <script>
   // for LibreJS:
-  /** 
+  /**
   * @file index.php
   * @copyright Copyright (C) 2017 Elphel Inc.
   * @author -
   *
-  * @licstart  The following is the entire license notice for the 
+  * @licstart  The following is the entire license notice for the
   *  JavaScript code in this page.
   *
   *   The JavaScript code in this page is free software: you can
@@ -62,8 +62,8 @@
   }
   .img_window{
     border: 1px solid rgba(210,210,210,1);
-  }  
-  
+  }
+
   table td {
     padding-right:10px;
   }
@@ -72,13 +72,13 @@
 <body>
 <div style='padding:10px'>
   <?php
-  
+
   $port0 = 2323;
   $path = "/sys/devices/soc0/elphel393-detect_sensors@0";
-    
+
   $table_contents = "";
   $port_links = "";
-    
+
   for($i=0;$i<4;$i++){
     $sensor = $path."/sensor{$i}0";
     if (is_file($sensor)){
@@ -87,31 +87,31 @@
         $sandp = "http://{$_SERVER["SERVER_ADDR"]}:".($port0+$i);
         $href1 = "$sandp/bimg";
         $href2 = "$sandp/mimg";
-        
+
         $table_contents .= "<td>";
         $table_contents .= "<div class='port_window img_window'>";
         $table_contents .= "<div><a href=\"$href1\"><img class='img_window' src='$href1' style='width:300px'/></a></div>";
         $table_contents .= "<div style='text-align:center;'>port $i: <a title='single image' href='$href1'>bimg</a>, <a title='multi-part image stream (M-JPEG)' href='$href2'>mimg</a></div>";
         $table_contents .= "</div>";
         $table_contents .= "</td>";
-        
+
         $port_links .= "<li><a href=\"#\" onclick=\"window.open('camvc.html?sensor_port=$i&reload=0', 'port 0','menubar=0, width=800, height=600, toolbar=0, location=0, personalbar=0, status=0, scrollbars=1')\">port $i</a></li>\n";
-        
+
       }
     }
   }
-  
+
   echo "<table><tr>$table_contents</tr></table>\n";
-  
+
   echo "<br/>";
-  
+
   echo "Camera Control Interface<ul>$port_links</ul>\n";
-  
+
   ?>
   <br />
   <a title="autocampars.php" href="autocampars.php">Parameter Editor</a><br />
   <a title="camogmgui.php" href="camogmgui.php">Recorder</a><br />
-  <a title="save snapshots" href="snapshot/">Take snapshot</a><br />
+  <a title="save snapshots" href="snapshot/">Snapshot</a><br />
   <a title="preview jp4 images (drag and drop from PC)" href="jp4-viewer/?width=1200&quality=1">JP4 Viewer</a><br />
   <a title="hwmon.html" href="hwmon.html">Temperature monitor</a><br />
   <a title="update NAND flash" href="update_software.html">Update firmware</a><br />

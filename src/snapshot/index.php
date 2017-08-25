@@ -43,9 +43,11 @@
 
   }
 
+  $lowest_port = $available_ports[0]-$port0;
+
   // get TRIG_MASTER from lowest port
   if(!empty($available_ports)){
-    $trig_master = intval(elphel_get_P_value($available_ports[0]-$port0,ELPHEL_TRIG_MASTER));
+    $trig_master = intval(elphel_get_P_value($lowest_port,ELPHEL_TRIG_MASTER));
     $trig_master_port = $trig_master + $port0;
   }
 
@@ -74,7 +76,7 @@
       if (isset($_GET['sensor_port'])){
         $port = $_GET['sensor_port'];
       }else{
-        $port = $available_ports[0]-$port0;
+        $port = $lowest_port;
       }
 
       $circbuf_pointers = elphel_get_circbuf_pointers($port,1);
@@ -91,6 +93,55 @@
       }
 
       print_r($meta);
+      die();
+
+    }
+
+    if (isset($_GET['zip'])){
+
+      $tmpdir = "/tmp/snapshot";
+
+      // create tmp dir
+      if (!is_dir($tmpdir)){
+        mkdir($tmpdir);
+      }
+
+      foreach($available_ports as $port){
+        exec("wget --content-disposition -P $tmpdir http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bimg");
+      }
+
+      $fstring = "";
+      $zipfile = "bimg.zip";
+
+      $files = scandir($tmpdir);
+      //remove . & ..
+      array_splice($files,0,2);
+
+      $prefixed_files = preg_filter('/^/', "$tmpdir/", $files);
+      $fstring = implode(" ",$prefixed_files);
+
+      // pick name for the zip archive
+      foreach($files as $file){
+        $tmp = explode(".",$file);
+        if ($tmp[1]=="jp4"||$tmp[1]=="jpeg"){
+          $tmp = explode("_",$tmp[0]);
+          if ($tmp[2]=="0"){
+            $zipfile = $tmp[0]."_".$tmp[1].".zip";
+            break;
+          }
+        }
+      }
+
+      $zipped_data = `zip -qj - $fstring `;
+      header('Content-type: application/zip');
+      header('Content-Disposition: attachment; filename="'.$zipfile.'"');
+      echo $zipped_data;
+
+      // clean up
+      foreach($prefixed_files as $file){
+        unlink($file);
+      }
+
       die();
 
     }
@@ -142,7 +193,7 @@
             background-color: #A0A0A0; /* not Green */
         }
 
-        #synced{
+        #synced, #aszip{
             width:25px;
             height:25px;
         }
@@ -183,6 +234,11 @@
     <br/>
     <div>
       <table>
+      <tr>
+        <td valign='middle'><span style='font-size:20px;line-height:25px;' title='checked = single zip
+unchecked = multiple files'>zip</span></td>
+        <td valign='middle'><input type='checkbox' id='aszip' checked/></td>
+      </tr>
       <tr>
         <td valign='middle'><span style='font-size:20px;line-height:25px;'>sync</span></td>
         <td valign='middle'><input type='checkbox' id='synced' checked/></td>

@@ -46,11 +46,34 @@ function trigger(){
 
 function download_all(rtp){
 
-    DLC = 0;
-    ports.forEach(function(c,i){
-      //download_single(ip+":"+c+"/timestamp_name/img");
-      download_single(ip+":"+c+"/timestamp_name/bimg");
-    });
+    if ($("#aszip").prop("checked")){
+
+      // get ze blob
+      var http = new XMLHttpRequest();
+      http.open("GET", "?zip", true);
+      http.responseType = "blob";
+
+      http.onload = function(e){
+        if (this.status === 200) {
+          var filename = this.getResponseHeader("Content-Disposition");
+          pass_to_file_reader(filename,http.response);
+          if ($("#synced").prop("checked")) {
+            read_tp();
+          }
+        }
+      };
+
+      http.send();
+
+    }else{
+
+      DLC = 0;
+      ports.forEach(function(c,i){
+        //download_single(ip+":"+c+"/timestamp_name/img");
+        download_single(ip+":"+c+"/timestamp_name/bimg");
+      });
+
+    }
 
 }
 
