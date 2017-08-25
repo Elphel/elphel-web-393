@@ -50,7 +50,7 @@ function download_all(rtp){
 
       // get ze blob
       var http = new XMLHttpRequest();
-      http.open("GET", "?zip", true);
+      http.open("GET", "?zip"+(dl_exif_histories?"&exifs":""), true);
       http.responseType = "blob";
 
       http.onload = function(e){

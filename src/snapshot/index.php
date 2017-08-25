@@ -72,33 +72,6 @@
 
     }
 
-    // get exif data from all buffers in a single text file
-    if (isset($_GET['exifs'])){
-
-      if (isset($_GET['sensor_port'])){
-        $port = $_GET['sensor_port'];
-      }else{
-        $port = $lowest_port;
-      }
-
-      $circbuf_pointers = elphel_get_circbuf_pointers($port,1);
-
-      // get metas
-      $meta = array();
-
-      foreach($circbuf_pointers as $k=>$v){
-        $meta[$k] = array (
-          'circbuf_pointer' => $v['circbuf_pointer'],
-          'meta' => elphel_get_interframe_meta($port,$v['circbuf_pointer']),
-          'Exif' => elphel_get_exif_elphel($port, $v['exif_pointer'])
-        );
-      }
-
-      print_r($meta);
-      die();
-
-    }
-
     if (isset($_GET['zip'])){
 
       $contents = Array();
@@ -107,7 +80,9 @@
       foreach($available_ports as $port){
         array_push($rqs,"http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bimg");
       }
+      // '1' in the end - get response with headers
       $cdata = curl_multi_start($rqs,1);
+      // '1' in the end - parse response with headers
       $results = curl_multi_finish($cdata,false,0,false,1);
 
       $filenames = $results['names'];
@@ -127,7 +102,7 @@
       }
       */
 
-      $zipfilename = preg_replace("/_\d+\.jp4$/",".zip",$filenames[0]);
+      $zipfilename = preg_replace("/_\d+\.jp(4|.*g)$/",".zip",$filenames[0]);
 
       //tmpfile
       $tmpfile = tmpfile();
@@ -143,6 +118,16 @@
         $zip->addFromString($v,$contents[$k]);
       }
 
+      if (isset($_GET['exifs'])){
+        foreach($available_ports as $k=>$v){
+          $i = $v-$port0;
+          $fname = $filenames[$k];
+          $v_new = preg_replace("/\.jp(4|.*g)$/","_exifs.txt",$fname);
+          $exifs = get_all_exifs($i);
+          $zip->addFromString($v_new,var_export($exifs,true));
+        }
+      }
+
       $zip->close();
 
       header('Content-type: application/zip');
@@ -152,6 +137,41 @@
       die();
 
     }
+
+    // get exif data from all buffers in a single text file
+    if (isset($_GET['exifs'])){
+
+      if (isset($_GET['sensor_port'])){
+        $port = $_GET['sensor_port'];
+      }else{
+        $port = $lowest_port;
+      }
+
+      $meta = get_all_exifs(intval($port));
+
+      print_r($meta);
+      die();
+
+    }
+
+  }
+
+  function get_all_exifs($port){
+
+    $circbuf_pointers = elphel_get_circbuf_pointers($port,1);
+
+    // get metas
+    $meta = array();
+
+    foreach($circbuf_pointers as $k=>$v){
+      $meta[$k] = array (
+        'circbuf_pointer' => $v['circbuf_pointer'],
+        'meta' => elphel_get_interframe_meta($port,$v['circbuf_pointer']),
+        'Exif' => elphel_get_exif_elphel($port, $v['exif_pointer'])
+      );
+    }
+
+    return $meta;
 
   }
 
