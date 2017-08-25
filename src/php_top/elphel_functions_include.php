@@ -111,7 +111,7 @@ function respond_xml($result,$error=null,$color_mode = 3){ // default white bold
 		header("Pragma: no-cache\n");
 		printf($rslt);
 	}
-	
+
 	if (isset($GLOBALS['logFile'])){
 		if ($result !== ""){ //"" will not be loged/output
 			log_msg(''.$result,$color_mode);
@@ -128,7 +128,7 @@ function respond_xml($result,$error=null,$color_mode = 3){ // default white bold
 // PARALLEL HTTP REQUESTS
 
 // Using parallel requests, PHP has to be configured '--with-curl=' (and libcurl should be installed)
-function curl_multi_start($urls) {
+function curl_multi_start($urls, $with_headers=0) {
 	// numprime is needed to actually send the request and remote starts executing it
 	// Not really clear - what it should be
 	$numprime = 4; // magic number, see http://lampe2e.blogspot.com/2015/03/making-stuff-faster-with-curlmultiexec.html
@@ -138,7 +138,7 @@ function curl_multi_start($urls) {
 		$ch = curl_init ();
 		curl_setopt ($ch, CURLOPT_URL, $url);
 		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt ($ch, CURLOPT_HEADER, 0);
+		curl_setopt ($ch, CURLOPT_HEADER, $with_headers);
 		$aCurlHandles[] = $ch;
 		curl_multi_add_handle ($curl_mh, $ch);
 	}
@@ -151,8 +151,8 @@ function curl_multi_start($urls) {
 	}
 	return array ("mh" => $curl_mh,"handles" => $aCurlHandles);
 }
-	
-function curl_multi_finish($data, $use_xml=true, $ntry=0, $echo = false) {
+
+function curl_multi_finish($data, $use_xml=true, $ntry=0, $echo = false, $with_headers = 0) {
 	$curl_active = 1;
 	$curl_mrc = CURLM_OK;
 	$nrep = 0;
@@ -170,6 +170,7 @@ function curl_multi_finish($data, $use_xml=true, $ntry=0, $echo = false) {
 		}
 	}
 	$results = array ();
+	$names = array ();
 	if ($use_xml) {
 		foreach ($data['handles'] as $i => $ch) {
 			$xml = simplexml_load_string (curl_multi_getcontent ($ch));
@@ -187,11 +188,48 @@ function curl_multi_finish($data, $use_xml=true, $ntry=0, $echo = false) {
 		foreach ($data['handles'] as $i => $ch) {
 			$r = curl_multi_getcontent ($ch);
 			curl_multi_remove_handle ($curl_mh, $ch);
+			if ($with_headers==1){
+				$hsize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+				$h = substr($r, 0, $hsize);
+				$r = substr($r, $hsize);
+				$names[] = curl_get_filename_from_header($h);
+			}
 			$results[] = $r;
+		}
+		if ($with_headers==1){
+			$results = Array('names' => $names,'contents'=> $results);
 		}
 	}
 	curl_multi_close ($curl_mh);
 	return $results;
+}
+
+function curl_get_filename_from_header($h){
+
+	$h = explode("\n",$h);
+	$res = "";
+	if ($h){
+		foreach($h as $e){
+			if (strlen($e)!=0){
+				$tmp = explode(":",$e);
+				if ($tmp[0]=="Content-Disposition"){
+					$tmp = explode(";",$tmp[1]);
+					foreach($tmp as $t){
+						$t = trim($t);
+						$t = explode("=",$t);
+						if ($t[0]=="filename"){
+							$res = trim($t[1]," \t\n\r\0\x0B\"");
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	return $res;
+
 }
 
 // DEVICES
@@ -218,7 +256,7 @@ function get_partitions()
 
 /** Get a list of disk devices which have file system and can be mounted. This function
  *  uses 'blkid' command from busybox.
- */ 
+ */
 function get_mnt_dev()
 {
 	$partitions = get_partitions();
@@ -237,7 +275,7 @@ function get_mnt_dev()
 			$i++;
 		}
 	}
-	
+
 	return array("devices" => $devices, "types" => $fs_types);
 }
 
@@ -246,12 +284,12 @@ function get_raw_dev()
 {
 	$j = 0;
 	$ret = get_mnt_dev();
-	$devices = $ret["devices"]; 
+	$devices = $ret["devices"];
 	$types = $ret["types"];
 
 	$names = get_partitions();
-	
-	// filter out partitions with file system 
+
+	// filter out partitions with file system
 	$i = 0;
 	$raw_devices = array();
 
@@ -267,7 +305,7 @@ function get_raw_dev()
 			$i++;
 		}
 	}
-	
+
 	//special case
 	if (count($raw_devices)>1) {
             foreach($raw_devices as $k=>$v){

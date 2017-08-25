@@ -59,6 +59,8 @@ function download_all(rtp){
           pass_to_file_reader(filename,http.response);
           if ($("#synced").prop("checked")) {
             read_tp();
+          }else{
+            $("#snapshot").attr("disabled",false);
           }
         }
       };

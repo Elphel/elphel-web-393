@@ -22,6 +22,8 @@
 ?>
 <?php
 
+  include "../include/elphel_functions_include.php";
+
   $port0 = 2323;
   $path = "/sys/devices/soc0/elphel393-detect_sensors@0";
   $available_ports = Array();
@@ -99,48 +101,53 @@
 
     if (isset($_GET['zip'])){
 
-      $tmpdir = "/tmp/snapshot";
-
-      // create tmp dir
-      if (!is_dir($tmpdir)){
-        mkdir($tmpdir);
-      }
-
+      $contents = Array();
+      $filenames = Array();
+      $rqs = Array();
       foreach($available_ports as $port){
-        exec("wget --content-disposition -P $tmpdir http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bimg");
+        array_push($rqs,"http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bimg");
       }
+      $cdata = curl_multi_start($rqs,1);
+      $results = curl_multi_finish($cdata,false,0,false,1);
 
-      $fstring = "";
-      $zipfile = "bimg.zip";
+      $filenames = $results['names'];
+      $contents = $results['contents'];
 
-      $files = scandir($tmpdir);
-      //remove . & ..
-      array_splice($files,0,2);
-
-      $prefixed_files = preg_filter('/^/', "$tmpdir/", $files);
-      $fstring = implode(" ",$prefixed_files);
-
-      // pick name for the zip archive
-      foreach($files as $file){
-        $tmp = explode(".",$file);
-        if ($tmp[1]=="jp4"||$tmp[1]=="jpeg"){
-          $tmp = explode("_",$tmp[0]);
-          if ($tmp[2]=="0"){
-            $zipfile = $tmp[0]."_".$tmp[1].".zip";
-            break;
-          }
+      /*
+      foreach($available_ports as $port){
+        //exec("wget --content-disposition -P $tmpdir http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bimg");
+        //fopen("http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bimg",'r');
+        $content = file_get_contents("http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bimg");
+        $filename = get_filename_from_headers($http_response_header);
+        if ($filename==""){
+          $filename = "bimg.jp4";
         }
+        array_push($filenames,$filename);
+        array_push($contents,$content);
+      }
+      */
+
+      $zipfilename = preg_replace("/_\d+\.jp4$/",".zip",$filenames[0]);
+
+      //tmpfile
+      $tmpfile = tmpfile();
+      $tmpfilename = stream_get_meta_data($tmpfile)['uri'];
+
+      $zip = new ZipArchive;
+
+      if ($zip->open($tmpfilename, ZipArchive::OVERWRITE)!==TRUE) {
+        die("cannot access temporary file <$tmpfilename>\n");
       }
 
-      $zipped_data = `zip -qj - $fstring `;
+      foreach($filenames as $k=>$v){
+        $zip->addFromString($v,$contents[$k]);
+      }
+
+      $zip->close();
+
       header('Content-type: application/zip');
-      header('Content-Disposition: attachment; filename="'.$zipfile.'"');
-      echo $zipped_data;
-
-      // clean up
-      foreach($prefixed_files as $file){
-        unlink($file);
-      }
+      header('Content-Disposition: attachment; filename="'.$zipfilename.'"');
+      echo file_get_contents($tmpfilename);
 
       die();
 
