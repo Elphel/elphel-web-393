@@ -10,4 +10,9 @@ generated*
 sysroots
 bitbake-logs
 temp
-image
+
+doxygen.tag
+/image
+/scripts
+/html
+
