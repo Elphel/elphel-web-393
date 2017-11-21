@@ -11,6 +11,10 @@ sysroots
 bitbake-logs
 temp
 
+all_sources.lst
+excluding.lst
+including.lst
+
 doxygen.tag
 /image
 /scripts
