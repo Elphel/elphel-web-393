@@ -2,7 +2,9 @@ PYTHONROOT=$(DESTDIR)/usr/local/bin
 OWN = -o root -g root
 INSTPYTHON = 0755
 #INSTALL = install
-PYTHON_SCRIPTS = tests.py
+PYTHON_SCRIPTS = tests.py \
+                 elphel_framepars.py \
+                 raw.py
 
 all:
 	@echo "make all in python_tests"
