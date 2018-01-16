@@ -19,6 +19,8 @@ import os
 import sys
 import subprocess
 
+MMAP_DATA = True
+
 # globals
 MEMPATH  = "/sys/devices/soc0/elphel393-mem@0"
 VMEMPATH = "/sys/devices/soc0/elphel393-videomem@0"
@@ -36,6 +38,7 @@ MEMSTATUS  = VMEMPATH+"/membridge_status"
 # or just calculate based on image sizes
 
 BUF_SIZE = 4096
+PAGE_SIZE = 4096
 
 # sbuf - buffer in system memory = cpu RAM
 # vbuf - buffer in fpga memory = video memory
@@ -57,12 +60,52 @@ def save_pixel_array(port,fname):
   subprocess.call(cmd,shell=True)
   print("Memory dumped into "+fname)
 
+def mmap_pixel_array(port,size):
+  with open(VMDEV_PRE+str(port),"r+b") as fp:
+      data = mmap.mmap(fp.fileno(), size, offset = 0) # mmap all data
+  return data
+
+def get_byte(data,i):
+  return struct.unpack_from(">B",data[i])[0]
+
+def get_byte_str(data,i):
+  res = get_byte(data,i)
+  #return str(hex(res))
+  return "{:02x}".format(res)
+  #return format(get_byte(data,i),'#02x')
 
 # MAIN
+
+mmap_data = []
+
 for i in range(2):
+
   set_sbuf_size(i)
   set_vbuf_position(i,0)
   copy_vbuf_to_sbuf(i,0)
-  save_pixel_array(i,"/tmp/port"+str(i)+".raw")
 
-print("Now scp raw files to pc and run bayer2rgb\n")
+  if MMAP_DATA:
+    mmap_data.append(mmap_pixel_array(i,BUF_SIZE*PAGE_SIZE))
+    # print the first 16 bytes only
+    print(" ".join("{:02x}".format(get_byte(mmap_data[i],c)) for c in range(16)))
+    # test: hexdump -C /dev/image_raw0
+  else:
+    save_pixel_array(i,"/tmp/port"+str(i)+".raw")
+
+if not MMAP_DATA:
+  print("Now scp raw files to pc and run bayer2rgb\n")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
