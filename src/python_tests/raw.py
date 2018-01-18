@@ -141,16 +141,18 @@ print("TRIG PERIOD = "+str(trig_period)+" us")
 #subprocess.call(cmd,shell=True)
 
 #
-# First set the buffer size and mmap
+# First set the buffer size and mmap once
 #
 for i in sensors:
   size = BUF_SIZE
   set_sbuf_size(i,size)
   if MMAP_DATA:
+    print("mmap buffer "+str(i))
     mmap_data.append(mmap_pixel_array(i,BUF_SIZE*PAGE_SIZE))
 
 #
 # Get pixel data to from fpga(=video) memory to system memory
+# repeat if needed
 #
 for i in sensors:
 
@@ -170,13 +172,17 @@ for i in sensors:
   #ts = get_timestamp_from_meta(i,0)
   #print("    timestamp: "+ts)
 
+
+#
+# Save/print after all needed ports are done
+#
+for i in sensors:
   if MMAP_DATA:
     # print the first 16 bytes for test purposes
     print("test output: " +" ".join("{:02x}".format(get_byte(mmap_data[i],c)) for c in range(16)))
     # test: hexdump -C /dev/image_raw0
   else:
     save_pixel_array(i,"/tmp/port"+str(i)+".raw")
-
 
 # Restore trigger
 #print("Restore trigger")
