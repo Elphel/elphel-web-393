@@ -1,87 +1,47 @@
-#!/usr/local/sbin/php -q
 <?php
-/*!*******************************************************************************
-*! FILE NAME  : raw.php
-*! DESCRIPTION:
-*! Copyright (C) 2008 Elphel, Inc
-*! -----------------------------------------------------------------------------**
-*!
-*!  This program is free software: you can redistribute it and/or modify
-*!  it under the terms of the GNU General Public License as published by
-*!  the Free Software Foundation, either version 3 of the License, or
-*!  (at your option) any later version.
-*!
-*!  This program is distributed in the hope that it will be useful,
-*!  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*!  GNU General Public License for more details.
-*!
-*!  You should have received a copy of the GNU General Public License
-*!  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*! -----------------------------------------------------------------------------**
-*!  $Log: raw.php,v $
-*!  Revision 1.2  2010/02/01 20:21:46  dzhimiev
-*!  1. updated the code
-*!  2. added 'stop' option in order not to return the sensor in continuous mode and thus keep the raw frame in buffer
-*!  3. added setting 8/16 bits for BITS
-*!
-*!  Revision 1.1  2009/10/15 19:42:16  oneartplease
-*!  added raw demo files
-*!
-*!  Revision 1.2  2008/08/18 06:00:34  elphel
-*!  Made it acquire one image at a  time
-*!
-*!  Revision 1.1  2008/08/18 03:27:06  kimstig
-*!  Raw image access demo
-*!
-*!
-*/
 
-$sensor_port = 0;
-if ($_GET ['sensor_port'] != NULL) {
-	$sensor_port = $_GET ['sensor_port'];
+$BUF_SIZE = 4096;
+$VPATH = "/sys/devices/soc0/elphel393-videomem@0"
+$MEM_PRE     = "$VPATH/membridge_start"
+$VFRAME_PRE  = "$VPATH/video_frame_number"
+$RAWINFO_PRE = "$VPATH/raw_frame_info"
+
+if (isset($argv[1])){
+  $_GET['sensor_port'] = $argv[1];
 }
 
-function myval ($s) {
-	$s=trim($s,"\" ");
-	if (strtoupper(substr($s,0,2))=="0X")   return intval(hexdec($s));
-	else return intval($s);
+if (isset($_GET['sensor_port'])){
+  $sensor_port = $_GET['sensor_port'];
+}else{
+  $sensor_port = 0;
 }
 
-$stop=false;
-$parsForRaw=array('SENSOR_RUN'=>1,'BITS'=>8);
+// get master
+$frame_num = elphel_get_frame($sensor_port);
 
-foreach($_GET as $key=>$value) switch ($key){
-	case 'stop':
-		$stop=true;
-	break;
-	default:  /// treat as camera native parameters
-		$parsForRaw[$key]=myval($value);
+$master_port = elphel_get_P_value($sensor_port,ELPHEL_TRIG_MASTER)),0);
+
+set_buf_size($sensor_port,$BUF_SIZE);
+set_vbuf_position($sensor_port,0);
+// waiting for frame is built-in in the driver
+copy_vbuf_to_sbuf($sensor_port,$frame_num+1);
+
+// read frame parameters from sysfs
+// echo short header
+// echo pixels
+
+function set_buf_size($sensor_port,$size){
+  exec("echo $size > /sys/devices/soc0/elphel393-mem@0/buffer_pages_raw_chn$sensor_port");
 }
 
-$name = "/dev/image_raw";
+function set_vbuf_position($sensor_port,$pos){
+  global $VRAME_PRE;
+  exec("echo $pos > {$VFRAME_PRE}{$sensor_port}");
+}
 
-$parsSaved=elphel_get_P_arr($sensor_port, $parsForRaw);
-$thisFrameNumber=elphel_get_frame($sensor_port);
-
-elphel_set_P_arr ($sensor_port, $parsForRaw, $thisFrameNumber);
-elphel_wait_frame_abs($sensor_port, $thisFrameNumber);
-
-$fp = fopen($name, 'rb');
-fseek($fp, 0, SEEK_END);  /// file pointer at the end of the file (to find the file size)
-$fsize = ftell($fp);      /// get file size
-fseek($fp, 0, SEEK_SET);  /// rewind to the start of the file
-/// send the headers
-header("Content-Type: application/octet-stream");
-header('Content-Disposition: attachment; '.'filename="image.raw"');
-header("Content-Length: ".$fsize."\n");
-header("Pragma: no-cache\n");
-fpassthru($fp);           /// send the raw data itself
-fclose($fp);
-
-if (!$stop) {
-	$parsSaved['SENSOR_RUN']=2;
-	elphel_set_P_arr ($sensor_port, $parsSaved, $thisFrameNumber);
+function copy_vbuf_to_sbuf($port,$frame_num){
+  global $MEM_PRE
+  exec("echo $frame_num > {$MEM_PRE}{$sensor_port}");
 }
 
 ?>
