@@ -135,11 +135,6 @@ print("TRIG MASTER = "+str(trig_master))
 print("TRIG PERIOD = "+str(trig_period)+" us")
 
 
-# Stop master trigger (not needed)
-#cmd = "wget -qO- 'http://127.0.0.1:"+str(trig_master_port)+"/trig/pointers' &> /dev/null"
-#print("Stop trigger:")
-#subprocess.call(cmd,shell=True)
-
 #
 # First set the buffer size and mmap once
 #
@@ -149,6 +144,7 @@ for i in sensors:
   if MMAP_DATA:
     print("mmap buffer "+str(i))
     mmap_data.append(mmap_pixel_array(i,BUF_SIZE*PAGE_SIZE))
+
 
 #
 # Get pixel data to from fpga(=video) memory to system memory
@@ -161,16 +157,12 @@ for i in sensors:
 
   print("Port "+str(i)+":")
 
-  #frame_num = p.get_frame_number()+1
-  #print("    frame number: "+str(frame_num))
-
+  # set video buf position: 0 or 1
   set_vbuf_position(i,0)
   # waiting for frame is built-in in the driver
   copy_vbuf_to_sbuf(i,tmp_frame_num+1)
-
-  # get timestamp
-  #ts = get_timestamp_from_meta(i,0)
-  #print("    timestamp: "+ts)
+  # after copying is done frame parameters are available in sysfs:
+  # /sys/devices/soc0/elphel393-videomem@0/raw_frame_infoX
 
 
 #
@@ -184,13 +176,10 @@ for i in sensors:
   else:
     save_pixel_array(i,"/tmp/port"+str(i)+".raw")
 
-# Restore trigger
-#print("Restore trigger")
-#cmd = "wget -qO- 'http://127.0.0.1/parsedit.php?sensor_port="+str(trig_master)+"&immediate&TRIG_PERIOD="+str(trig_period)+"*1' &> /dev/null"
-#subprocess.call(cmd,shell=True)
 
-
-# debug info (might be useful for some standard raw format headers)
+#
+# Debug info (might be useful for some standard raw format headers)
+#
 print("Debug, stored raw frames parameters:")
 # read raw frames parameters
 for i in sensors:
