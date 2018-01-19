@@ -88,6 +88,8 @@ if($cmd=="run"){
   // STEP 2: run
   for($i=0;$i<count($ports);$i++){
     // second argument: 0 or 1 - location in video buffer
+    // setting to 0 here and waiting frame_num+1, but
+    // if frame_num+2 is also of interest - it needs to be set to 1
     set_vbuf_position($ports[$i],0);
     // waiting for frame is built-in in the driver
     copy_vbuf_to_sbuf($ports[$i],$frame_num+1);

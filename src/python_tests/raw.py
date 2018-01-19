@@ -157,7 +157,7 @@ for i in sensors:
 
   print("Port "+str(i)+":")
 
-  # set video buf position: 0 or 1
+  # set video buf position: 0 or 1 - need to manually alterate for each frame (if have time)
   set_vbuf_position(i,0)
   # waiting for frame is built-in in the driver
   copy_vbuf_to_sbuf(i,tmp_frame_num+1)
