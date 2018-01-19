@@ -5,7 +5,7 @@ INSTDOCS = 0644
 #INSTALL = install
 DOCS=       favicon.ico \
             robots.txt
-#CONFS=      autocampars.xml            
+#CONFS=      autocampars.xml
 SYSCONFDIR   = /etc
 CONFDIR      = $(SYSCONFDIR)/elphel393
 
@@ -16,13 +16,14 @@ PHP_SCRIPTS=i2c.php \
             framepars.php \
             parsedit.php \
             phpinfo.php \
+            raw.php \
             snapfull.php \
             tuneseq.php
 
 PHPINCLUDES=i2c_include.php \
             show_source_include.php \
             elphel_functions_include.php
-            
+
 all:
 	@echo "make all in src"
 	@echo "REMOTE_IP =$(REMOTE_IP)"
