@@ -3,10 +3,12 @@
 $help = <<<HELP
 Description:
   This script gets raw pixel data from sensors. It does 2 things:
-  * captures raw data (controls the videomem driver to copy data from fpga memory to the system memory)
+  * captures raw data (controls the videomem driver to copy data from fpga
+    memory to the system memory)
   * transfers captured data over network
 
-  It can capture images for multiple ports at a time, but downloads only a single image.
+  It can capture images for multiple ports at a time, but downloads only
+  a single image (the lowest in the mask).
 
 Parameters:
   cmd - (run|get)
