@@ -108,15 +108,17 @@
   echo "Camera Control Interface<ul>$port_links</ul>\n";
 
   ?>
+  <a href="autocampars.php" title="autocampars.php">Parameter Editor</a><br />
   <br />
-  <a title="autocampars.php" href="autocampars.php">Parameter Editor</a><br />
-  <a title="camogmgui.php" href="camogmgui.php">Recorder</a><br />
-  <a title="save snapshots" href="snapshot/">Snapshot</a><br />
-  <a title="preview jp4 images (drag and drop from PC)" href="jp4-viewer/?width=1200&quality=1">JP4 Viewer</a><br />
-  <a title="hwmon.html" href="hwmon.html">Temperature monitor</a><br />
-  <a title="update NAND flash" href="update_software.html">Update firmware</a><br />
+  <a href="camogmgui.php"   title="Store video/images to the camera's storage">Recorder</a><br />
+  <a href="snapshot/"       title="Take a snapshot and download from the camera">Snapshot</a><br />
+  <a href="raw.php"         title="Take a snapshot and download raw pixel data from the camera">Snapshot (raw image data)</a><br />
+  <br />
+  <a href="hwmon.html"           title="hwmon.html">Temperature monitor</a><br />
+  <a href="update_software.html" title="update NAND flash">Update firmware</a><br />
   <br />
   <a title="docs" href="http://wiki.elphel.com/index.php?title=Tmp_manual">User manual</a><br />
+  <a href="jp4-viewer/?width=1200&quality=1" title="preview jp4 images (drag and drop from PC)">JP4 Viewer</a><br />
 </div>
 <body>
 </html>
