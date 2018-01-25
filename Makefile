@@ -1,5 +1,5 @@
 # Runs 'make', 'make install', and 'make clean' in specified subdirectories
-SUBDIRS := src/php_top src/python_tests src/debugfs-webgui src/jp4-canvas src/update src/eyesis4pi src/index src/pointers src/snapshot src/jp4-viewer # src1
+SUBDIRS := src/php_top src/python_tests src/debugfs-webgui src/jp4-canvas src/update src/eyesis4pi src/index src/pointers src/snapshot src/jp4-viewer src/photofinish # src1
 INSTALLDIRS = $(SUBDIRS:%=install-%)
 CLEANDIRS =   $(SUBDIRS:%=clean-%)
 
@@ -14,13 +14,13 @@ $(SUBDIRS):
 install: $(INSTALLDIRS)
 	echo "make install top"
 
-$(INSTALLDIRS): 
+$(INSTALLDIRS):
 	$(MAKE) -C $(@:install-%=%) install
 
 clean: $(CLEANDIRS)
 	@echo "make clean top"
 
-$(CLEANDIRS): 
+$(CLEANDIRS):
 	$(MAKE) -C $(@:clean-%=%) clean
 
 .PHONY: all install clean $(SUBDIRS) $(INSTALLDIRS) $(CLEANDIRS)

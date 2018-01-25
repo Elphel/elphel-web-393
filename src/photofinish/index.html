@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="author" content="?"/>
+    <link rel="stylesheet" href="/js/bootstrap/css/bootstrap.css">
+    <style>
+      #control-panel{
+        padding: 5px 5px 0px 5px;
+      }
+      #display-panel{
+        padding: 5px 5px 0px 5px;
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <table>
+    <tr>
+      <td>
+        <div id='control-panel'>
+          <button id='init' title='init linescan mode' class='btn btn-default btn-danger '>init</button>
+          <button id='refresh' title='refresh image (no sync)' class='btn btn-default btn-success '>refresh</button>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td><div id='display-panel'></div></td>
+    </tr>
+    </table>
+
+    <script src="/js/elphel.js"></script>
+    <script src="/js/jquery-3.1.1.js"></script>
+    <script src="/js/jcanvas.js"></script>
+    <script src="/js/exif.js"></script>
+    <script src="/js/jquery-jp4.js"></script>
+    <script src="photo-finish.js"></script>
+
+  </body>
+</html>
