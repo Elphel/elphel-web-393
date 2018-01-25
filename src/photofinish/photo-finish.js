@@ -29,10 +29,26 @@ $(function(){
 
   $("#init").on('click',function(){
     console.log("init photo finish");
+    $.ajax({
+      url: "photo-finish.php?cmd=init",
+      success: function(){
+        console.log("success");
+      }
+    });
   });
 
   $("#refresh").on('click',function(){
     console.log("refresh images");
+
+    t1 = $("#display-panel").jp4({
+        ip:"127.0.0.1",
+        port:2323,
+        width:600,
+        fast:true,
+        lowres:0,
+        webworker_path:"/js"
+    });
+
   });
 
   var t1 = $("#display-panel").jp4({
