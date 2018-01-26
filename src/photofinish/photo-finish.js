@@ -25,33 +25,29 @@
  *  for the JavaScript code in this page.
  */
 
+var display_object;
+
 $(function(){
 
   $("#init").on('click',function(){
     console.log("init photo finish");
+    wait_start();
     $.ajax({
       url: "photo-finish.php?cmd=init",
       success: function(){
         console.log("success");
+        wait_stop("init done");
       }
     });
   });
 
   $("#refresh").on('click',function(){
     console.log("refresh images");
-
-    t1 = $("#display-panel").jp4({
-        ip:"127.0.0.1",
-        port:2323,
-        width:600,
-        fast:true,
-        lowres:0,
-        webworker_path:"/js"
-    });
-
+    wait_start();
+    display_object.data.refresh();
   });
 
-  var t1 = $("#display-panel").jp4({
+  display_object = $("#display-panel").jp4({
     ip:"127.0.0.1",
     port:2323,
     width:600,
@@ -61,19 +57,28 @@ $(function(){
   });
 
   $("#display-panel").on("canvas_ready",function(){
+    canvas_ready_handler(this);
+  });
 
-    // get display canvas - hide
-    var cnv_old = $(this).find("#display")[0];
+});
 
-    $(cnv_old).hide();
+function canvas_ready_handler(elem){
+
+    // find display canvas from original plugin
+    var cnv_old = $(elem).find("#display")[0];
+    var parent  = $(cnv_old).parent();
+
+    // init
+    if (parent.find("#display2").length==0){
+      $(cnv_old).hide();
+      cnv_new = $("<canvas>",{id:"display2"});
+      parent.append(cnv_new);
+    }else{
+      cnv_new = parent.find("#display2");
+    }
 
     var w = cnv_old.width;
     var h = cnv_old.height;
-
-    var parent = $(cnv_old).parent();
-
-    cnv_new = $("<canvas>",{id:"display2"});
-    parent.append(cnv_new);
 
     var ctx = cnv_new[0].getContext("2d");
 
@@ -86,6 +91,28 @@ $(function(){
     ctx.drawImage(cnv_old,0,0,w,h,0,0,w,h);
     ctx.restore();
 
-  });
+    wait_stop("refresh done");
+}
 
-});
+var wait_interval;
+var timeout_counter;
+
+function wait_start(){
+  timeout_counter = 30;
+  clearInterval(wait_interval);
+  wait_interval = setInterval(wait_tick,1000);
+}
+
+function wait_stop(msg){
+  clearInterval(wait_interval);
+  $("#status").html(msg);
+}
+
+function wait_tick(){
+  if (timeout_counter==0){
+    wait_stop("Timeout");
+  }else{
+    timeout_counter--;
+  }
+  $("#status").html("waiting("+timeout_counter+")");
+}

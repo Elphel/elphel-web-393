@@ -5,9 +5,8 @@
     <meta name="author" content="?"/>
     <link rel="stylesheet" href="/js/bootstrap/css/bootstrap.css">
     <style>
-      #control-panel{
-        padding: 5px 5px 0px 5px;
-      }
+      #links-panel,
+      #control-panel,
       #display-panel{
         padding: 5px 5px 0px 5px;
       }
@@ -19,9 +18,14 @@
     <table>
     <tr>
       <td>
+        <div id='links-panel'>
+          <a title='Photo finish related pars'
+             href='/parsedit.php?sensor_port=0&WB_EN&AUTOEXP_ON&EXPOS&COMPRESSOR_RUN&TRIG&TRIG_PERIOD&PF_HEIGHT&WOI_HEIGHT&WOI_TOP&WOI_LEFT&WOI_WIDTH&refresh'>Parameter Editor (port 0)</a>
+        </div>
         <div id='control-panel'>
           <button id='init' title='init linescan mode' class='btn btn-default btn-danger '>init</button>
           <button id='refresh' title='refresh image (no sync)' class='btn btn-default btn-success '>refresh</button>
+          <span id='status'></status>
         </div>
       </td>
     </tr>

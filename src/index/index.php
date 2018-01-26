@@ -113,12 +113,14 @@
   <a href="camogmgui.php"   title="Store video/images to the camera's storage">Recorder</a><br />
   <a href="snapshot/"       title="Take a snapshot and download from the camera">Snapshot</a><br />
   <a href="raw.php"         title="Take a snapshot and download raw pixel data from the camera">Snapshot (raw image data)</a><br />
+  <a href="photofinish/"    title="Scanline mode demo">Photo finish demo</a><br />
   <br />
   <a href="hwmon.html"           title="hwmon.html">Temperature monitor</a><br />
   <a href="update_software.html" title="update NAND flash">Update firmware</a><br />
   <br />
   <a title="docs" href="http://wiki.elphel.com/index.php?title=Tmp_manual">User manual</a><br />
   <a href="jp4-viewer/?width=1200&quality=1" title="preview jp4 images (drag and drop from PC)">JP4 Viewer</a><br />
+  <a href="/debugfs.html" title="Linux Kernel Dynamic Debug helper interface (debug device drivers)">DebugFS</a><br />
 </div>
 <body>
 </html>

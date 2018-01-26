@@ -55,13 +55,14 @@ $pars_init_0 = array(
 $pars_init_1 = array(
   'COLOR' => 5,
   'TRIG' => 4,
-  'TRIG_PERIOD' => 100000, // 2000fps
+  'TRIG_PERIOD' => 50000, // 2000fps
   'PF_HEIGHT' => 2,
-  'WOI_HEIGHT' => 16, // for faster work
+  'WOI_HEIGHT' => 16 // for faster work
 );
 
 $pars_init_2 = array(
-  'WOI_HEIGHT' => 8000 // equals to 10 seconds for 400fps
+  'WOI_HEIGHT' => 8000, // equals to 10 seconds for 400fps
+  'WOI_TOP' => 968 // scan at the sensor's center
 );
 
 $pars_init_3 = array(
@@ -77,7 +78,7 @@ if ($cmd=="init"){
   elphel_set_P_arr($sensor_port,$pars_init_0,$frame_num+3);
   elphel_set_P_arr($sensor_port,$pars_init_1,$frame_num+6);
   elphel_set_P_arr($sensor_port,$pars_init_2,$frame_num+9);
-  elphel_set_P_arr($sensor_port,$pars_init_3,$frame_num+11);
+  elphel_set_P_arr($sensor_port,$pars_init_3,$frame_num+12);
 
   elphel_wait_frame_abs($sensor_port,$frame_num+12);
 
