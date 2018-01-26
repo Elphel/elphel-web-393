@@ -37,6 +37,8 @@ $(function(){
       success: function(){
         console.log("success");
         wait_stop("init done");
+        //refresh
+        $("#refresh").click();
       }
     });
   });
