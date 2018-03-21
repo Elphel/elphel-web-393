@@ -388,6 +388,20 @@
 
       var MakerNote = EXIF.getTag(src,"MakerNote");
 
+      //BAYER_MODE
+      bayer_mode = 0; // r gr / gb b
+      if (typeof MakerNote !== 'undefined'){
+        bayer_mode = (MakerNote[10]>>2)&0x3;
+        console.log("Bayer mode = "+bayer_mode);
+        switch(bayer_mode){
+          case 0: BAYER = [["Gr","R"],["B","Gb"]];break;
+          case 1: BAYER = [["R","Gr"],["Gb","B"]];break;
+          case 2: BAYER = [["B","Gb"],["Gr","R"]];break;
+          case 3: BAYER = [["Gb","B"],["R","Gr"]];break;
+          default:BAYER = [["Gr","R"],["B","Gb"]];
+        }
+      }
+
       //FLIPH & FLIPV
       if (typeof MakerNote !== 'undefined'){
         FLIPH = (MakerNote[10]   )&0x1;
@@ -405,6 +419,7 @@
         }
       }
 
+      settings.mosaic = BAYER;
       //console.log("MakerNote: Flips: V:"+FLIPV+" H:"+FLIPH);
 
       //COLOR_MODE ----------------------------------------------------------------
