@@ -53,6 +53,8 @@
   *  for the JavaScript code in this page.
   */
   </script>
+  <script type='text/javascript' src='../js/jquery-3.1.1.js'></script>
+  <!--<script type='text/javascript' src='../js/bootstrap/js/bootstrap.js'></script>-->
   <link rel="stylesheet" href="js/bootstrap/css/bootstrap.css">
   <style>
   .port_window{
@@ -67,6 +69,10 @@
   table td {
     padding-right:10px;
   }
+  
+  .btn.active:focus, .btn:focus{
+  	outline:none;
+  }
   </style>
 </head>
 <body>
@@ -78,12 +84,17 @@
 
   $table_contents = "";
   $port_links = "";
-
+  
+  $sample_port = -1;
+  
   for($i=0;$i<4;$i++){
     $sensor = $path."/sensor{$i}0";
     if (is_file($sensor)){
       $c = trim(file_get_contents($sensor));
       if ($c!="none"){
+
+      	$sample_port = $i;
+      	
         $sandp = "http://{$_SERVER["SERVER_ADDR"]}:".($port0+$i);
         $href1 = "$sandp/bimg";
         $href2 = "$sandp/mimg";
@@ -95,12 +106,17 @@
         $table_contents .= "</div>";
         $table_contents .= "</td>";
 
-        $port_links .= "<li><a href=\"#\" onclick=\"window.open('camvc.html?sensor_port=$i&reload=0', 'port 0','menubar=0, width=800, height=600, toolbar=0, location=0, personalbar=0, status=0, scrollbars=1')\">port $i</a></li>\n";
+        $port_links .= "<li><a href=\"#\" onclick=\"window.open('camvc.html?sensor_port=$i&reload=0', 'port $i','menubar=0, width=800, height=600, toolbar=0, location=0, personalbar=0, status=0, scrollbars=1')\">port $i</a></li>\n";
 
       }
     }
   }
 
+  // check awb of master channel
+  $master_port = elphel_get_P_value($sample_port,ELPHEL_TRIG_MASTER);
+  $awb_on = elphel_get_P_value($master_port,ELPHEL_WB_EN);
+  
+  
   echo "<table><tr>$table_contents</tr></table>\n";
 
   echo "<br/>";
@@ -108,6 +124,15 @@
   echo "Camera Control Interface<ul>$port_links</ul>\n";
 
   ?>
+  <span title='Auto White Balance'>
+  	Auto WB:&nbsp;
+	<div class="btn-group btn-toggle">
+	  <button class="btn btn-xs <?php echo  ($awb_on)?"btn-success active":"btn-default";?>">ON</button>
+	  <button class="btn btn-xs <?php echo (!$awb_on)?"btn-danger active":"btn-default";?>">OFF</button>
+	</div>
+  </span>
+  <br />
+  <br />
   <a href="autocampars.php" title="autocampars.php">Parameter Editor</a><br />
   <br />
   <a href="camogmgui.php"   title="Store video/images to the camera's storage">Recorder</a><br />
@@ -122,5 +147,40 @@
   <a href="jp4-viewer/?width=1200&quality=1" title="preview jp4 images (drag and drop from PC)">JP4 Viewer</a><br />
   <a href="/debugfs.html" title="Linux Kernel Dynamic Debug helper interface (debug device drivers)">DebugFS</a><br />
 </div>
+<script>
+$(function(){
+	$('.btn-toggle').click(function() {
+
+	    if ($(this).find('.btn.active').html()=="ON"){
+	    	$(this).find('.btn.active').toggleClass('btn-success');
+		}else{
+			$(this).find('.btn.active').toggleClass('btn-danger');
+		}
+			    
+		// toggle active
+	    $(this).find('.btn').toggleClass('active');
+
+	    if ($(this).find('.btn.active').html()=="ON"){
+	    	wb_en = 1;
+	    	$(this).find('.btn.active').toggleClass('btn-success');
+		}else{
+			wb_en = 0;
+			$(this).find('.btn.active').toggleClass('btn-danger');
+		}
+
+	    $(this).find('.btn').toggleClass('btn-default');
+	    
+		url = "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&WB_EN="+wb_en+"&*WB_EN=0xf";
+
+		$.ajax({
+			url: url,
+		    success: function(){
+				console.log("awb "+(wb_en?"on":"off"));
+			}
+		});
+	    
+	});	
+});
+</script>
 <body>
 </html>
