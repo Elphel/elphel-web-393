@@ -53,8 +53,13 @@
   *  for the JavaScript code in this page.
   */
   </script>
-  <script type='text/javascript' src='../js/jquery-3.1.1.js'></script>
+  <script type='text/javascript' src='js/jquery-3.1.1.js'></script>
   <!--<script type='text/javascript' src='../js/bootstrap/js/bootstrap.js'></script>-->
+  <script src="js/elphel.js"></script>
+  <script src="js/jcanvas.js"></script>
+  <script src="js/exif.js"></script>
+  <script src="js/jquery-jp4.js"></script>
+  
   <link rel="stylesheet" href="js/bootstrap/css/bootstrap.css">
   <style>
   .port_window{
@@ -64,6 +69,11 @@
   }
   .img_window{
     border: 1px solid rgba(210,210,210,1);
+  }
+
+  .port_preview{
+    width:300px;
+    height:224px;
   }
 
   table td {
@@ -101,7 +111,8 @@
 
         $table_contents .= "<td>";
         $table_contents .= "<div class='port_window img_window'>";
-        $table_contents .= "<div><a href=\"$href1\"><img class='img_window' src='$href1' style='width:300px'/></a></div>";
+        //$table_contents .= "<div><a href=\"$href1\"><img class='img_window' src='$href1' style='width:300px'/></a></div>";
+        $table_contents .= "<div><a href=\"$href1\"><div index='$i' class='port_preview'></div></a></div>";
         $table_contents .= "<div style='text-align:center;'>port $i: <a title='single image' href='$href1'>bimg</a>, <a title='multi-part image stream (M-JPEG)' href='$href2'>mimg</a></div>";
         $table_contents .= "</div>";
         $table_contents .= "</td>";
@@ -149,6 +160,18 @@
 </div>
 <script>
 $(function(){
+	init_awb_toggle();
+	init_jp4_previews();
+});
+
+function init_jp4_previews(){
+	$('.port_preview').each(function(){
+		index = parseInt($(this).attr("index"));
+		$(this).jp4({ip:"127.0.0.1",port:2323+index,width:300,fast:true,lowres:4});
+	});
+}
+
+function init_awb_toggle(){
 	$('.btn-toggle').click(function() {
 
 	    if ($(this).find('.btn.active').html()=="ON"){
@@ -179,8 +202,9 @@ $(function(){
 			}
 		});
 	    
-	});	
-});
+	});		
+} 
+
 </script>
 <body>
 </html>
