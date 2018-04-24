@@ -83,6 +83,11 @@
   .btn.active:focus, .btn:focus{
   	outline:none;
   }
+  
+  .btn-toggle{
+  	padding: 1px 0px;
+  }
+  
   </style>
 </head>
 <body>
@@ -126,7 +131,7 @@
   // check awb of master channel
   $master_port = elphel_get_P_value($sample_port,ELPHEL_TRIG_MASTER);
   $awb_on = elphel_get_P_value($master_port,ELPHEL_WB_EN);
-  
+  $aexp_on = elphel_get_P_value($master_port,ELPHEL_AUTOEXP_ON);
   
   echo "<table><tr>$table_contents</tr></table>\n";
 
@@ -135,14 +140,30 @@
   echo "Camera Control Interface<ul>$port_links</ul>\n";
 
   ?>
-  <span title='Auto White Balance'>
-  	Auto WB:&nbsp;
-	<div class="btn-group btn-toggle">
-	  <button class="btn btn-xs <?php echo  ($awb_on)?"btn-success active":"btn-default";?>">ON</button>
-	  <button class="btn btn-xs <?php echo (!$awb_on)?"btn-danger active":"btn-default";?>">OFF</button>
-	</div>
-  </span>
-  <br />
+  <table>
+  <tr id="toggle_awb" title='Auto White Balance'>
+  	<td>
+  		Auto WB:
+  	</td>
+  	<td>
+		<div id="toggle_awb" class="btn-group btn-toggle">
+		  <button class="btn btn-xs <?php echo  ($awb_on)?"btn-success active":"btn-default";?>">ON</button>
+		  <button class="btn btn-xs <?php echo (!$awb_on)?"btn-danger active":"btn-default";?>">OFF</button>
+		</div>
+  	</td>
+  </tr>
+  <tr id="toggle_aexp" title='Auto Exposure'>
+  	<td>
+  		Auto Exposure:
+  	</td>
+  	<td>
+		<div id="toggle_aexp" class="btn-group btn-toggle">
+		  <button class="btn btn-xs <?php echo  ($aexp_on)?"btn-success active":"btn-default";?>">ON</button>
+		  <button class="btn btn-xs <?php echo (!$aexp_on)?"btn-danger active":"btn-default";?>">OFF</button>
+		</div>
+  	</td>
+  </tr>  
+  </table>
   <br />
   <a href="autocampars.php" title="autocampars.php">Parameter Editor</a><br />
   <br />
@@ -161,6 +182,7 @@
 <script>
 $(function(){
 	init_awb_toggle();
+	init_aexp_toggle();
 	init_jp4_previews();
 });
 
@@ -172,7 +194,7 @@ function init_jp4_previews(){
 }
 
 function init_awb_toggle(){
-	$('.btn-toggle').click(function() {
+	$('#toggle_awb').click(function() {
 
 	    if ($(this).find('.btn.active').html()=="ON"){
 	    	$(this).find('.btn.active').toggleClass('btn-success');
@@ -201,9 +223,43 @@ function init_awb_toggle(){
 				console.log("awb "+(wb_en?"on":"off"));
 			}
 		});
+
+	});
+}
+
+function init_aexp_toggle(){
+	$('#toggle_aexp').click(function() {
+
+	    if ($(this).find('.btn.active').html()=="ON"){
+	    	$(this).find('.btn.active').toggleClass('btn-success');
+		}else{
+			$(this).find('.btn.active').toggleClass('btn-danger');
+		}
+			    
+		// toggle active
+	    $(this).find('.btn').toggleClass('active');
+
+	    if ($(this).find('.btn.active').html()=="ON"){
+	    	aexp_en = 1;
+	    	$(this).find('.btn.active').toggleClass('btn-success');
+		}else{
+			aexp_en = 0;
+			$(this).find('.btn.active').toggleClass('btn-danger');
+		}
+
+	    $(this).find('.btn').toggleClass('btn-default');
 	    
-	});		
-} 
+		url = "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&AUTOEXP_ON="+aexp_en+"&*AUTOEXP_ON=0xf";
+
+		$.ajax({
+			url: url,
+		    success: function(){
+				console.log("aexp "+(aexp_en?"on":"off"));
+			}
+		});
+ 
+	});
+}
 
 </script>
 <body>
