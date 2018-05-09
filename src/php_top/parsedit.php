@@ -3,7 +3,7 @@
 /*!
 *! PHP script
 *! FILE NAME  : parsedit.php
-*! DESCRIPTION: 
+*! DESCRIPTION:
 *! AUTHOR     : Elphel, Inc.
 *! Copyright (C) 2008 Elphel, Inc
 *! -----------------------------------------------------------------------------**
@@ -121,7 +121,7 @@
 ///globals
     $PARS_FRAMES=16;
     $PARS_FRAMES_MASK = $PARS_FRAMES - 1;
-    $sensor_port=0; /// TODO: NC393 - add sensor port control, initially will use $sensor_port=0 for all php functions that require it    
+    $sensor_port=0; /// TODO: NC393 - add sensor port control, initially will use $sensor_port=0 for all php functions that require it
     $autocampars='/www/pages/autocampars.php';
     $descriptions=getParDescriptions($autocampars);
     $default_ahead= 3;
@@ -139,7 +139,7 @@
 //    $imgsrv="http://".$_SERVER['SERVER_ADDR'].":8081";
     $imgsrv_base="http://".$_SERVER['SERVER_ADDR'].":";
     $imgsrv_ports= array ("2323","2324","2325","2326");
-    
+
     /// $imglink="img"; /// use this for faster output (and safer in simultaneous accesses from multiple hosts
     $imglink="bimg"; ///It was "img" - faster, but image may get corrupted if buffer is overrun before it is trasferred (network congestion)
     $defaultImgScale=0.2; /// 20% image size
@@ -151,7 +151,7 @@
     $imagesPerRow=$defaultImagesPerRow;
     $imgScale=$defaultImgScale;
     $embedImageScale=0;
-    $defaultEmbedImageScale=0.3; 
+    $defaultEmbedImageScale=0.3;
     $encoded_todo="";
     if ($isPost) {
       parsePost();
@@ -168,11 +168,11 @@
          endPage();
          exit (0);
     }
-    
+
     $imgsrv = $imgsrv_base.$imgsrv_ports[$GLOBALS [sensor_port]];
     $elp_const=get_defined_constants(true);
     $elp_const=$elp_const["elphel"];
-    $immediateMode=parseGetNames(); 
+    $immediateMode=parseGetNames();
     if ($immediateMode){
       convertImmediateMode();
       $todo=preparePost();
@@ -208,6 +208,8 @@
         header("Content-Type: text/xml");
         header("Content-Length: ".strlen($msg)."\n");
         header("Pragma: no-cache\n");
+        // allow CORS: needed for multicam controls
+        header('Access-Control-Allow-Origin: *');
         printf($msg);
         exit(0); // that's all
       }
@@ -239,14 +241,14 @@
  */
 
 function printDefaultPage() {
-   $url_port = "sensor_port=".$GLOBALS [sensor_port]."&";	
+   $url_port = "sensor_port=".$GLOBALS [sensor_port]."&";
 //   $imgsrv="http://".$_SERVER['SERVER_ADDR'].":8081";
    $url_init=  $url_port."embed&test&showseq&title=Camera+initialization+parameters"
               ."&TASKLET_CTL=0*0"          /// at least ELPHEL_CONST_TASKLET_CTL_NOSAME bit should be 0 so initialization will not wait for the frame sync
               ."&MAXAHEAD=2"               /// When servicing interrupts, try programming up to 2 frames ahead of the due to program time)
               ."&FPGA_XTRA=1000"           /// Extra clock cycles needed to compress a frame (in addition to per macroblocs time)
               ."&EXTERN_TIMESTAMP=1"       /// Use external timestamp when available
-              ."&BITS=8"                   /// 8 bit data mode 
+              ."&BITS=8"                   /// 8 bit data mode
               ."&QUALITY=80"               /// 80 percent JPEG image quality
               ."&COLOR=0"                  /// regular color mode (not mono or JP4 flavors)
               ."&COLOR_SATURATION_BLUE=200"/// 2.0 (200% blue/green color saturation (to compensate for effect of non-unity gamma)
@@ -427,7 +429,7 @@ $url_ext_trigger=$url_port."embed=0.1&title=External+trigger+controls"
               ."&THIS_FRAME=@"        /// Current frame
 ///Next parameters are non-zero only for external connections and should match particular I/O boards/connectors
               ."&TRIG_CONDITION=0"    /// trigger condition, 0 - internal, else dibits ((use<<1) | level) for each GPIO[11:0] pin
-		                              /// 0x0 - from FPGA, 0x80000 - ext, 0x8000 - int, 0x88000 - any, 0x95555 - add ext, 0x59999 - add int 
+		                              /// 0x0 - from FPGA, 0x80000 - ext, 0x8000 - int, 0x88000 - any, 0x95555 - add ext, 0x59999 - add int
               ."&TRIG_OUT=0x65555"    /// trigger output to GPIO, dibits ((use << 1) | level_when_active). Bit 24 - test mode,
                                       ///  when GPIO[11:10] are controlled by other internal signals
                                       /// 0x56555 - ext connector, 0x65555  - internal connector 0x66555 - both, 0x55555 - none
@@ -448,7 +450,7 @@ $url_sample=   $url_port
               ."&FPGATEST"
               ;
 $url_ext_photofinish=$url_port."embed=0.2&&title=Photofinish+and+ oversize+controls"
-              ."&WOI_TOP"             /// WOI top - here used to adjust the acquisition line to the center of the screen 
+              ."&WOI_TOP"             /// WOI top - here used to adjust the acquisition line to the center of the screen
               ."&WOI_HEIGHT"          /// Total WOI height (composite image),<16384
               ."&WOI_WIDTH"           /// Just WOI width (image height in photofinish mode)
               ."&PF_HEIGHT"           /// Photofinish stripe height - minimal 2. Set to zero to turn photofinish mode off
@@ -612,7 +614,7 @@ function showLastImages($numImg, $imagesPerRow, $imgScale) {
 	// /TODO: If all changes were later than the images shown - disregard $todo
 	// print_r($circbuf_pointers);
 	// print_r($done);
-	
+
 	// echo "</pre>\n";
 	$meta = array ();
 	// end($circbuf_pointers);
@@ -625,14 +627,14 @@ function showLastImages($numImg, $imagesPerRow, $imgScale) {
 						$circbuf_pointers [$lastFrameIndex - ($numImg - 1) + $i] ['circbuf_pointer'] ),
 				'Exif' => elphel_get_exif_elphel (
 						$GLOBALS [sensor_port],
-						$circbuf_pointers [$lastFrameIndex - ($numImg - 1) + $i] ['exif_pointer'] ) 
+						$circbuf_pointers [$lastFrameIndex - ($numImg - 1) + $i] ['exif_pointer'] )
 		);
 		$lastFrameNumber = $circbuf_pointers [$lastFrameIndex - ($numImg - 1) + $i] ['frame'];
 	}
 	echo "<!--";
 	var_dump($meta);
 	echo "-->";
-	
+
 	$running = (elphel_get_P_value ( $GLOBALS [sensor_port], ELPHEL_COMPRESSOR_RUN ) == ELPHEL_CONST_COMPRESSOR_RUN_CONT) && (elphel_get_P_value ( $GLOBALS [sensor_port], ELPHEL_SENSOR_RUN ) == ELPHEL_CONST_SENSOR_RUN_CONT);
 	$page_title = sprintf ( "%s %d images acquired to the circular buffer (circbuf). Acquisition is %s. Last frame is %d", $framesAgo ? "$framesAgo frames (stored) ago" : "Latest", $numImg, $running ? "on - these frames are/will be overwritten in the camera memory" : "off", $lastFrameNumber );
 	/*
@@ -758,7 +760,7 @@ function  showSequence($todo,$frame_zero) {
 			}
 		}
 	}
-	
+
 	printf ( "</table>\n" );
 }
 
@@ -808,7 +810,7 @@ function  applyPost_debug($todo,$noFinalWait=false) {
 			}
      }
      $broadcast_sorted=split_broadcast($pgmpars);
-          
+
      ksort($broadcast_sorted);
      $frame_to_apply = $frame_zero+$since;
      if ($since<0){
@@ -837,7 +839,7 @@ function  applyPost_debug($todo,$noFinalWait=false) {
        }
      }
    }
-    
+
    if ($showSeqMode>0) {printf ("done, frame is %d, rslt=%d, frame_now was %d, waitingEnabled=%d\n",
    		elphel_get_frame($GLOBALS [sensor_port]), $rslt, $frame_now, $waitingEnabled);
    		ob_flush();  flush();
@@ -933,7 +935,7 @@ function split_broadcast($pgmpars){
 			unset ($pgmpars[$name]);
 		}
 	}
-	
+
 	$broadcast=array(0=>array());
 	foreach ($port_masks as $key=>$value){
 //		if (!in_array($value,$broadcast)) $broadcast[] = $value;
@@ -962,14 +964,14 @@ function  parsePost() {
        if (!$posted_params[$index]) $posted_params[$index]=array();
        $posted_params[$index][$name]=$value;
      }
-   } 
+   }
 }
 /// Simulate POST from URL parameters if 'immediate' is present in the URL
 function convertImmediateMode(){
 	global $posted_params,$global_params,$frame_params;
 	$posted_params=array();
 	$index=0;
-	foreach ($global_params as $param) {   
+	foreach ($global_params as $param) {
     	$posted_params[$index++]=array(
         	'name'   =>   $param['name'],
             'oldval' =>   $param['cur_value'],
@@ -1110,6 +1112,8 @@ function parseGetNames() {
           header("Content-Type: text/xml");
           header("Content-Length: ".strlen($rslt)."\n");
           header("Pragma: no-cache\n");
+          // allow CORS: needed for multicam controls
+          header('Access-Control-Allow-Origin: *');
           printf($rslt);
           exit (0);
         }
@@ -1122,7 +1126,7 @@ function parseGetNames() {
         if (isset($_GET["*$key"])) {
         	$port_mask = myval($_GET["*$key"]);
         }
-        
+
         $write_en=(!($value[0]=="@"));
         if (!$write_en) {
           if (strlen($value)==1) $value="";
@@ -1405,8 +1409,8 @@ function printPage($encoded_todo) {
 //echo "width=$width, height=$height, embedImageScale=$embedImageScale<br />\n";
        printf ("<tr style='text-align:center'>".
                "<td colspan=$table_width>");
-///       printf ("<a href='$imgsrv/%d/$imglink'><img src='$imgsrv/%d/$imglink' style='width:%dpx; height:%dpx;' /></a>",$circbuf_pointer,$circbuf_pointer, $width,$height); 
-       printf ("<a href='$imgsrv/$imglink' target='new'><img src='$imgsrv/%d/$imglink' style='width:%dpx; height:%dpx;' title='Click on the image to open the last acquired one - it may be different than this one (if acquisition is going on)' /></a>",$circbuf_pointer, $width,$height); 
+///       printf ("<a href='$imgsrv/%d/$imglink'><img src='$imgsrv/%d/$imglink' style='width:%dpx; height:%dpx;' /></a>",$circbuf_pointer,$circbuf_pointer, $width,$height);
+       printf ("<a href='$imgsrv/$imglink' target='new'><img src='$imgsrv/%d/$imglink' style='width:%dpx; height:%dpx;' title='Click on the image to open the last acquired one - it may be different than this one (if acquisition is going on)' /></a>",$circbuf_pointer, $width,$height);
        printf ("</td></tr>\n");
      }
 
@@ -1463,7 +1467,7 @@ function printPage($encoded_todo) {
 
          printf ("<td style='text-align:center'>0x<input name='broadcast_%d' type='text' size='2' value='%x' id='id_broadcast_%d' style='text-align:center'".
          		" onchange='onchangeBroadcast(this,\"id_apply_%d\");'/></td>",$num,$par['port_mask'],$num,$num);
-         
+
          printf ("<td style='text-align:center'><input type='checkbox' name='apply_%d' value='1' %s id='id_apply_%d'/></td>",$num,$par['modified']?'checked':'',$num);
        }else {
          if (!$readonly) printf ("<td colspan='4'>&nbsp;</td>");
@@ -1546,7 +1550,7 @@ function getDescription ($compositeName,$descriptions){
 
 */
 function getParDescriptions($autocampars) {
-  /*	
+  /*
   $file=file($autocampars);
   $path="";
   foreach ($file as $line) if ((strpos($line,'$configPath')!==false ) || ((strpos($line,"'configPath'")!==false)){
