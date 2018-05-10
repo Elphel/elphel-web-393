@@ -59,7 +59,7 @@
   <script src="js/jcanvas.js"></script>
   <script src="js/exif.js"></script>
   <script src="js/jquery-jp4.js"></script>
-  
+
   <link rel="stylesheet" href="js/bootstrap/css/bootstrap.css">
   <style>
   .port_window{
@@ -79,15 +79,15 @@
   table td {
     padding-right:10px;
   }
-  
+
   .btn.active:focus, .btn:focus{
   	outline:none;
   }
-  
+
   .btn-toggle{
   	padding: 1px 0px;
   }
-  
+
   </style>
 </head>
 <body>
@@ -99,9 +99,9 @@
 
   $table_contents = "";
   $port_links = "";
-  
+
   $sample_port = -1;
-  
+
   for($i=0;$i<4;$i++){
     $sensor = $path."/sensor{$i}0";
     if (is_file($sensor)){
@@ -109,7 +109,7 @@
       if ($c!="none"){
 
       	$sample_port = $i;
-      	
+
         $sandp = "http://{$_SERVER["SERVER_ADDR"]}:".($port0+$i);
         $href1 = "$sandp/bimg";
         $href2 = "$sandp/mimg";
@@ -132,7 +132,7 @@
   $master_port = elphel_get_P_value($sample_port,ELPHEL_TRIG_MASTER);
   $awb_on = elphel_get_P_value($master_port,ELPHEL_WB_EN);
   $aexp_on = elphel_get_P_value($master_port,ELPHEL_AUTOEXP_ON);
-  
+
   echo "<table><tr>$table_contents</tr></table>\n";
 
   echo "<br/>";
@@ -162,7 +162,7 @@
 		  <button class="btn btn-xs <?php echo (!$aexp_on)?"btn-danger active":"btn-default";?>">OFF</button>
 		</div>
   	</td>
-  </tr>  
+  </tr>
   </table>
   <br />
   <a href="autocampars.php" title="autocampars.php">Parameter Editor</a><br />
@@ -189,7 +189,7 @@ $(function(){
 function init_jp4_previews(){
 	$('.port_preview').each(function(){
 		index = parseInt($(this).attr("index"));
-		$(this).jp4({ip:"127.0.0.1",port:2323+index,width:300,fast:true,lowres:4});
+		$(this).jp4({ip:location.host,port:2323+index,width:300,fast:true,lowres:4});
 	});
 }
 
@@ -201,7 +201,7 @@ function init_awb_toggle(){
 		}else{
 			$(this).find('.btn.active').toggleClass('btn-danger');
 		}
-			    
+
 		// toggle active
 	    $(this).find('.btn').toggleClass('active');
 
@@ -214,7 +214,7 @@ function init_awb_toggle(){
 		}
 
 	    $(this).find('.btn').toggleClass('btn-default');
-	    
+
 		url = "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&WB_EN="+wb_en+"&*WB_EN=0xf";
 
 		$.ajax({
@@ -235,7 +235,7 @@ function init_aexp_toggle(){
 		}else{
 			$(this).find('.btn.active').toggleClass('btn-danger');
 		}
-			    
+
 		// toggle active
 	    $(this).find('.btn').toggleClass('active');
 
@@ -248,7 +248,7 @@ function init_aexp_toggle(){
 		}
 
 	    $(this).find('.btn').toggleClass('btn-default');
-	    
+
 		url = "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&AUTOEXP_ON="+aexp_en+"&*AUTOEXP_ON=0xf";
 
 		$.ajax({
@@ -257,7 +257,7 @@ function init_aexp_toggle(){
 				console.log("aexp "+(aexp_en?"on":"off"));
 			}
 		});
- 
+
 	});
 }
 

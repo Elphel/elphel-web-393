@@ -78,6 +78,8 @@
     var cnv_working = $("<canvas>",{id:"working"});
     var cnv_display = $("<canvas>",{id:"display"});
 
+    obj.busy = false;
+
     // hide working canvas
     cnv_working.css({display:"none"});
     /*
@@ -102,6 +104,7 @@
          * make sure the image data starts with: "data:image/jpeg;base64,"
          * EXIF.js does not like empty data type: "data:;base64,"
          */
+        obj.busy = true;
         process_image(settings.image);
     }else{
         send_request();
@@ -115,7 +118,8 @@
       var http = new XMLHttpRequest();
 
       if (settings.port!=""&&settings.ip!=""){
-        rq = "/get-image.php?ip="+settings.ip+"&port="+settings.port+"&rel=bimg&ts="+Date.now();
+        //rq = "/get-image.php?ip="+settings.ip+"&port="+settings.port+"&rel=bimg&ts="+Date.now();
+        rq = "http://"+settings.ip+"/get-image.php?ip="+settings.ip+"&port="+settings.port+"&rel=img&ts="+Date.now();
         //rq = "get-image.php?ip="+settings.ip+"&port="+settings.port+"&rel=img&ts="+Date.now();
         //settings.refresh = true;
       }else{
@@ -137,12 +141,16 @@
         }
       };
 
+      obj.busy = true;
       http.send();
 
     }
 
     this.refresh = function(){
-      send_request();
+      // skip if busy?
+      if (!obj.busy){
+        send_request();
+      }
     }
 
     this.resize = function(w){
@@ -244,6 +252,7 @@
             }
 
             $(this).trigger("canvas_ready");
+            obj.busy = false;
 
             if (settings.refresh) {
                 if (DEBUG){
@@ -360,6 +369,7 @@
         }
         //trigger here
         cnv_working.trigger("canvas_ready");
+        obj.busy = false;
 
         if (settings.refresh) {
             if (DEBUG){
@@ -368,6 +378,8 @@
             }
             send_request();
         }
+
+        this.terminate();
       }
 
     }
@@ -392,7 +404,7 @@
       bayer_mode = 0; // r gr / gb b
       if (typeof MakerNote !== 'undefined'){
         bayer_mode = (MakerNote[10]>>2)&0x3;
-        console.log("Bayer mode = "+bayer_mode);
+        //console.log("Bayer mode = "+bayer_mode);
         switch(bayer_mode){
           case 0: BAYER = [["Gr","R"],["B","Gb"]];break;
           case 1: BAYER = [["R","Gr"],["Gb","B"]];break;

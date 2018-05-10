@@ -34,15 +34,22 @@ if (isset($_GET['ip']))
     $ip = $_GET['ip'];
 else
     $ip = "localhost";
-    
+
 /*
 header("Location: http://{$_SERVER['HTTP_HOST']}:$port/$rel");
 die();
 */
 
+$port0 = 2323;
+$pointers = elphel_get_circbuf_pointers(intval($port)-$port0,1);
+$pointer = $pointers[count($pointers)-1]['circbuf_pointer'];
+
+// allow CORS
+header('Access-Control-Allow-Origin: *');
 header('Content-type:image/jpeg');
-echo file_get_contents("http://$ip:$port/$rel");
+echo file_get_contents("http://$ip:$port/$pointer/$rel");
+//echo file_get_contents("http://$ip:$port/$rel");
 
 die();
 
-?> 
+?>

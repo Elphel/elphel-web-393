@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Multi cameras control</title>
+
+    <script src="../js/jquery-3.1.1.js"></script>
+    <script src="../js/elphel.js"></script>
+    <script src="../js/jcanvas.js"></script>
+    <script src="../js/exif.js"></script>
+    <script src="../js/jquery-jp4.js"></script>
+
+    <link rel="stylesheet" href="../js/bootstrap/css/bootstrap.css">
+
+    <script type='text/javascript' src='multicam.js'></script>
+    <link rel='stylesheet' type='text/css' href='multicam.css'></link>
+
+  </head>
+  <body>
+    <div id='settings'>
+      <table>
+      <tr>
+        <td>
+          <div id='rec_button' class='rec_outer' title='start recording'>
+            <div class='rec_inner'></div>
+          </div>
+        </td>
+      </tr>
+      <tr id="toggle_awb" title='Auto White Balance'>
+        <td>Auto WB:</td>
+        <td>
+          <div id="toggle_awb" class="btn-group btn-toggle">
+            <button class="btn btn-xs btn-success active">ON</button>
+            <button class="btn btn-xs btn-default">OFF</button>
+          </div>
+        </td>
+      </tr>
+      <tr id="toggle_aexp" title='Auto Exposure'>
+        <td>Auto Exposure:</td>
+        <td>
+          <div id="toggle_aexp" class="btn-group btn-toggle">
+            <button class="btn btn-xs btn-success active">ON</button>
+            <button class="btn btn-xs btn-default">OFF</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td hidden>
+          <br/>
+          <div id='edit_addrs_input' hidden>
+            <div id='eai_text_div'>
+              <textarea id='eai_text' rows='4' cols='30'></textarea>
+            </div>
+            <div id='eai_ok_div'>
+              <button id='eai_ok' class="btn btn-sm btn-success">ok</button>
+            </div>
+          </div>
+          <div id='edit_addrs' title='edit ip addresses'>
+            <button id='ea_btn' class="btn btn-sm btn-success">+</button>
+          </div>
+          <div id='addrs'>
+          </div>
+        </td>
+      </tr>
+      </table>
+    </div>
+    <div id='display'>
+      <div id='display_status'></div>
+      <hr/>
+      <div id='display_previews'></div>
+    </div>
+  </body>
+</html>
