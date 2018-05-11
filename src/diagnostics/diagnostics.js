@@ -190,7 +190,7 @@ function analyze_timestamps(){
     var g = parseInt((count-1)*color_inc);
     var b = 0;
     color = "rgba("+r+","+g+","+b+",1)";
-    console.log(ts+" "+count+" "+color);
+    //console.log(ts+" "+count+" "+color);
     $(".timestamps[ts='"+ts+"']").css({
       color: color
     });
