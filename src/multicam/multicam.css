@@ -119,3 +119,7 @@ hr{
 .port_preview canvas,#display{
   padding:0px;
 }
+
+#system_tests{
+  margin:5px;
+}

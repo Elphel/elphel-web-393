@@ -1,0 +1,48 @@
+#display_general, #display_pars, #display_ts{
+  padding:5px;
+}
+
+#gen_table th, #pars_table th, #ts_table th{
+  padding: 2px 5px;
+  text-align:center;
+  border: 1px solid rgb(150,150,150);
+}
+
+#gen_table td{
+  padding: 2px 5px;
+  text-align:center;
+  border: 1px solid rgb(150,150,150);
+}
+
+#pars_table td, #ts_table td{
+  padding: 0px 5px;
+  border: 1px solid rgb(150,150,150);
+}
+
+.center{
+  text-align:center;
+}
+
+.right{
+  text-align:right;
+}
+
+.left{
+  text-align:left;
+}
+
+h4{
+  padding:0px 5px;
+}
+
+.vtop{
+  vertical-align:top;
+}
+
+.timestamps{
+  font-size: 0.9em;
+}
+
+.framenumbers{
+  font-size: 0.9em;
+}

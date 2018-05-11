@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>System info</title>
+    <script src="../js/jquery-3.1.1.js"></script>
+    <link rel="stylesheet" href="../js/bootstrap/css/bootstrap.css">
+
+    <script type='text/javascript' src='diagnostics.js'></script>
+    <link rel='stylesheet' type='text/css' href='diagnostics.css'></link>
+
+  </head>
+  <body>
+    <h4>General info</h4>
+    <div id='display_general'>
+      <table id='gen_table'>
+        <tr>
+          <th>ip</th>
+          <th>time</th>
+          <th>uptime</th>
+          <th title='Temperature, &deg;C'>t</th>
+          <th>storage</th>
+          <th>camogm</th>
+          <th>master port</th>
+          <th>GPS</th>
+          <th>IMU</th>
+        </tr>
+      </table>
+    </div>
+    <h4>Port info</h4>
+    <div id='display_pars'>
+      <table id='pars_table'>
+        <tr>
+          <th>port</th>
+          <th>mux</th>
+          <th>sensors</th>
+          <th>sensor run</th>
+          <th>compressor run</th>
+          <th title='image format'>format</th>
+          <th>quality</th>
+          <th>wxh</th>
+          <th>TRIG</th>
+          <th>master</th>
+          <th title='TRIG_PERIOD'>period</th>
+          <th title='TRIG_OUT'>T_OUT</th>
+          <th title='TRIG_CONDITION'>T_COND</th>
+          <th>exposure</th>
+          <th>gainR</th>
+          <th>gainG</th>
+          <th>gainB</th>
+          <th>gainGB</th>
+        </tr>
+      </table>
+    </div>
+    <h4>Timestamps info</h4>
+    <div id='display_ts'>
+      <table id='ts_table'>
+      </table>
+    </div>
+  </body>
+</html>

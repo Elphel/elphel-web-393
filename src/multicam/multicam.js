@@ -283,7 +283,7 @@ function rec_button_update_state(){
         rec_button_switch(recording);
       }
 
-      refresh_previews_intvl = setInterval(refresh_previews,1000);
+      refresh_previews_intvl = setInterval(refresh_previews,2000);
       refresh_status_intvl   = setInterval(refresh_status,2000);
     }
 
