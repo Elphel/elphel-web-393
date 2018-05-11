@@ -439,7 +439,13 @@ function init3(index){
 
   $("#display_status").find("tr[ip=\'"+cam.ip+"\']").html($(status_str));
 
+  init_test_button();
+}
 
+function init_test_button(){
+  $("#system_tests").on('click',function(){
+    window.open('http://'+location.host+'/diagnostics/index.html?ip='+addrs_ips2str());
+  });
 }
 
 function refresh_previews(){
@@ -585,6 +591,18 @@ function addrs_ips2addrs(){
   for(var i=0;i<cams.length;i++){
     $("#addrs").append($('<div>').html(cams[i].ip));
   }
+}
+
+function addrs_ips2str(){
+  var arr = [];
+  var str = "";
+
+  for(var i=0;i<cams.length;i++){
+    arr.push(cams[i].ip);
+  }
+
+  str = arr.join(",");
+  return str;
 }
 
 function addrs_ips2ta(){
