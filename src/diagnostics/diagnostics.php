@@ -16,17 +16,25 @@ $master_port = elphel_get_P_value($sample_port,ELPHEL_TRIG_MASTER);
 //print_r($ports);
 //print("sample port = ".$sample_port);
 
+if (isset($_GET['pointers'])){
+  $POINTERS_ONLY = true;
+}else{
+  $POINTERS_ONLY = false;
+}
 
 $res = "";
 $res .= "<camera ip='".$_SERVER['SERVER_ADDR']."'>\n";
-$res .= "\t<master_port>".$master_port."</master_port>\n";
-$res .= "\t<systime>".get_system_time()."</systime>\n";
-$res .= "\t<systimestamp>".time()."</systimestamp>\n";
-$res .= "\t<uptime>".get_uptime()."</uptime>\n";
-$res .= "\t<temperature>".get_temperature()."\t</temperature>\n";
-$res .= "\t<storage>".check_storage()."\t</storage>\n";
-$res .= "\t<recorder name='camogm'>".check_camogm_running()."</recorder>\n";
-$res .= "\t<gps>".check_gps($master_port)."\t</gps>\n";
+
+if (!$POINTERS_ONLY){
+  $res .= "\t<master_port>".$master_port."</master_port>\n";
+  $res .= "\t<systime>".get_system_time()."</systime>\n";
+  $res .= "\t<systimestamp>".time()."</systimestamp>\n";
+  $res .= "\t<uptime>".get_uptime()."</uptime>\n";
+  $res .= "\t<temperature>".get_temperature()."\t</temperature>\n";
+  $res .= "\t<storage>".check_storage()."\t</storage>\n";
+  $res .= "\t<recorder name='camogm'>".check_camogm_running()."</recorder>\n";
+  $res .= "\t<gps>".check_gps($master_port)."\t</gps>\n";
+}
 
 for($i=0;$i<count($ports);$i++){
   $s = implode(', ',$ports[$i]['sensors']);
@@ -212,12 +220,14 @@ function get_temperature(){
 
 function get_port_info($port){
 
+  global $POINTERS_ONLY;
+
   $pars_res = "";
   $ts_res = "";
 
   $pars = array(
     'WB_EN' => 0,
-    'AUTOEXP_EN' => 0,
+    'AUTOEXP_ON' => 0,
     'COMPRESSOR_RUN'=> 0,
     'SENSOR_RUN'=> 0,
     'COLOR' => 0,
@@ -236,14 +246,17 @@ function get_port_info($port){
     'GAINGB' => 0,
   );
 
-  $ps = elphel_get_P_arr($port,$pars);
+  $pars_res .= "\n";
 
-  $pars_res .= "\n\t\t<parameters>\n";
-  foreach($ps as $k=>$v){
-    $pars_res .= "\t\t\t<".strtolower($k).">$v</".strtolower($k).">\n";
+  if (!$POINTERS_ONLY){
+    $ps = elphel_get_P_arr($port,$pars);
+
+    $pars_res .= "\t\t<parameters>\n";
+    foreach($ps as $k=>$v){
+      $pars_res .= "\t\t\t<".strtolower($k).">$v</".strtolower($k).">\n";
+    }
+    $pars_res .= "\t\t</parameters>\n";
   }
-  $pars_res .= "\t\t</parameters>\n";
-
 
   // get recent timestamps
   $circbuf_pointers = elphel_get_circbuf_pointers($port,1);
@@ -261,7 +274,8 @@ function get_port_info($port){
   foreach($meta as $m){
     $sec  = $m['meta']['timestamp_sec'];
     $usec = sprintf("%06d", $m['meta']['timestamp_usec']);
-    $ts_res .= "\t\t\t<ts frame='{$m['Exif']['FrameNumber']}'>$sec.$usec</ts>\n";
+    $ptr = $m['circbuf_pointer'];
+    $ts_res .= "\t\t\t<ts frame='{$m['Exif']['FrameNumber']}' ts='$sec.$usec' ptr='$ptr'>$sec.$usec</ts>\n";
   }
 
   $ts_res .= "\t\t</timestamps>\n";

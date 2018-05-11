@@ -173,10 +173,11 @@
   <a href="photofinish/"    title="Scanline mode demo">Photo finish demo</a><br />
   <br />
   <a href="hwmon.html"           title="hwmon.html">Temperature monitor</a><br />
-  <a href="update_software.html" title="update NAND flash">Update firmware</a><br />
+  <a href="update_software.html" title="Update NAND flash">Update firmware</a><br />
   <br />
   <a title="docs" href="http://wiki.elphel.com/index.php?title=Tmp_manual">User manual</a><br />
-  <a href="jp4-viewer/?width=1200&quality=1" title="preview jp4 images (drag and drop from PC)">JP4 Viewer</a><br />
+  <a href="jp4-viewer/?width=1200&quality=1" title="Preview jp4 images (drag and drop from PC)">JP4 Viewer</a><br />
+  <a href="/diagnostics/index.html" title="Inspect camera system info">System info</a><br />
   <a href="/debugfs.html" title="Linux Kernel Dynamic Debug helper interface (debug device drivers)">DebugFS</a><br />
 </div>
 <script>
