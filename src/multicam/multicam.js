@@ -56,18 +56,25 @@ $(function(){
 });
 
 function parseURL(){
+
+    var ips_str = location.host;
+
     var parameters=location.href.replace(/\?/ig,"&").split("&");
     for (var i=0;i<parameters.length;i++) parameters[i]=parameters[i].split("=");
     for (var i=1;i<parameters.length;i++) {
         switch (parameters[i][0]) {
             case "ip":
-              ips_from_url = true;
+              //ips_from_url = true;
               ips_str = parameters[i][1];
               ips_str = ips_str.replace(/,|;/gm,'\n');
-              addrs_str2ips(ips_str);
               break;
         }
     }
+
+    // force url
+    addrs_str2ips(ips_str);
+    ips_from_url = true;
+
 }
 
 function init(){
@@ -111,6 +118,8 @@ function init(){
     top: '2px',
     left: $("#settings").find("table").width()+10
   });
+
+  init_test_button();
 
 }
 
@@ -439,7 +448,6 @@ function init3(index){
 
   $("#display_status").find("tr[ip=\'"+cam.ip+"\']").html($(status_str));
 
-  init_test_button();
 }
 
 function init_test_button(){
