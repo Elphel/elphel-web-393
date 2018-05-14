@@ -113,19 +113,25 @@ function analyze_sysinfo(){
 
 function parse_timestamps(){
 
+  var thead = [];
+  thead.push('<tr>');
+  thead.push([
+    '<th>port</th>',
+    '<th title=\'Frames period matches programmed trigger period\'>period</th>',
+    '<th title=\'Period is not uniform?\'>skipped</th>',
+    '<th title=\'In sync with other ports/cameras\'>sync</th>',
+    '<th title=\'Timestamps data, mouse over\'>data</th>',
+  ].join('\n'));
+  //for(var j=0;j<ports.length;j++){
+  //  thead.push('<th>p</th><th>frame</th><th>timestamp</th>');
+  //}
+  thead.push('</tr>');
+
+  $("#ts_table").append(thead);
+
   for(var i=0;i<sysinfo.length;i++){
     var f = $(sysinfo[i]);
     var ports = f.find('port');
-
-    var thead = [];
-    thead.push('<tr>');
-    for(var j=0;j<ports.length;j++){
-      thead.push('<th>p</th><th>frame</th><th>timestamp</th>');
-    }
-    thead.push('</tr>');
-
-    $("#ts_table").append(thead);
-
     var colspan = $("#ts_table").find("th").length;
 
     var tr3 = [
@@ -149,8 +155,12 @@ function parse_timestamps(){
 
 }
 
+// timetamps
 var BAT = [];
+// frame numbers
 var BAF = [];
+// trig periods, in seconds
+var BAP = [];
 var TOTAL_PORTS = 0;
 var RES = [];
 
@@ -162,9 +172,11 @@ function analyze_timestamps(){
     var ports = f.find('port');
     BAT[i] = [];
     BAF[i] = [];
+    BAP[i] = [];
     TOTAL_PORTS += ports.length;
     for(var j=0;j<ports.length;j++){
       var ts = $(ports[j]).find('ts');
+      BAP[i][j] = pp_calc_trig_period($(ports[j]).find('trig_period').text());
       BAT[i][j] = [];
       BAF[i][j] = [];
       for(var k=0;k<ts.length;k++){
@@ -182,19 +194,103 @@ function analyze_timestamps(){
     }
   }
 
+  for(var i=0;i<BAT.length;i++){
+    for(var j=0;j<BAT[i].length;j++){
+      // RES is ready
+      var tmp = process_ts_periods(i,j);
+    }
+  }
+
+  /*
   var color_inc = 256/(sysinfo.length*TOTAL_PORTS);
 
   for(var ts in RES){
     var count = RES[ts].count;
+
     var r = (count==1)?200:0;
     var g = parseInt((count-1)*color_inc);
     var b = 0;
+
     color = "rgba("+r+","+g+","+b+",1)";
     //console.log(ts+" "+count+" "+color);
     $(".timestamps[ts='"+ts+"']").css({
       color: color
     });
   }
+  */
+
+}
+
+function process_ts_periods(cam_i,port_i){
+
+  var tp    = BAP[cam_i][port_i];
+  var tses  = BAT[cam_i][port_i];
+  var fnums = BAF[cam_i][port_i];
+
+  var data = [];
+  for(var i=0;i<tses.length;i++){
+    data.push(fnums[i]+": "+tses[i]);
+  }
+  $("#tses_c"+cam_i+"p"+port_i).find(".ts_data").html("<span title='"+data.join('\n')+"'>data</span>");
+
+  var diffs = [];
+  for(var i=0;i<tses.length-1;i++){
+    diffs.push(Math.round((tses[i+1]-tses[i])*1000000)/1000000);
+  }
+
+  var count = 0;
+  var all_match = true;
+  for(var i=0;i<diffs.length;i++){
+    if (tp==diffs[i]){
+      count++;
+    }else{
+      if(diffs[i]%tp==0){
+        all_match = false;
+      }
+    }
+
+    if (diffs[i]!=diffs[0]){
+      // fps is not uniform
+      all_match = false;
+    }
+  }
+
+  //more than half match
+  if (count==diffs.length){
+    // print ok
+    $("#tses_c"+cam_i+"p"+port_i).find(".ts_period").html("<span title='matches with TRIG_PERIOD'>ok</span>");
+  }else{
+    // print error
+    color = "rgb(230,0,0)";
+    $("#tses_c"+cam_i+"p"+port_i).find(".ts_period").html("<span title='not match with TRIG_PERIOD or some frames are skipped' style='color:"+color+";'>error</span>");
+  }
+
+  if (all_match){
+    $("#tses_c"+cam_i+"p"+port_i).find(".ts_skipped").html("<span title=''>ok</span>");
+  }else{
+    color = "rgb(230,0,0)";
+    $("#tses_c"+cam_i+"p"+port_i).find(".ts_skipped").html("<span title='some frames might be skipped' style='color:"+color+";'>error</span>");
+
+    console.log(diffs);
+  }
+
+  // now check tses
+  var sync = false;
+  for(var i=0;i<tses.length;i++){
+    if (RES[tses[i]].count==TOTAL_PORTS){
+      sync = true;
+    }
+  }
+  if (sync){
+    color = "";
+    msg = "ok";
+  }else{
+    color = "rgb(230,0,0)";
+    msg = "error";
+    console.log("Printing timestamps stats:");
+    console.log(RES);
+  }
+  $("#tses_c"+cam_i+"p"+port_i).find(".ts_sync").html("<span title='Check debug output' style='color:"+color+"'>"+msg+"</span>");
 
 }
 
@@ -212,15 +308,20 @@ function process_timestamp(ts,fr){
 function pt_parse_port(cn,port){
 
   var p = $(port);
-
   var pn = p.attr('index');
   var mux = p.attr('mux');
   var sensors = p.attr('sensor');
 
   var res = [
-    '  <td class=\'center\'>'+pn+'</td>',
-    '  <td class=\'center vtop\'>'+pt_parse_framenumbers(cn,pn,p.find('ts'))+'</td>',
-    '  <td class=\'center vtop\'>'+pt_parse_timestamps(cn,pn,p.find('ts'))+'</td>',
+    '<tr id=\'tses_c'+cn+'p'+pn+'\'>',
+    '  <td class=\'ts_port center\'>'+pn+'</td>',
+    '  <td class=\'ts_period center vtop\'></td>',
+    '  <td class=\'ts_skipped center vtop\'></td>',
+    //'  <td class=\'center vtop\'>'+pt_parse_framenumbers(cn,pn,p.find('ts'))+'</td>',
+    //'  <td class=\'center vtop\'>'+pt_parse_timestamps(cn,pn,p.find('ts'))+'</td>',
+    '  <td class=\'ts_sync\'></td>',
+    '  <td class=\'ts_data\'></td>',
+    '</tr>',
   ].join('\n');
 
   return res;
