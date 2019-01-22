@@ -1,5 +1,7 @@
 <?php
 
+include "../include/elphel_functions_include.php";
+
 $cmd = "donothing";
 
 if (isset($_GET['cmd']))
@@ -40,6 +42,9 @@ switch($cmd){
     // use get and post requests
     write_config($config,$ips);
     print("ok");
+    break;
+  case "snapshot":
+    send_zipped_images($ips);
     break;
   case "read":
   default:
@@ -88,6 +93,12 @@ function getports(){
   $xml .= "</Document>\n";
 
   return $xml;
+}
+
+function send_zipped_images($ips){
+
+
+
 }
 
 ?>

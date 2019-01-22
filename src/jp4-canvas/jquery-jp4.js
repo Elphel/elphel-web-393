@@ -136,8 +136,10 @@
         }
 
         if (this.status === 200) {
-            var imgdata = URL.createObjectURL(http.response);
-            process_image(imgdata);
+            obj.blob = window.URL.createObjectURL(http.response);
+            process_image(obj.blob);
+            delete this;
+            //URL.revokeObjectURL(imgdata);
         }
       };
 
@@ -189,40 +191,47 @@
 
         heavyImage.onload = function(){
 
-        EXIF.getData(this, function() {
+          if (obj.blob){
+            console.log("revoking object");
+            window.URL.revokeObjectURL(obj.blob);
+          }
 
-            var cnv_w;
-            var cnv_h;
 
-            if (settings.lowres!=0){
-                cnv_w = this.width/settings.lowres;
-                cnv_h = this.height/settings.lowres;
-            }else{
-                cnv_w = this.width;
-                cnv_h = this.height;
-            }
+          EXIF.getData(this, function() {
 
-            //update canvas size
-            canvas.attr("width",cnv_w);
-            canvas.attr("height",cnv_h);
+              var cnv_w;
+              var cnv_h;
 
-            parseEXIFMakerNote(this);
+              if (settings.lowres!=0){
+                  cnv_w = this.width/settings.lowres;
+                  cnv_h = this.height/settings.lowres;
+              }else{
+                  cnv_w = this.width;
+                  cnv_h = this.height;
+              }
 
-            canvas.drawImage({
-                x:0, y:0,
-                source: this,
-                width: cnv_w,
-                height: cnv_h,
-                //source: heavyImage,
-                load: redraw,
-                sx: 0,
-                sy: 0,
-                sWidth: this.width,
-                sHeight: this.height,
-                //scale: scale,
-                fromCenter: false
-            });
-        });
+              //update canvas size
+              canvas.attr("width",cnv_w);
+              canvas.attr("height",cnv_h);
+
+              parseEXIFMakerNote(this);
+
+              canvas.drawImage({
+                  x:0, y:0,
+                  source: this,
+                  width: cnv_w,
+                  height: cnv_h,
+                  //source: heavyImage,
+                  load: redraw,
+                  sx: 0,
+                  sy: 0,
+                  sWidth: this.width,
+                  sHeight: this.height,
+                  //scale: scale,
+                  fromCenter: false
+              });
+
+          });
 
         };
         heavyImage.src = imagedata;
@@ -230,6 +239,9 @@
     }
 
     function redraw(){
+
+      //URL.revokeObjectURL($(this).source.src);
+      //console.log(this);
 
       //for debugging
       //IMAGE_FORMAT="JPEG";
