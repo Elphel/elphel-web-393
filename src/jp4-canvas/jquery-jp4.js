@@ -191,10 +191,12 @@
 
         heavyImage.onload = function(){
 
+          /*
           if (obj.blob){
             console.log("revoking object");
             window.URL.revokeObjectURL(obj.blob);
           }
+          */
 
 
           EXIF.getData(this, function() {
