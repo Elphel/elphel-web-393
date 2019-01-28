@@ -181,6 +181,9 @@
   <a href="/debugfs.html" title="Linux Kernel Dynamic Debug helper interface (debug device drivers)">DebugFS</a><br />
 </div>
 <script>
+
+var jp4_previews_enable = true;
+
 $(function(){
 	init_awb_toggle();
 	init_aexp_toggle();
@@ -190,7 +193,11 @@ $(function(){
 function init_jp4_previews(){
 	$('.port_preview').each(function(){
 		index = parseInt($(this).attr("index"));
-		$(this).jp4({ip:location.host,port:2323+index,width:300,fast:true,lowres:4});
+    if (jp4_previews_enable) {
+      $(this).jp4({ip:location.host,port:2323+index,width:300,fast:true,lowres:4});
+    }else{
+      $(this).html("<img width='300' src='http://"+location.host+":"+(2323+index)+"/img' />");
+    }
 	});
 }
 
