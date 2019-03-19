@@ -50,7 +50,7 @@ $(function(){
   });
 
   display_object = $("#display-panel").jp4({
-    ip:"127.0.0.1",
+    ip: location.host,
     port:2323,
     width:600,
     fast:true,
