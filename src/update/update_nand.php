@@ -41,7 +41,8 @@ $UPDATE_LIST = array(
   array(0,"devicetree.dtb","/dev/mtd2","0 8"),
   array(0,"uImage",        "/dev/mtd3","0 128"),
   array(1,"rootfs.tar.gz", "",""),
-  array(0,"rootfs.ubi",    "/dev/mtd4","0 2048","-s 2048 -O 2048"),
+  //array(0,"rootfs.ubi",    "/dev/mtd4","0 2048","-s 2048 -O 2048"),
+  array(0,"rootfs.ubi",    "/dev/mtd4","0 2560","-s 2048 -O 2048"),
   array(1,"rootfs.ubifs",  "/dev/mtd4","/dev/ubi_ctrl -m 4","ubiupdatevol /dev/ubi0_0"),
 );
 
