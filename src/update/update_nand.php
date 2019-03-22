@@ -34,14 +34,18 @@ $BKP_DIR  = "/etc/elphel393";
 # update files
 # file, expertise level, nand partition, size - see http://wiki.elphel.com/index.php?title=NAND_flash_boot_rootfs
 # partitions are also listed in the device tree
-# WARNING: DO NOT CHANGE
+
+# e[3]s for flash_erase are now calculated from sysfs and depend on the device tree
+
+# WARNING: TRY NOT TO CHANGE
 $UPDATE_LIST = array(
   array(0,"boot.bin",      "/dev/mtd0","0 2"),
   array(0,"u-boot-dtb.img","/dev/mtd1","0 8"),
   array(0,"devicetree.dtb","/dev/mtd2","0 8"),
   array(0,"uImage",        "/dev/mtd3","0 128"),
   array(1,"rootfs.tar.gz", "",""),
-  array(0,"rootfs.ubi",    "/dev/mtd4","0 2048","-s 2048 -O 2048"),
+  //array(0,"rootfs.ubi",    "/dev/mtd4","0 2048","-s 2048 -O 2048"),
+  array(0,"rootfs.ubi",    "/dev/mtd4","0 2560","-s 2048 -O 2048"),
   array(1,"rootfs.ubifs",  "/dev/mtd4","/dev/ubi_ctrl -m 4","ubiupdatevol /dev/ubi0_0"),
 );
 
@@ -137,6 +141,21 @@ function backup_note(){
   print("<b>NOTE</b>: If flashing rootfs, please download a backup copy of <a href='$base?cmd=backup'>/etc/elphel393</a><br/>");
 }
 
+// $defaults are not used yet. No need
+function get_flash_erase_args($dev, $defaults){
+
+  $mtd_device = explode("/",$dev)[2];
+  $mtd_sysfs_path = "/sys/class/mtd/$mtd_device";
+  $mtd_size      = intval(file_get_contents("$mtd_sysfs_path/size"));
+  $mtd_erasesize = intval(file_get_contents("$mtd_sysfs_path/erasesize"));
+  $mtd_size_blocks = intval($mtd_size/$mtd_erasesize);
+  $mtd_erase_start = 0;
+
+  $res = "$mtd_erase_start $mtd_size_blocks";
+  return $res;
+
+}
+
 function nandflash($list){
   global $UPDATE_DIR;
   global $FLASH_LOG;
@@ -149,12 +168,14 @@ function nandflash($list){
     if ($e[0]==0){
       if ($e[1]!="rootfs.ubi"){
         exec("flash_unlock ${e[2]} >> $FLASH_LOG");
-        exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
+        $flash_erase_args = get_flash_erase_args($e[2],$e[3]);
+        exec("flash_erase ${e[2]} $flash_erase_args >> $FLASH_LOG");
         exec("nandwrite -n ${e[2]} -p $UPDATE_DIR/${e[1]} >> $FLASH_LOG");
       }else{
         if (!is_dir($NAND_PATH)) {
           exec("flash_unlock ${e[2]} >> $FLASH_LOG");
-          exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
+          $flash_erase_args = get_flash_erase_args($e[2],$e[3]);
+          exec("flash_erase ${e[2]} $flash_erase_args >> $FLASH_LOG");
           exec("ubiformat ${e[2]} -f $UPDATE_DIR/${e[1]} ${e[4]} >> $FLASH_LOG");
         }else{
           rootfs_warning_note();
