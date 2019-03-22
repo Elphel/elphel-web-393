@@ -26,6 +26,7 @@
 
   $port0 = 2323;
   $path = "/sys/devices/soc0/elphel393-detect_sensors@0";
+  $base_channel = 0;
   $available_ports = Array();
 
   $trig_master = -1;
@@ -57,6 +58,10 @@
     $dl_exif_histories = 1;
   }
 
+  if (isset($_GET['bchn'])){
+    $base_channel = $_GET['bchn'];
+  }
+
   if ($trig_master>=0){
 
     if (isset($_GET['trig'])){
@@ -78,7 +83,7 @@
       $filenames = Array();
       $rqs = Array();
       foreach($available_ports as $port){
-        array_push($rqs,"http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bimg");
+        array_push($rqs,"http://{$_SERVER['SERVER_ADDR']}:$port/timestamp_name/bchn$base_channel/bimg");
       }
       // '1' in the end - get response with headers
       $cdata = curl_multi_start($rqs,1);

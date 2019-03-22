@@ -79,6 +79,8 @@ function parseURL(){
 
 function init(){
 
+  zip.workerScriptsPath = "../js/zip/";
+
   parseURL();
 
   if (!ips_from_url){
@@ -120,6 +122,7 @@ function init(){
   });
 
   init_test_button();
+  init_snapshot_button();
 
 }
 
@@ -742,3 +745,311 @@ function multi_ajax(url,callback){
   }
 
 }
+
+var pointers = [];
+
+function init_snapshot_button(){
+
+  $("#snapshot").on('click',function(){
+    //reset pointers
+    pointers = [];
+    // get combined diagnostcs - need timestamps and pointers
+    multi_ajax("../diagnostics.php",function(data){
+      pointers.push($(data));
+      // when everything is collected
+      if (pointers.length==cams.length){
+        //find the latest
+        snapshot_download_all(pointers);
+      }
+    });
+   // download images
+  });
+
+}
+
+function snapshot_find_latest_ts(ptrs){
+
+  // loop through the 1st one backwards
+  var c = $($(ptrs[0]).find('timestamps')[0]).find('ts');
+
+  var total_ports = 0;
+  for(var i=0;i<ptrs.length;i++){
+    total_ports += $(ptrs[i]).find('port').length;
+  }
+
+  var ts = [];
+  var pattern = "";
+  var common_ts_found = false;
+
+  for(var i=c.length-1;i>=0;i--){
+    var pattern = c[i].innerText;
+    var counter = 0;
+    for(var j=0;j<ptrs.length;j++){
+      var l = $(ptrs[j]).find('ts[ts=\''+pattern+'\']').length;
+      counter += l;
+
+    }
+    if (counter==total_ports){
+      common_ts_found = true;
+      break;
+    }
+  }
+
+  if (common_ts_found){
+    console.log("Downloading "+pattern);
+    return pattern;
+  }else{
+    console.log("ERROR: didn't find a common timestamp among cameras and ports");
+    return false;
+  }
+
+}
+
+var ZW;
+var zip_filename = "zip.zip";
+
+var blobs = [];
+var filenames = [];
+
+var snapshot_counter = 0;
+var zip_counter = 0;
+var blob_coounter = 0;
+
+function snapshot_download_all(ptrs){
+
+  // create zipWriter
+  /*
+  zip.createWriter(new zip.BlobWriter("application/zip"),function(zipWriter){
+
+    ZW = zipWriter;
+  });
+  */
+
+  var ts = snapshot_find_latest_ts(ptrs);
+  if (ts){
+
+    zip_filename = ts.replace(/\./ig,"_")+".zip";
+
+    snapshot_counter = 0;
+    zip_counter = 0;
+    blob_counter = 0;
+    filenames = [];
+    blobs = [];
+
+    for(var i=0;i<ptrs.length;i++){
+        var ip = $(ptrs[i]).find('camera').attr('ip');
+        var bchn = get_base_channel(ip);
+        //console.log(ip+": base channel = "+base_chn);
+        var buf_pointers = $(ptrs[i]).find('ts[ts=\''+ts+'\']');
+
+        for(var j=0;j<cams[i].ports.length;j++){
+          // everything is ordered
+          var port = cams[i].ports[j].port;
+          var pointer = $(buf_pointers[j]).attr('ptr');
+          var url = "http://"+ip+":"+port+"/"+pointer+"/timestamp_name/bchn"+bchn+"/bimg";
+          snapshot_download_single(url);
+        }
+    }
+  }
+
+}
+
+function get_base_channel(ip){
+  var base = 0;
+  for(var i=0;i<cams.length;i++){
+    if (cams[i].ip==ip){
+      break;
+    }else{
+      base += cams[i].ports.length;
+    }
+  }
+  return base;
+}
+
+// from snapshot.js
+function snapshot_download_single(addr){
+
+  snapshot_counter++;
+
+  // get ze blob
+  var http = new XMLHttpRequest();
+  http.open("GET", addr, true);
+  http.responseType = "blob";
+  http.onload = function(e){
+
+    if (this.status === 200) {
+
+      // To access the header, had to add
+      // printf("Access-Control-Expose-Headers: Content-Disposition\r\n");
+      // to imgsrv
+      var filename = this.getResponseHeader("Content-Disposition");
+      filename = filename_from_content_disposition(filename);
+
+      // store in case zip cannot zip
+      filenames.push(filename);
+      blobs.push(http.response);
+
+      blob_counter++;
+      //var blob = http.response;
+      //blob.type = "image/jpeg";
+
+      if (blob_counter==snapshot_counter){
+        zip_blobs();
+        //add_test_blob_to_zip();
+      }
+
+      //pass_to_file_reader(filename,http.response);
+
+    }
+
+  }
+  http.send();
+
+}
+
+function add_test_blob_to_zip(){
+
+  var textblob = new Blob(
+    ["Lorem ipsum dolor sit amet, consectetuer adipiscing elit..." ],
+    {type : "text/plain"}
+  );
+
+  ZW.add("test.txt",new zip.BlobReader(textblob),function(){
+    ZW.close(function(zippedBlob){
+      pass_to_file_reader(zip_filename,zippedBlob);
+    });
+  });
+
+}
+
+function zip_blobs(){
+
+  zip.createWriter(new zip.BlobWriter("application/zip"), function(writer) {
+      var f = 0;
+      function nextFile(f) {
+          fblob = blobs[f];
+          writer.add(filenames[f], new zip.BlobReader(fblob), function() {
+              // callback
+              f++;
+              if (f < filenames.length) {
+                  nextFile(f);
+              } else close();
+          });
+      }
+
+      function close() {
+          // close the writer
+          writer.close(function(blob) {
+              // save with FileSaver.js
+              pass_to_file_reader(zip_filename,blob);
+          });
+      }
+
+      nextFile(f);
+
+  }, onerror);
+
+  /*
+  for(var i=0;i<filenames.length;i++){
+    // add to zip writer
+    ZW.add(filenames[i],new zip.BlobReader(blobs[i]),function(){
+      zip_counter++;
+      if (snapshot_counter==zip_counter){
+        ZW.close(function(zippedBlob){
+          // right befre closing
+          // save zip
+          pass_to_file_reader(zip_filename,zippedBlob);
+        });
+      }
+    });
+  }
+  */
+
+}
+
+function filename_from_content_disposition(str){
+  var parameters = str.split(";");
+  for (var i=0;i<parameters.length;i++) parameters[i]=parameters[i].split("=");
+  for (var i=0;i<parameters.length;i++) {
+    if (parameters[i][0].trim()=="filename"){
+      str = parameters[i][1].replace(/"/ig,"");
+      str = str.trim();
+    }
+  }
+  return str;
+}
+
+// from here:
+//   https://diegolamonica.info/multiple-files-download-on-single-link-click/
+//   http://jsfiddle.net/diegolamonica/ssk8z9pa/
+//   (helped a lot) https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
+function pass_to_file_reader(filename,fileblob){
+
+  var url = window.URL.createObjectURL(fileblob);
+
+  var a = $('<a>')
+    .attr('href', url)
+    .attr('download',filename)
+    // Firefox does not fire click if the link is outside
+    // the DOM
+    .appendTo('body');
+
+  a[0].click();
+  //a.click();
+
+  // delay?
+  setTimeout(function(){
+    a.remove();
+  },200);
+
+  //return;
+
+  // The code below will not work because .readAsDataURL() is limited in Chrome to 2MB, but no limit in FF.
+
+  /*
+  var reader = new FileReader();
+  reader.filename = filename;
+
+  reader.onloadend = function(e){
+
+      //console.log("Load ended!");
+
+      var file = [this.filename,e.target.result];
+
+      var theAnchor = $('<a>')
+        .attr('href', file[1])
+        .attr('download',file[0])
+        // Firefox does not fire click if the link is outside
+        // the DOM
+        .appendTo('body');
+
+      theAnchor[0].click();
+      //theAnchor.click();
+
+      //delay
+
+      setTimeout(function(){
+        theAnchor.remove();
+      },200);
+
+  };
+
+  reader.onload = function(e){
+    //console.log("onload");
+  };
+
+  reader.readAsDataURL(filedata);
+  */
+
+}
+
+
+
+
+
+
+
+
+
+
+
