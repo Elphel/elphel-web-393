@@ -34,7 +34,10 @@ $BKP_DIR  = "/etc/elphel393";
 # update files
 # file, expertise level, nand partition, size - see http://wiki.elphel.com/index.php?title=NAND_flash_boot_rootfs
 # partitions are also listed in the device tree
-# WARNING: DO NOT CHANGE
+
+# for rootfs.ubi - e[3] (=="0 2560") for flash_erase is now calculated from sysfs and depends on the device tree
+
+# WARNING: TRY NOT TO CHANGE
 $UPDATE_LIST = array(
   array(0,"boot.bin",      "/dev/mtd0","0 2"),
   array(0,"u-boot-dtb.img","/dev/mtd1","0 8"),
@@ -155,7 +158,15 @@ function nandflash($list){
       }else{
         if (!is_dir($NAND_PATH)) {
           exec("flash_unlock ${e[2]} >> $FLASH_LOG");
-          exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
+          // make more universal
+          $mtd_device = explode("/",$e[2])[2];
+          $mtd_sysfs_path = "/sys/class/mtd/$mtd_device";
+          $mtd_size      = intval(file_get_contents("$mtd_sysfs_path/size"));
+          $mtd_erasesize = intval(file_get_contents("$mtd_sysfs_path/erasesize"));
+          $mtd_size_blocks = intval($mtd_size/$mtd_erasesize);
+          $mtd_erase_start = 0;
+          //exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
+          exec("flash_erase ${e[2]} $mtd_erase_start $mtd_size_blocks >> $FLASH_LOG");
           exec("ubiformat ${e[2]} -f $UPDATE_DIR/${e[1]} ${e[4]} >> $FLASH_LOG");
         }else{
           rootfs_warning_note();
