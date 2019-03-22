@@ -35,7 +35,7 @@ $BKP_DIR  = "/etc/elphel393";
 # file, expertise level, nand partition, size - see http://wiki.elphel.com/index.php?title=NAND_flash_boot_rootfs
 # partitions are also listed in the device tree
 
-# for rootfs.ubi - e[3] (=="0 2560") for flash_erase is now calculated from sysfs and depends on the device tree
+# e[3]s for flash_erase are now calculated from sysfs and depend on the device tree
 
 # WARNING: TRY NOT TO CHANGE
 $UPDATE_LIST = array(
