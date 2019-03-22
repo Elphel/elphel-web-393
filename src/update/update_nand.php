@@ -141,6 +141,21 @@ function backup_note(){
   print("<b>NOTE</b>: If flashing rootfs, please download a backup copy of <a href='$base?cmd=backup'>/etc/elphel393</a><br/>");
 }
 
+// $defaults are not used yet. No need
+function get_flash_erase_args($dev, $defaults){
+
+  $mtd_device = explode("/",$dev)[2];
+  $mtd_sysfs_path = "/sys/class/mtd/$mtd_device";
+  $mtd_size      = intval(file_get_contents("$mtd_sysfs_path/size"));
+  $mtd_erasesize = intval(file_get_contents("$mtd_sysfs_path/erasesize"));
+  $mtd_size_blocks = intval($mtd_size/$mtd_erasesize);
+  $mtd_erase_start = 0;
+
+  $res = "$mtd_erase_start $mtd_size_blocks";
+  return $res;
+
+}
+
 function nandflash($list){
   global $UPDATE_DIR;
   global $FLASH_LOG;
@@ -153,20 +168,14 @@ function nandflash($list){
     if ($e[0]==0){
       if ($e[1]!="rootfs.ubi"){
         exec("flash_unlock ${e[2]} >> $FLASH_LOG");
-        exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
+        $flash_erase_args = get_flash_erase_args($e[2],$e[3]);
+        exec("flash_erase ${e[2]} $flash_erase_args >> $FLASH_LOG");
         exec("nandwrite -n ${e[2]} -p $UPDATE_DIR/${e[1]} >> $FLASH_LOG");
       }else{
         if (!is_dir($NAND_PATH)) {
           exec("flash_unlock ${e[2]} >> $FLASH_LOG");
-          // make more universal
-          $mtd_device = explode("/",$e[2])[2];
-          $mtd_sysfs_path = "/sys/class/mtd/$mtd_device";
-          $mtd_size      = intval(file_get_contents("$mtd_sysfs_path/size"));
-          $mtd_erasesize = intval(file_get_contents("$mtd_sysfs_path/erasesize"));
-          $mtd_size_blocks = intval($mtd_size/$mtd_erasesize);
-          $mtd_erase_start = 0;
-          //exec("flash_erase ${e[2]} ${e[3]} >> $FLASH_LOG");
-          exec("flash_erase ${e[2]} $mtd_erase_start $mtd_size_blocks >> $FLASH_LOG");
+          $flash_erase_args = get_flash_erase_args($e[2],$e[3]);
+          exec("flash_erase ${e[2]} $flash_erase_args >> $FLASH_LOG");
           exec("ubiformat ${e[2]} -f $UPDATE_DIR/${e[1]} ${e[4]} >> $FLASH_LOG");
         }else{
           rootfs_warning_note();
