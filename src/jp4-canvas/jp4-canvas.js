@@ -27,9 +27,9 @@
 
 $(function(){
   
-  var t1 = $("#test1").jp4({ip:"127.0.0.1",port:2323,width:600,fast:true,lowres:4});
-  var t2 = $("#test2").jp4({ip:"127.0.0.1",port:2324,width:600,fast:true,lowres:4});
-  var t3 = $("#test3").jp4({ip:"127.0.0.1",port:2325,width:600,fast:true,lowres:4});
-  var t4 = $("#test4").jp4({ip:"127.0.0.1",port:2326,width:600,fast:true,lowres:4});
+  var t1 = $("#test1").jp4({ip:location.host, port:2323,width:600,fast:true,lowres:4});
+  var t2 = $("#test2").jp4({ip:location.host, port:2324,width:600,fast:true,lowres:4});
+  var t3 = $("#test3").jp4({ip:location.host, port:2325,width:600,fast:true,lowres:4});
+  var t4 = $("#test4").jp4({ip:location.host, port:2326,width:600,fast:true,lowres:4});
 
 });

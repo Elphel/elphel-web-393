@@ -136,8 +136,16 @@
         }
 
         if (this.status === 200) {
-            obj.blob = window.URL.createObjectURL(http.response);
-            process_image(obj.blob);
+
+            var contentType = http.getResponseHeader("Content-Type");
+
+            if (contentType=="image/tiff"){
+              process_image_tiff(http.response);
+            }else{
+              obj.blob = window.URL.createObjectURL(http.response);
+              process_image(obj.blob);
+            }
+
             delete this;
             //URL.revokeObjectURL(imgdata);
         }
@@ -179,6 +187,24 @@
 
     this.getAddr = function(){
       return Array(settings.ip,settings.port);
+    }
+
+    function process_image_tiff(blob){
+
+        var arrayBuffer;
+        var fileReader = new FileReader();
+        fileReader.onload = function(event){
+            arrayBuffer = event.target.result;
+            var tiff = new Tiff({buffer: arrayBuffer});
+            var canvas = tiff.toCanvas();
+
+            cnv_working.trigger("canvas_ready");
+            obj.busy = false;
+
+            Elphel.Canvas.drawScaled($(canvas),cnv_display,settings.width);
+        }
+        fileReader.readAsArrayBuffer(blob);
+
     }
 
     function process_image(imagedata){

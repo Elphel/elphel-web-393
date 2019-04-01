@@ -57,6 +57,7 @@
   <!--<script type='text/javascript' src='../js/bootstrap/js/bootstrap.js'></script>-->
   <script src="js/elphel.js"></script>
   <script src="js/jcanvas.js"></script>
+  <script src="js/tiff.js"></script>
   <script src="js/exif.js"></script>
   <script src="js/jquery-jp4.js"></script>
 

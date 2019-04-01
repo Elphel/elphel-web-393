@@ -7,6 +7,7 @@ DOCS=       jp4-canvas.html \
 
 LIBS=       elphel.js \
             exif.js \
+            tiff.js \
             jquery-jp4.js \
             jcanvas.js \
             webworker.js
