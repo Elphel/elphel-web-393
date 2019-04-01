@@ -44,10 +44,26 @@ $port0 = 2323;
 $pointers = elphel_get_circbuf_pointers(intval($port)-$port0,1);
 $pointer = $pointers[count($pointers)-1]['circbuf_pointer'];
 
+$contents = file_get_contents("http://$ip:$port/$rel");
+
+$acao = "*";
+$ct   = "image/jpeg"; 
+
+// pass some headers from file_get_contents
+// $http_response_header is auto populated
+foreach($http_response_header as $h){
+    $hv = explode(":",$h);
+    if ($hv[0]=="Access-Control-Allow-Origin"){
+        $acao = trim($hv[1]);
+    }else if ($hv[0]=="Content-Type"){
+        $ct   = trim($hv[1]);
+    }
+}
+
 // allow CORS
-header('Access-Control-Allow-Origin: *');
-header('Content-type:image/jpeg');
-echo file_get_contents("http://$ip:$port/$pointer/$rel");
+header("Access-Control-Allow-Origin: $acao");
+header("Content-Type: $ct");
+echo $contents;
 //echo file_get_contents("http://$ip:$port/$rel");
 
 die();
