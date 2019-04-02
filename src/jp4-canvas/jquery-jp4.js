@@ -191,6 +191,9 @@
 
     function process_image_tiff(blob){
 
+        IMAGE_FORMAT = "TIFF";
+        obj.format = IMAGE_FORMAT;
+
         var arrayBuffer;
         var fileReader = new FileReader();
         fileReader.onload = function(event){
