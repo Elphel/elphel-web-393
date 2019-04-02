@@ -74,7 +74,8 @@
 
   .port_preview{
     width:300px;
-    height:224px;
+    min-height:224px;
+    overflow: auto;
   }
 
   table td {
