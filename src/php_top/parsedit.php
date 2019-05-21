@@ -501,7 +501,18 @@ $prefix_url='http://'.$_SERVER['SERVER_ADDR'].$_SERVER['SCRIPT_NAME'];
    </ul>
    <p>Each parameter on a generated page has a "tooltip" - if  you hover a mouse pointer over it's name it will show short description of the parameter.</p>
    <h4> Changing parameters with the HTTP GET method</h4>
-   <p>If "&immediate" is added the the URL, the program will apply parameteres (those that have values specified) without opening any forms. If the parameter <b>showseq</b> is specified and positive, the HTML page will show the sequence of parameter application, if it is ommitted or less or equal to 0, the request will generate an XML response with the previous parameter values (before application of the new ones). You may specify different program-ahead values and/or multiple settings for the same parameters - program-ahead values are separated from the parameter values with "*", multiple value/program-ahead pairs for the same parameter are separated with ":". Non-specified program-ahead is currently set to 3.</p>
+   <p>If "&immediate" is added the the URL, the program will apply parameteres (those that have values specified)
+      without opening any forms. If the parameter <b>showseq</b> is specified and positive, the HTML page will show
+      the sequence of parameter application, if it is ommitted or less or equal to 0, the request will generate
+      an XML response with the previous parameter values (before application of the new ones). You may specify
+      different program-ahead values and/or multiple settings for the same parameters - program-ahead values
+      are separated from the parameter values with "*", multiple value/program-ahead pairs for the same parameter
+      are separated with ":". Non-specified program-ahead is currently set to 3.</p>
+   <p>It is possible to simultaneously apply the same parameter to all (or some) ports, not jsut the one specified by
+      "sensor_port=x". Port selection can be set as a hex digit attached to the value after "!" sign: <b>&amp;key=value!ports</b>
+      or by adding parameter preceded by an asterisk: <b>&amp;key=value&amp;*key=ports</b><br/>
+      <b><i>Note:</i></b> 'broadcast' parameters set with port selection are applied with FRAMEPAIR_FORCE_NEWPROC modifier
+      (other parameters are not!), so the actions caused by the parameter will be performed even if the value is not changed.</p>
 
 USAGE;
 }
@@ -898,7 +909,7 @@ function  applyPost($todo,$noFinalWait=false) {
 					elphel_set_P_arr ( $GLOBALS [sensor_port], $params, $frame_zero + $since, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC, $bcast );
 				} else {
 //					echo "elphel_set_P_arr(" . $GLOBALS [sensor_port] . ", " . print_r ( $params, 1 ) . ", " . ($frame_zero + $since) . ", ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC)\n";
-					elphel_set_P_arr ( $GLOBALS [sensor_port], $params, $frame_zero + $since, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / Are these flags needed?
+					elphel_set_P_arr ( $GLOBALS [sensor_port], $params, $frame_zero + $since, ELPHEL_CONST_FRAMEPAIR_FORCE_NEWPROC ); // / Are these flags needed?- YES!
 				}
 			}
 		}
@@ -1119,8 +1130,10 @@ function parseGetNames() {
         }
         $port_mask = 0;
         if (strpos($value,"!")!==FALSE) {
-        	$port_mask = myval(substr($value,strpos($value,"!")+1),16);
-        	$value = substr($value,strpos($value,"!")+1);
+        	$port_mask = myval(substr($value,strpos($value,"!")+1),16); // string after '!' - hex port mask
+//        	$value = substr($value,strpos($value,"!")+1);
+// Old bug above?
+        	$value = substr($value,0, strpos($value,"!")); // string before "!" - parameter value
         }
 
         if (isset($_GET["*$key"])) {
