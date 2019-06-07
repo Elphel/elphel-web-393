@@ -508,9 +508,12 @@ $prefix_url='http://'.$_SERVER['SERVER_ADDR'].$_SERVER['SCRIPT_NAME'];
       different program-ahead values and/or multiple settings for the same parameters - program-ahead values
       are separated from the parameter values with "*", multiple value/program-ahead pairs for the same parameter
       are separated with ":". Non-specified program-ahead is currently set to 3.</p>
-   <p>It is possible to simultaneously apply the same parameter to all (or some) ports, not jsut the one specified by
-      "sensor_port=x". Port selection can be set as a hex digit attached to the value after "!" sign: <b>&amp;key=value!ports</b>
-      or by adding parameter preceded by an asterisk: <b>&amp;key=value&amp;*key=ports</b><br/>
+   <p>It is possible to simultaneously apply the same parameter to all (or some) ports, not just the one specified by
+      "sensor_port=x". Port selection can be set as a hex digit:
+      <ul>
+        <li>attached to the value after "!" sign: <b>&amp;key=value!ports</b> or with ahead parameter <b>&amp;key=value*ahead!ports</b> (<span style='color:red;font-weight:bold'>order of <i>value, ahead and ports</i> is important</span>)</li>
+        <li>by adding parameter preceded by an asterisk: <b>&amp;key=value&amp;*key=ports</b></li>
+      </ul>
       <b><i>Note:</i></b> 'broadcast' parameters set with port selection are applied with FRAMEPAIR_FORCE_NEWPROC modifier
       (other parameters are not!), so the actions caused by the parameter will be performed even if the value is not changed.</p>
 
