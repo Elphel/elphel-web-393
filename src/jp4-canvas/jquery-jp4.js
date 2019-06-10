@@ -197,14 +197,59 @@
         var arrayBuffer;
         var fileReader = new FileReader();
         fileReader.onload = function(event){
+
             arrayBuffer = event.target.result;
-            var tiff = new Tiff({buffer: arrayBuffer});
-            var canvas = tiff.toCanvas();
+
+            // tiff.js which is limited in capabilities
+            //var tiff = new Tiff({buffer: arrayBuffer});
+            //var canvas = tiff.toCanvas();
+
+            // UTIF.js
+            var ifds = UTIF.decode(arrayBuffer);
+            UTIF.decodeImage(arrayBuffer, ifds[0]);
+
+            if (ifds[0].t258==16){
+
+                rgba_16bit = new Float32Array(ifds[0].data.filter((x,i) => i%2==0));
+                rgba_16bit = rgba_16bit.map((x,i) => x + (ifds[0].data[2*i+1]<<8));
+
+                /*
+                if (ifds[0].height==122){
+                    // cut off telemetry
+                    ifds[0].height = 120;
+                    rgba_16bit = rgba_16bit.slice(0,ifds[0].height*ifds[0].width);
+                }
+                */
+
+                // convert to C
+                rgba_16bit = rgba_16bit.map(x => x/100-273.15);
+                // scale
+                t_lo = 10;
+                t_hi = 30;
+                rgba_16bit = rgba_16bit.map(x => (x-t_lo)/(t_hi-t_lo));
+                rgba_16bit = rgba_16bit.map(x => 255*x*x);
+
+            }
+
+            var rgba_clamped = new Uint8ClampedArray(rgba_16bit.length*4);
+            rgba_clamped = rgba_clamped.map((x,i) => rgba_16bit[(i-i%4)/4]);
+            rgba_clamped = rgba_clamped.map((x,i) => (i%4==3)?255:x);
+
+            var rgba_idata   = new ImageData(rgba_clamped,ifds[0].width,ifds[0].height);
+            var canvas = cnv_working[0];
+
+            canvas.width = ifds[0].width;
+            canvas.height = ifds[0].height;
+
+            var ctx = canvas.getContext('2d');
+            ctx.putImageData(rgba_idata, 0, 0);
 
             cnv_working.trigger("canvas_ready");
             obj.busy = false;
 
-            Elphel.Canvas.drawScaled($(canvas),cnv_display,settings.width);
+            //Elphel.Canvas.drawScaled($(canvas),cnv_display,settings.width);
+            Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
+
         }
         fileReader.readAsArrayBuffer(blob);
 
