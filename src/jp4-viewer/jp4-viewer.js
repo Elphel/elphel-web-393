@@ -27,7 +27,7 @@ function parseURL(){
 $(function(){
     
     $.ajax({
-      url: "http://192.168.0.9:2323",
+      url: location.host+":2323",
       success: function(){
         console.log("success");
       }
@@ -54,6 +54,8 @@ function handleImage(e) {
     reader.onload = function(event){
         //$("#smallimage").attr("src",event.target.result);
         
+        console.log("File loaded");
+
         $("#jp4view").html("");
         var view = $("<div>",{id:"img"});
 
