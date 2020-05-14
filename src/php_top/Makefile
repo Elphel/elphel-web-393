@@ -18,7 +18,8 @@ PHP_SCRIPTS=i2c.php \
             phpinfo.php \
             raw.php \
             snapfull.php \
-            tuneseq.php
+            tuneseq.php \
+            utils.php
 
 PHPINCLUDES=i2c_include.php \
             show_source_include.php \

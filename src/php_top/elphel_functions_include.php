@@ -317,4 +317,18 @@ function get_raw_dev()
 	return $raw_devices;
 }
 
+/** Get a list of detected sensors (no mux). Readimg from sysfs. */
+function get_sensors(){
+    $sensors = array('none','none','none','none');
+    $path = "/sys/devices/soc0/elphel393-detect_sensors@0";
+    for($i=0;$i<count($sensors);$i++){
+        $s = "$path/sensor{$i}0";
+        if (is_file($s)){
+            $c = trim(file_get_contents($s));
+            $sensors[$i] = $c;
+        }
+    }
+    return $sensors;
+}
+
 ?>
