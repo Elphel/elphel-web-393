@@ -96,21 +96,17 @@
 <div style='padding:10px'>
   <?php
 
-  $port0 = 2323;
-  $path = "/sys/devices/soc0/elphel393-detect_sensors@0";
+  include "include/elphel_functions_include.php";
 
+  $port0 = 2323;
   $table_contents = "";
   $port_links = "";
 
   $sample_port = -1;
 
-  for($i=0;$i<4;$i++){
-    $sensor = $path."/sensor{$i}0";
-    if (is_file($sensor)){
-      $c = trim(file_get_contents($sensor));
-      if ($c!="none"){
-
-      	$sample_port = $i;
+  foreach(get_sensors() as $i => $sensor){
+    if ($sensor!="none"){
+        $sample_port = $i;
 
         $sandp = "http://{$_SERVER["SERVER_ADDR"]}:".($port0+$i);
         $href1 = "$sandp/bimg";
@@ -125,8 +121,6 @@
         $table_contents .= "</td>";
 
         $port_links .= "<li><a href=\"#\" onclick=\"window.open('camvc.html?sensor_port=$i&reload=0', 'port $i','menubar=0, width=800, height=600, toolbar=0, location=0, personalbar=0, status=0, scrollbars=1')\">port $i</a></li>\n";
-
-      }
     }
   }
 
