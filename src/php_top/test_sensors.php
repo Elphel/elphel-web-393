@@ -87,6 +87,8 @@ function run_test_mt9p006($port){
         if ($md5sum!=$ref_md5sum){
             print("md5sum($i) does not match reference ($ref_md5sum): $md5sum\n");
             $test_status = "fail";
+        }else{
+            print("md5sum($i) $md5sum ok\n");
         }
     }
 
