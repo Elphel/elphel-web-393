@@ -18,6 +18,7 @@ PHP_SCRIPTS=i2c.php \
             phpinfo.php \
             raw.php \
             snapfull.php \
+            test_sensors.php \
             tuneseq.php \
             utils.php
 
