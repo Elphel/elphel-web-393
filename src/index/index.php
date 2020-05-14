@@ -180,6 +180,7 @@
   <a title="docs" href="http://wiki.elphel.com/index.php?title=Tmp_manual">User manual</a><br />
   <a href="jp4-viewer/?width=1200&quality=1" title="Preview jp4 images (drag and drop from PC)">JP4 Viewer</a><br />
   <a href="/diagnostics/index.html" title="Inspect camera system info">System info</a><br />
+  <a href="/test_sensors.php" title="Switch to test pattern and check md5sums">Test sensors</a><br />
   <a href="/debugfs.html" title="Linux Kernel Dynamic Debug helper interface (debug device drivers)">DebugFS</a><br />
 </div>
 <script>
