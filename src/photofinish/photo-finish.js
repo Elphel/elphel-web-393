@@ -50,8 +50,9 @@ $(function(){
   });
 
   display_object = $("#display-panel").jp4({
-    ip:location.host,
-    port:2323,
+    //ip:location.host,
+    //port:2323,
+    src: "http://"+location.host+":2323/img",
     width:600,
     fast:true,
     lowres:0,
