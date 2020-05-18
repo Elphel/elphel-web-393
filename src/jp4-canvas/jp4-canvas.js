@@ -26,10 +26,10 @@
  */
 
 $(function(){
-  
-  var t1 = $("#test1").jp4({ip:location.host, port:2323,width:600,fast:true,lowres:4});
-  var t2 = $("#test2").jp4({ip:location.host, port:2324,width:600,fast:true,lowres:4});
-  var t3 = $("#test3").jp4({ip:location.host, port:2325,width:600,fast:true,lowres:4});
-  var t4 = $("#test4").jp4({ip:location.host, port:2326,width:600,fast:true,lowres:4});
+
+  let t1 = $("#test1").jp4({src:"http://"+location.host+":"+2323+"/img",width:600,fast:true,lowres:4,debug:false,refresh:false});
+  let t2 = $("#test2").jp4({src:"http://"+location.host+":"+2324+"/img",width:600,fast:true,lowres:4,debug:false,refresh:false});
+  let t3 = $("#test3").jp4({src:"http://"+location.host+":"+2325+"/img",width:600,fast:true,lowres:4,debug:false,refresh:false});
+  let t4 = $("#test4").jp4({src:"http://"+location.host+":"+2326+"/img",width:600,fast:true,lowres:4,debug:false,refresh:false});
 
 });
