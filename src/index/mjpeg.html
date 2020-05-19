@@ -20,6 +20,7 @@
 
             const params = new URLSearchParams(location.search);
             const port = params.get('port') || 0;
+            const refresh = params.get('refresh') || 5;
 
             if (params.get('port')===null){
                 let s = "";
@@ -53,7 +54,7 @@
                 ctx.canvas.height = img.height;
             }
 
-            window.setInterval("refreshCanvas()", 5);
+            window.setInterval("refreshCanvas()", refresh);
 
             function refreshCanvas(){
                 try{

@@ -92,6 +92,12 @@
             text-align:right;
             margin-top: 1px;
         }
+
+        #ll_status{
+            color: rgba(0,150,0,1);
+            opacity: 0;
+        }
+
     </style>
 </head>
 <body>
@@ -118,7 +124,7 @@
         $table_contents .= "<div class='port_window img_window'>";
         //$table_contents .= "<div><a href=\"$href1\"><img class='img_window' src='$href1' style='width:300px'/></a></div>";
         $table_contents .= "<div><a href=\"$href1\"><div index='$i' class='port_preview'></div></a></div>";
-        $table_contents .= "<div style='text-align:center;'>port $i: <a title='single image' href='$href1'>bimg</a>, <a title='multi-part image stream (M-JPEG)' href='$href2'>mimg</a></div>";
+        $table_contents .= "<div style='text-align:center;'>port $i: <a title='single image' href='$href1'>bimg</a>, <a title='multi-part image stream (M-JPEG). Played in browser as is.' href='$href2'>mimg</a>, <a href=\"mjpeg.html?port=$i\" title='MJPEG stream played in html canvas' class='canvas_mjpeg'>canvas</a></div>";
         $table_contents .= "</div>";
         $table_contents .= "</td>";
 
@@ -202,6 +208,7 @@
     <a href="camogmgui.php"   title="Store video/images to the camera's storage">Recorder</a><br />
     <a href="snapshot/"       title="Take a snapshot and download from the camera">Snapshot</a><br />
     <a href="raw.php"         title="Take a snapshot and download raw pixel data from the camera">Snapshot (raw image data)</a><br />
+    <a id="low_latency_link" href="#" title="For 5 MPix sensors">Quick low latency setup (1920x1088, 30fps)</a> <span id='ll_status'>settings applied</span><br />
     <a href="photofinish/"    title="Scanline mode demo">Photo finish demo</a><br />
     <br />
     <a href="hwmon.html"           title="hwmon.html">Temperature monitor</a><br />
@@ -225,6 +232,8 @@
         init_aexp_toggle();
         init_jp4_previews();
         init_inputs();
+        init_lowlatency();
+        update_canvas_mjpeg();
     });
 
     async function check_time(){
@@ -282,79 +291,106 @@
         });
     }
 
-function init_aexp_toggle(){
-    $('#toggle_aexp').click(function() {
+    function init_aexp_toggle(){
+        $('#toggle_aexp').click(function() {
 
-        if ($(this).find('.btn.active').html()=="ON"){
-            $(this).find('.btn.active').toggleClass('btn-success');
-        }else{
-            $(this).find('.btn.active').toggleClass('btn-danger');
-        }
+            if ($(this).find('.btn.active').html()=="ON"){
+                $(this).find('.btn.active').toggleClass('btn-success');
+            }else{
+                $(this).find('.btn.active').toggleClass('btn-danger');
+            }
 
-        // toggle active
-        $(this).find('.btn').toggleClass('active');
+            // toggle active
+            $(this).find('.btn').toggleClass('active');
 
-        if ($(this).find('.btn.active').html()=="ON"){
-            aexp_en = 1;
-            $(this).find('.btn.active').toggleClass('btn-success');
-        }else{
-            aexp_en = 0;
-            $(this).find('.btn.active').toggleClass('btn-danger');
-        }
+            if ($(this).find('.btn.active').html()=="ON"){
+                aexp_en = 1;
+                $(this).find('.btn.active').toggleClass('btn-success');
+            }else{
+                aexp_en = 0;
+                $(this).find('.btn.active').toggleClass('btn-danger');
+            }
 
-        $(this).find('.btn').toggleClass('btn-default');
+            $(this).find('.btn').toggleClass('btn-default');
 
-        url = "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&AUTOEXP_ON="+aexp_en+"&*AUTOEXP_ON=0xf";
+            url = "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&AUTOEXP_ON="+aexp_en+"&*AUTOEXP_ON=0xf";
 
-        $.ajax({
-            url: url,
-            success: function(){
-                console.log("aexp "+(aexp_en?"on":"off"));
+            $.ajax({
+                url: url,
+                success: function(){
+                    console.log("aexp "+(aexp_en?"on":"off"));
+                }
+            });
+
+        });
+    }
+
+    async function init_inputs(){
+        $("input").change(function(){
+            let pname  = $(this).attr('pname');
+            let pvalue = $(this).val();
+
+            switch(pname){
+            case "AUTOEXP_EXP_MAX":
+                pvalue = parseInt(pvalue*1000);
+                set_param(pname,pvalue,()=>{
+                    console.log("ok");
+                });
+                break;
+            case "EXPOS":
+                pvalue = parseInt(pvalue*1000);
+                // autoexp off
+                if ($('#toggle_aexp').find('.btn.active').html()==="ON"){
+                    $('#toggle_aexp').click();
+                }
+                set_param(pname,pvalue,()=>{
+                    console.log("ok");
+                });
+                break;
+            case "TRIG_PERIOD":
+                pvalue = parseInt(1/pvalue*10e7);
+                set_param(pname,pvalue,()=>{
+                    console.log("ok");
+                    update_canvas_mjpeg();
+                });
+                break;
+            default:
             }
         });
+    }
 
-    });
-}
+    async function init_lowlatency(){
+        $("#low_latency_link").click(async ()=>{
+            await set_param("WOI_WIDTH",1920,()=>{console.log("ok");});
+            await set_param("WOI_HEIGHT",1088,()=>{console.log("ok");});
+            await set_param("TRIG_PERIOD",3333333,()=>{console.log("ok");});
+            $("#ll_status").css({opacity:1}).animate({opacity:0},1000);
+            update_canvas_mjpeg();
+        });
 
-async function init_inputs(){
-    $("input").change(function(){
-        let pname  = $(this).attr('pname');
-        let pvalue = $(this).val();
+    }
 
-        switch(pname){
-        case "AUTOEXP_EXP_MAX":
-            pvalue = parseInt(pvalue*1000);
-            set_param(pname,pvalue,()=>{
-                console.log("ok");
-            });
-            break;
-        case "EXPOS":
-            pvalue = parseInt(pvalue*1000);
-            // autoexp off
-            if ($('#toggle_aexp').find('.btn.active').html()==="ON"){
-                $('#toggle_aexp').click();
-            }
-            set_param(pname,pvalue,()=>{
-                console.log("ok");
-            });
-            break;
-        case "TRIG_PERIOD":
-            pvalue = parseInt(1/pvalue*10e7);
-            set_param(pname,pvalue,()=>{
-                console.log("ok");
-            });
-            break;
-        default:
-        }
-    });
-}
+    async function update_canvas_mjpeg(){
 
-async function set_param(pname,pvalue,callback){
-    $.ajax({
-        url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+pname+"="+pvalue+"&*"+pname+"=0xf",
-        success: callback
-    });
-}
+        let refresh = parseInt(1/$("#fps").val()*1000);
+
+        $(".canvas_mjpeg").each(function(){
+            let href = $(this).attr("href");
+            href = href.split("?");
+            let p = new URLSearchParams(href[1]);
+            let port = p.get("port");
+            $(this).attr("href",href[0]+"?port="+port+"&refresh="+refresh);
+        });
+
+
+    }
+
+    async function set_param(pname,pvalue,callback){
+        $.ajax({
+            url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+pname+"="+pvalue+"&*"+pname+"=0xf",
+            success: callback
+        });
+    }
 
 </script>
 <body>
