@@ -89,7 +89,6 @@
         #exposure,
         #fps{
             width: 50px;
-            height: 1.4em;
             text-align:right;
             margin-top: 1px;
         }
