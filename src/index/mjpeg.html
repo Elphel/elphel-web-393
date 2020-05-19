@@ -1,0 +1,69 @@
+<html>
+    <head>
+        <style>
+            body {
+                margin: 0px;
+            }
+            canvas {
+                height: 100%;
+                border: 0px solid red;
+            }
+        </style>
+    </head>
+    <body>
+
+        <canvas id='cnv'></canvas>
+
+        <script>
+
+            const IMGSRV_PORT0 = 2323;
+
+            const params = new URLSearchParams(location.search);
+            const port = params.get('port') || 0;
+
+            if (params.get('port')===null){
+                let s = "";
+                if (location.search===""){
+                    s = "?port="+port;
+                }else{
+                    s = location.search+"&port="+port;
+                }
+                window.history.pushState('', '', location.pathname+s);
+            }
+
+            let imgsrv_port = IMGSRV_PORT0 + parseInt(port);
+
+            let cnv = document.getElementById('cnv');
+            let ctx = cnv.getContext('2d');
+            let img = new Image();
+            img.onload = function() {
+                canvas_resize();
+                refreshCanvas();
+            };
+            img.src = location.origin+":"+imgsrv_port+"/mimg";
+
+            window.addEventListener("resize", ()=>{
+                canvas_resize();
+            });
+
+            ///////////////////////////////////////////////////////////////////////////////////
+
+            function canvas_resize(){
+                ctx.canvas.width = img.width;
+                ctx.canvas.height = img.height;
+            }
+
+            window.setInterval("refreshCanvas()", 5);
+
+            function refreshCanvas(){
+                try{
+                    ctx.drawImage(img,0,0,ctx.canvas.width,ctx.canvas.height);
+                }catch(err){
+                    img.src = location.origin+":2323/mimg";
+                }
+            };
+
+
+    </script>
+  </body>
+</html>

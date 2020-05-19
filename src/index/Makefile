@@ -3,7 +3,8 @@ OWN = -o root -g root
 INSTDOCS = 0644
 INSTALL = install
 DOCS=       index.html \
-            index.php
+            index.php \
+            mjpeg.html
 
 all:
 	@echo "make all in src"
