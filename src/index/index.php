@@ -85,6 +85,14 @@
         .btn-toggle{
             padding: 1px 0px;
         }
+        #aexp_limit,
+        #exposure,
+        #fps{
+            width: 50px;
+            height: 1.4em;
+            text-align:right;
+            margin-top: 1px;
+        }
     </style>
 </head>
 <body>
@@ -107,7 +115,7 @@
         $href1 = "$sandp/bimg";
         $href2 = "$sandp/mimg";
 
-        $table_contents .= "<td>";
+        $table_contents .= "<td valign='top'>";
         $table_contents .= "<div class='port_window img_window'>";
         //$table_contents .= "<div><a href=\"$href1\"><img class='img_window' src='$href1' style='width:300px'/></a></div>";
         $table_contents .= "<div><a href=\"$href1\"><div index='$i' class='port_preview'></div></a></div>";
@@ -124,6 +132,21 @@
   $awb_on = elphel_get_P_value($master_port,ELPHEL_WB_EN);
   $aexp_on = elphel_get_P_value($master_port,ELPHEL_AUTOEXP_ON);
 
+  $aexp_max = elphel_get_P_value($master_port,ELPHEL_AUTOEXP_EXP_MAX);
+  $aexp_max = round($aexp_max/100)/10;
+
+  $trig_period = elphel_get_P_value($master_port,ELPHEL_TRIG_PERIOD);
+  if ($trig_period!=1){ // single
+    $trig_period_step_s = 0.00000001;
+    $trig_period_s = $trig_period*$trig_period_step_s;
+    $fps = round(1/$trig_period_s*10)/10;
+  }else{
+    $fps = 10;
+  }
+
+  $expos = elphel_get_P_value($master_port,ELPHEL_EXPOS);
+  $expos = round($expos/100)/10;
+
   echo "<table><tr>$table_contents</tr></table>\n";
 
   echo "<br/>";
@@ -132,7 +155,22 @@
 
 ?>
     <table>
-    <tr id="toggle_awb" title='Auto White Balance'>
+    <tr>
+        <td>
+            <span title='Frames Per Second. Set internal trigger per second. WARNING: Trigger can be programmed to be faster than real fps. In that case some triggers are ignored.'>FPS:</span>
+        </td>
+        <td><input id='fps' type='text' value='<?php echo $fps;?>' pname='TRIG_PERIOD' /></td>
+    </tr>
+    <tr>
+        <td>
+            <span title='Initial read from master port, applied to all ports'>Manual Exposure:</span>
+        </td>
+        <td><input id='exposure' type='text' value='<?php echo $expos;?>' pname='EXPOS'/> ms</td>
+    </tr>
+    </table>
+    <br/>
+    <table>
+    <tr id="toggle_awb_div" title='Auto White Balance'>
         <td>
             Auto WB:
         </td>
@@ -143,7 +181,7 @@
             </div>
         </td>
     </tr>
-    <tr id="toggle_aexp" title='Auto Exposure'>
+    <tr id="toggle_aexp_div" title='Auto Exposure'>
         <td>
             Auto Exposure:
         </td>
@@ -153,6 +191,10 @@
                 <button class="btn btn-xs <?php echo (!$aexp_on)?"btn-danger active":"btn-default";?>">OFF</button>
             </div>
         </td>
+        <td>
+            <span title="Auto Exposure Limit in ms">Limit:
+        </td>
+        <td><input id='aexp_limit' type='text' value='<?php echo $aexp_max;?>' pname='AUTOEXP_EXP_MAX'/> ms</td>
     </tr>
     </table>
     <br />
@@ -176,12 +218,14 @@
 <script>
 
     var jp4_previews_enable = true;
+    var jp4_previews = [];
 
     $(function(){
         check_time();
         init_awb_toggle();
         init_aexp_toggle();
         init_jp4_previews();
+        init_inputs();
     });
 
     async function check_time(){
@@ -197,7 +241,7 @@
         $('.port_preview').each(function(){
             index = parseInt($(this).attr("index"));
             if (jp4_previews_enable) {
-                $(this).jp4({ip:location.host,port:2323+index,width:300,fast:true,lowres:4});
+                jp4_previews[index] = $(this).jp4({ip:location.host,port:2323+index,width:300,fast:true,lowres:4});
                 //$(this).jp4({src:"http://"+location.host+":"+(2323+index)+"/img",width:300,fast:true,lowres:4});
             }else{
                 $(this).html("<img width='300' src='http://"+location.host+":"+(2323+index)+"/img' />");
@@ -270,6 +314,46 @@ function init_aexp_toggle(){
             }
         });
 
+    });
+}
+
+async function init_inputs(){
+    $("input").change(function(){
+        let pname  = $(this).attr('pname');
+        let pvalue = $(this).val();
+
+        switch(pname){
+        case "AUTOEXP_EXP_MAX":
+            pvalue = parseInt(pvalue*1000);
+            set_param(pname,pvalue,()=>{
+                console.log("ok");
+            });
+            break;
+        case "EXPOS":
+            pvalue = parseInt(pvalue*1000);
+            // autoexp off
+            if ($('#toggle_aexp').find('.btn.active').html()==="ON"){
+                $('#toggle_aexp').click();
+            }
+            set_param(pname,pvalue,()=>{
+                console.log("ok");
+            });
+            break;
+        case "TRIG_PERIOD":
+            pvalue = parseInt(1/pvalue*10e7);
+            set_param(pname,pvalue,()=>{
+                console.log("ok");
+            });
+            break;
+        default:
+        }
+    });
+}
+
+async function set_param(pname,pvalue,callback){
+    $.ajax({
+        url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+pname+"="+pvalue+"&*"+pname+"=0xf",
+        success: callback
     });
 }
 
