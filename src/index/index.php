@@ -250,7 +250,7 @@
             index = parseInt($(this).attr("index"));
             if (jp4_previews_enable) {
                 jp4_previews[index] = $(this).jp4({ip:location.host,port:2323+index,width:300,fast:true,lowres:4});
-                //$(this).jp4({src:"http://"+location.host+":"+(2323+index)+"/img",width:300,fast:true,lowres:4});
+                //jp4_previews[index] = $(this).jp4({src:"http://"+location.host+":"+(2323+index)+"/img",width:300,fast:true,lowres:4});
             }else{
                 $(this).html("<img width='300' src='http://"+location.host+":"+(2323+index)+"/img' />");
             }
