@@ -60,7 +60,7 @@ function cmd_time(){
         $ts_formatted = date("Y-m-d H:i:s.$ts_ms",$ts_s);
         print("Your time:   $ts_s.$ts_ms ($ts_formatted)\nCamera time: $t\n");
 
-        if (abs($ts_s-$t)>24*3600){
+        if (isset($_GET['apply'])||(abs($ts_s-$t)>24*3600)){
             elphel_set_fpga_time($_GET['ts']/1000);
             exec("date -s $ts_formatted");
             exec("hwclock --systohc");
