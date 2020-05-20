@@ -361,11 +361,19 @@
 
     async function init_lowlatency(){
         $("#low_latency_link").click(async ()=>{
-            await set_param("WOI_WIDTH",1920,()=>{console.log("ok");});
-            await set_param("WOI_HEIGHT",1088,()=>{console.log("ok");});
-            await set_param("WOI_TOP",432,()=>{console.log("ok");});
-            await set_param("WOI_LEFT",336,()=>{console.log("ok");});
-            await set_param("TRIG_PERIOD",3333333,()=>{console.log("ok");});
+
+            await set_params({
+                "AUTOEXP_EXP_MAX": 30000,
+                "WOI_WIDTH"      : 1920,
+                "WOI_HEIGHT"     : 1088,
+                "WOI_TOP"        : 432,
+                "WOI_LEFT"       : 336
+            },()=>{console.log("ok")});
+
+            await set_params({
+                "TRIG_PERIOD":3333333
+            },()=>{console.log("ok");});
+
             $("#ll_status").css({opacity:1}).animate({opacity:0},1000);
             update_canvas_mjpeg();
         });
@@ -389,9 +397,23 @@
 
     async function set_param(pname,pvalue,callback){
         $.ajax({
-            url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+pname+"="+pvalue+"&*"+pname+"=0xf",
+            url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+pname+"="+pvalue+"*3&*"+pname+"=0xf",
             success: callback
         });
+    }
+
+    async function set_params(pars,callback){
+
+        let req = [];
+        for(p in pars){
+            req.push(p+"="+pars[p]+"&*"+p+"=0xf");
+        }
+
+        $.ajax({
+            url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+req.join("&"),
+            success: callback
+        });
+
     }
 
 </script>
