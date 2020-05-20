@@ -425,7 +425,11 @@
                 ctx.drawImage(this,0,0,cnv_w,cnv_h);
 
                 decode_and_display(ctx);
+
             }
+
+            //delete this.src;
+            URL.revokeObjectURL(this.src);
 
         };
         //obj.blob = window.URL.createObjectURL(http.response);
