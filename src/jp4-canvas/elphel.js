@@ -129,13 +129,13 @@ var Elphel = {
     * @lowres - valid values: 1 (not scaled), 2, 4, 8 (lowest resolution) 
     *    
     */
-    reorderBlocksJP4_lowres: function(pixels,width,height,format="JP4",mosaic=[["Gr","R"],["B" ,"Gb"]],lowres){
-      
+    //reorderBlocksJP4_lowres: function(pixels,width,height,format="JP4",mosaic=[["Gr","R"],["B" ,"Gb"]],lowres){
+    reorderBlocksJP4_lowres: async function(pixels,width,height,format="JP4",mosaic=[["Gr","R"],["B" ,"Gb"]],lowres){
       // the output image is 1/4 because demosaicing = 4 single color channel pixels are put into 1 rgb pixel 
       var oPixels = new Uint8Array(pixels.length/4);
       
       // check
-      if ((lowres!=1)&&(lowres!=2)&&(lowres!=4)&&(lowres!=8)){
+      if (![1,2,4,8].includes(lowres)){
         lowres = 4;
       }
       

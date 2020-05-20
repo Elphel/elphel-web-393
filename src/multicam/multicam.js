@@ -477,8 +477,9 @@ function refresh_previews(){
           //console.log("preview does not exist");
           var jp4prev = elem.find(".port_preview[index="+j+"]");
           var preview = jp4prev.jp4({
-            ip: cam.ip,
-            port: cam.ports[j].port,
+            //ip: cam.ip,
+            //port: cam.ports[j].port,
+            src: "http://"+cam.ip+":"+cam.ports[j].port+"/img",
             width: 200,
             fast: true,
             lowres:4,

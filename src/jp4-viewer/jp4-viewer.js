@@ -65,7 +65,7 @@ function handleImage(e) {
 
         //console.log(SETTINGS.width);
         
-        view.jp4({image:myimg, fromhtmlinput: true, width:SETTINGS.width,fast:true, lowres:SETTINGS.quality, webworker_path:"../js"});
+        view.jp4({src:myimg, fromhtmlinput: true, width:SETTINGS.width,fast:true, lowres:SETTINGS.quality, webworker_path:"../js"});
         //view.jp4({image:"test.jp4", input: false, width:1200,fast:true, lowres:1});
         $("#jp4view").append(view);
         
