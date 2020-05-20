@@ -775,7 +775,17 @@ function snapshot_find_latest_ts(ptrs){
 
   var total_ports = 0;
   for(var i=0;i<ptrs.length;i++){
-    total_ports += $(ptrs[i]).find('port').length;
+
+    let port_counter = 0;
+    let ports = $(ptrs[i]).find('port');
+    for(p of ports){
+        let sensors = $(p).attr("sensor").replace(/\s/g,'').split(",");
+        if (!sensors.every(v => v==='none')){
+            port_counter++;
+        }
+    }
+    total_ports += port_counter;
+
   }
 
   var ts = [];
