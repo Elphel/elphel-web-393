@@ -363,8 +363,8 @@
         $("#low_latency_link").click(async ()=>{
             await set_param("WOI_WIDTH",1920,()=>{console.log("ok");});
             await set_param("WOI_HEIGHT",1088,()=>{console.log("ok");});
-            await set_param("WOI_LEFT",336,()=>{console.log("ok");});
             await set_param("WOI_TOP",432,()=>{console.log("ok");});
+            await set_param("WOI_LEFT",336,()=>{console.log("ok");});
             await set_param("TRIG_PERIOD",3333333,()=>{console.log("ok");});
             $("#ll_status").css({opacity:1}).animate({opacity:0},1000);
             update_canvas_mjpeg();
