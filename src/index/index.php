@@ -333,7 +333,7 @@
             switch(pname){
             case "AUTOEXP_EXP_MAX":
                 pvalue = parseInt(pvalue*1000);
-                set_param(pname,pvalue,()=>{
+                set_params({[pname]:pvalue},()=>{
                     console.log("ok");
                 });
                 break;
@@ -343,13 +343,13 @@
                 if ($('#toggle_aexp').find('.btn.active').html()==="ON"){
                     $('#toggle_aexp').click();
                 }
-                set_param(pname,pvalue,()=>{
+                set_params({[pname]:pvalue},()=>{
                     console.log("ok");
                 });
                 break;
             case "TRIG_PERIOD":
                 pvalue = parseInt(1/pvalue*10e7);
-                set_param(pname,pvalue,()=>{
+                set_params({[pname]:pvalue},()=>{
                     console.log("ok");
                     update_canvas_mjpeg();
                 });
@@ -393,13 +393,6 @@
         });
 
 
-    }
-
-    async function set_param(pname,pvalue,callback){
-        $.ajax({
-            url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+pname+"="+pvalue+"*3&*"+pname+"=0xf",
-            success: callback
-        });
     }
 
     async function set_params(pars,callback){
