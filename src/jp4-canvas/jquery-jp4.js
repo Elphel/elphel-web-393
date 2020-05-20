@@ -227,7 +227,7 @@
     this.getFormat = () => this.format;
     this.getSrc = () => settings.src;
 
-    function process_image_tiff(blob){
+    function process_image_tiff(imagedata){
 
         IMAGE_FORMAT = "TIFF";
         obj.format = IMAGE_FORMAT;
@@ -360,8 +360,9 @@
             //Elphel.Canvas.drawScaled($(canvas),cnv_display,settings.width);
             Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
 
+            delete this;
         }
-        fileReader.readAsArrayBuffer(blob);
+        fileReader.readAsArrayBuffer(new Blob([imagedata]));
 
     }
 
