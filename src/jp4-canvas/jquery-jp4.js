@@ -227,142 +227,129 @@
     this.getFormat = () => this.format;
     this.getSrc = () => settings.src;
 
-    function process_image_tiff(blob){
+    function process_image_tiff(imagedata){
 
         IMAGE_FORMAT = "TIFF";
         obj.format = IMAGE_FORMAT;
 
-        var arrayBuffer;
-        var fileReader = new FileReader();
-        fileReader.onload = function(event){
+        // tiff.js which is limited in capabilities
+        //var tiff = new Tiff({buffer: arrayBuffer});
+        //var canvas = tiff.toCanvas();
 
-            arrayBuffer = event.target.result;
+        // UTIF.js
+        var ifds = UTIF.decode(imagedata);
+        UTIF.decodeImage(imagedata, ifds[0]);
 
-            // tiff.js which is limited in capabilities
-            //var tiff = new Tiff({buffer: arrayBuffer});
-            //var canvas = tiff.toCanvas();
+        if (ifds[0].t258==16){
+            rgba_16bit = new Float32Array(ifds[0].data.filter((x,i) => i%2==0));
+            rgba_16bit = rgba_16bit.map((x,i) => x + (ifds[0].data[2*i+1]<<8));
 
-            // UTIF.js
-            var ifds = UTIF.decode(arrayBuffer);
-            UTIF.decodeImage(arrayBuffer, ifds[0]);
+            /*
+            if (ifds[0].height==122){
+                // cut off telemetry
+                ifds[0].height = 120;
+                rgba_16bit = rgba_16bit.slice(0,ifds[0].height*ifds[0].width);
+            }
+            */
 
-            if (ifds[0].t258==16){
+            // convert to C
+            rgba_16bit = rgba_16bit.map(x => x/100-273.15);
 
-                rgba_16bit = new Float32Array(ifds[0].data.filter((x,i) => i%2==0));
-                rgba_16bit = rgba_16bit.map((x,i) => x + (ifds[0].data[2*i+1]<<8));
+            // display based on histogram
+            function get_t_lo(a,p=0.05,bins=1024){
 
-                /*
-                if (ifds[0].height==122){
-                    // cut off telemetry
-                    ifds[0].height = 120;
-                    rgba_16bit = rgba_16bit.slice(0,ifds[0].height*ifds[0].width);
-                }
-                */
-
-                // convert to C
-                rgba_16bit = rgba_16bit.map(x => x/100-273.15);
-
-                // display based on histogram
-                function get_t_lo(a,p=0.05,bins=1024){
-
-                    let min = Math.min(...a);
-                    let max = Math.max(...a);
-                    let bin_height = (max-min)/bins;
+                let min = Math.min(...a);
+                let max = Math.max(...a);
+                let bin_height = (max-min)/bins;
 
 
-                    for(let i=0;i<bins;i++){
-                        let bin_lo = min + (i+0)*bin_height;
-                        let bin_hi = min + (i+1)*bin_height;
-                        let a_f = a.filter(x => x<bin_hi);
-                        if(a_f.length>=p*a.length){
-                            return (bin_lo+bin_hi)/2;
-                        }
+                for(let i=0;i<bins;i++){
+                    let bin_lo = min + (i+0)*bin_height;
+                    let bin_hi = min + (i+1)*bin_height;
+                    let a_f = a.filter(x => x<bin_hi);
+                    if(a_f.length>=p*a.length){
+                        return (bin_lo+bin_hi)/2;
                     }
-                    return 0;
-
                 }
-
-                // display based on histogram
-                function get_t_hi(a,p=0.01,bins=1024){
-
-                    let min = Math.min(...a);
-                    let max = Math.max(...a);
-                    let bin_height = (max-min)/bins;
-
-                    for(let i=0;i<bins;i++){
-                        let bin_lo = max - (i+1)*bin_height;
-                        let bin_hi = max - (i+0)*bin_height;
-                        let a_f = a.filter(x => x>bin_lo);
-                        if(a_f.length>=p*a.length){
-                            return (bin_lo+bin_hi)/2;
-                        }
-                    }
-                    return 0;
-
-                }
-
-                // scale - 0.0-1.0
-                t_lo = get_t_lo(rgba_16bit);
-                t_hi = get_t_hi(rgba_16bit);
-
-                t_lo = t_lo.toFixed(2);
-                t_hi = t_hi.toFixed(2);
-
-                //console.log(t_lo+" "+t_hi);
-
-                rgba_16bit = rgba_16bit.map(x => (x-t_lo)/(t_hi-t_lo));
-
-                // get index
-                //rgba_16bit = rgba_16bit.map(x => iron_palette[Math.round(x*(iron_palette.length-1))]);
-
-                // this is for linear black n white
-                //rgba_16bit = rgba_16bit.map(x => 255*x*x);
+                return 0;
 
             }
 
-            var rgba_clamped = new Uint8ClampedArray(rgba_16bit.length*4);
-            //rgba_clamped = rgba_clamped.map((x,i) => rgba_16bit[(i-i%4)/4]);
-            rgba_clamped = rgba_clamped.map((x,i) => {
+            // display based on histogram
+            function get_t_hi(a,p=0.01,bins=1024){
 
-                let v = rgba_16bit[(i-i%4)/4];
-                v = (v>1)?1:v;
-                v = (v<0)?0:v;
-                v = get_palette_color(v);
+                let min = Math.min(...a);
+                let max = Math.max(...a);
+                let bin_height = (max-min)/bins;
 
-                if (i%4==0){
-                    v = v.slice(1,3);
-                }else if (i%4==1){
-                    v = v.slice(3,5);
-                }else if (i%4==2){
-                    v = v.slice(5,7);
-                }else{
-                    return 255;
+                for(let i=0;i<bins;i++){
+                    let bin_lo = max - (i+1)*bin_height;
+                    let bin_hi = max - (i+0)*bin_height;
+                    let a_f = a.filter(x => x>bin_lo);
+                    if(a_f.length>=p*a.length){
+                        return (bin_lo+bin_hi)/2;
+                    }
                 }
+                return 0;
 
-                v = parseInt(v,16);
-                return v;
-            });
+            }
 
-            rgba_clamped = rgba_clamped.map((x,i) => (i%4==3)?255:x);
+            // scale - 0.0-1.0
+            t_lo = get_t_lo(rgba_16bit);
+            t_hi = get_t_hi(rgba_16bit);
 
-            var rgba_idata   = new ImageData(rgba_clamped,ifds[0].width,ifds[0].height);
-            var canvas = cnv_working[0];
+            t_lo = t_lo.toFixed(2);
+            t_hi = t_hi.toFixed(2);
 
-            canvas.width = ifds[0].width;
-            canvas.height = ifds[0].height;
+            //console.log(t_lo+" "+t_hi);
 
-            var ctx = canvas.getContext('2d');
-            ctx.putImageData(rgba_idata, 0, 0);
+            rgba_16bit = rgba_16bit.map(x => (x-t_lo)/(t_hi-t_lo));
 
-            cnv_working.trigger("canvas_ready");
-            obj.busy = false;
+            // get index
+            //rgba_16bit = rgba_16bit.map(x => iron_palette[Math.round(x*(iron_palette.length-1))]);
 
-            //Elphel.Canvas.drawScaled($(canvas),cnv_display,settings.width);
-            Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
+            // this is for linear black n white
+            //rgba_16bit = rgba_16bit.map(x => 255*x*x);
 
         }
-        fileReader.readAsArrayBuffer(blob);
 
+        var rgba_clamped = new Uint8ClampedArray(rgba_16bit.length*4);
+        //rgba_clamped = rgba_clamped.map((x,i) => rgba_16bit[(i-i%4)/4]);
+        rgba_clamped = rgba_clamped.map((x,i) => {
+
+            let v = rgba_16bit[(i-i%4)/4];
+            v = (v>1)?1:v;
+            v = (v<0)?0:v;
+            v = get_palette_color(v);
+
+            if (i%4==0){
+                v = v.slice(1,3);
+            }else if (i%4==1){
+                v = v.slice(3,5);
+            }else if (i%4==2){
+                v = v.slice(5,7);
+            }else{
+                return 255;
+            }
+
+            v = parseInt(v,16);
+            return v;
+        });
+
+        rgba_clamped = rgba_clamped.map((x,i) => (i%4==3)?255:x);
+
+        var rgba_idata   = new ImageData(rgba_clamped,ifds[0].width,ifds[0].height);
+        var canvas = cnv_working[0];
+
+        canvas.width = ifds[0].width;
+        canvas.height = ifds[0].height;
+
+        var ctx = canvas.getContext('2d');
+        ctx.putImageData(rgba_idata, 0, 0);
+
+        Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
+
+        conclude_processing();
     }
 
     function process_image(imagedata){
