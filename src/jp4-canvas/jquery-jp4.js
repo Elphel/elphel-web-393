@@ -347,11 +347,9 @@
         var ctx = canvas.getContext('2d');
         ctx.putImageData(rgba_idata, 0, 0);
 
-        cnv_working.trigger("canvas_ready");
-        obj.busy = false;
-
-        //Elphel.Canvas.drawScaled($(canvas),cnv_display,settings.width);
         Elphel.Canvas.drawScaled(cnv_working,cnv_display,settings.width);
+
+        conclude_processing();
     }
 
     function process_image(imagedata){
