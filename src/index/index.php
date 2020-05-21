@@ -98,6 +98,14 @@
             opacity: 0;
         }
 
+        .qlink{
+            cursor: pointer;
+        }
+
+        .qlink:hover {
+            text-decoration: underline;
+        }
+
     </style>
 </head>
 <body>
@@ -208,7 +216,12 @@
     <a href="camogmgui.php"   title="Store video/images to the camera's storage">Recorder</a><br />
     <a href="snapshot/"       title="Take a snapshot and download from the camera">Snapshot</a><br />
     <a href="raw.php"         title="Take a snapshot and download raw pixel data from the camera">Snapshot (raw image data)</a><br />
-    <a id="low_latency_link" href="#" title="For 5 MPix sensors">Quick low latency setup (1920x1088, 30fps)</a> <span id='ll_status'>settings applied</span><br />
+    <span title="for 5MPix sensors - MT9P006">Quick setup (for 5MPix sensors):</span>
+    <ul>
+        <li><span id="quick_fullres" class='text-primary qlink'>2592x1936 10fps</span> <span id='ll_status'>settings applied</span></li>
+        <li><span id="quick_1080p" class='text-primary qlink'>1920x1080 30fps</span> <span id='ll_status'>settings applied</span></li>
+        <li><span id="quick_720p" class='text-primary qlink'>1280x720 60fps</span> <span id='ll_status'>settings applied</span></li>
+    </ul>
     <a href="photofinish/"    title="Scanline mode demo">Photo finish demo</a><br />
     <br />
     <a href="hwmon.html"           title="hwmon.html">Temperature monitor</a><br />
@@ -232,7 +245,7 @@
         init_aexp_toggle();
         init_jp4_previews();
         init_inputs();
-        init_lowlatency();
+        init_quick_res_fps();
         update_canvas_mjpeg();
     });
 
@@ -359,22 +372,86 @@
         });
     }
 
-    async function init_lowlatency(){
-        $("#low_latency_link").click(async ()=>{
+    async function init_quick_res_fps(){
+        // quick_fullres
+        // quick_1080p
+        // quick_720p
+
+        $("#quick_fullres").click(async function(){
+
+            await set_params({
+                "TRIG_PERIOD"    : 10000000
+            },-2);
+
+            await set_params({
+                "AUTOEXP_EXP_MAX": 100000,
+                "WOI_WIDTH"      : 2592,
+                "WOI_HEIGHT"     : 1936,
+                "WOI_TOP"        : 0,
+                "WOI_LEFT"       : 0,
+                "SENSOR_RUN"     : 0,
+                "COMPRESSOR_RUN" : 3
+            },3,()=>{console.log("ok")});
+
+            await set_params({
+                "TRIG_PERIOD"    : 10000000,
+                "SENSOR_RUN"     : 2,
+                "COMPRESSOR_RUN" : 2
+            },7,()=>{console.log("ok")});
+
+            $(this).parent().find("#ll_status").css({opacity:1}).animate({opacity:0},2000);
+            update_canvas_mjpeg();
+        });
+
+        $("#quick_1080p").click(async function(){
+
+            await set_params({
+                "TRIG_PERIOD"    : 10000000
+            },-2);
 
             await set_params({
                 "AUTOEXP_EXP_MAX": 30000,
                 "WOI_WIDTH"      : 1920,
                 "WOI_HEIGHT"     : 1088,
                 "WOI_TOP"        : 432,
-                "WOI_LEFT"       : 336
-            },()=>{console.log("ok")});
+                "WOI_LEFT"       : 336,
+                "SENSOR_RUN"     : 0,
+                "COMPRESSOR_RUN" : 3
+            },3,()=>{console.log("ok")});
 
             await set_params({
-                "TRIG_PERIOD":3333333
-            },()=>{console.log("ok");});
+                "TRIG_PERIOD"    : 3333333,
+                "SENSOR_RUN"     : 2,
+                "COMPRESSOR_RUN" : 2
+            },7,()=>{console.log("ok")});
 
-            $("#ll_status").css({opacity:1}).animate({opacity:0},1000);
+            $(this).parent().find("#ll_status").css({opacity:1}).animate({opacity:0},2000);
+            update_canvas_mjpeg();
+        });
+
+        $("#quick_720p").click(async function(){
+
+            await set_params({
+                "TRIG_PERIOD"    : 10000000
+            },-2);
+
+            await set_params({
+                "AUTOEXP_EXP_MAX": 16000,
+                "WOI_WIDTH"      : 1280,
+                "WOI_HEIGHT"     : 720,
+                "WOI_TOP"        : 616,
+                "WOI_LEFT"       : 656,
+                "SENSOR_RUN"     : 0,
+                "COMPRESSOR_RUN" : 3
+            },3,()=>{console.log("ok")});
+
+            await set_params({
+                "TRIG_PERIOD"    : 1666667,
+                "SENSOR_RUN"     : 2,
+                "COMPRESSOR_RUN" : 2
+            },7,()=>{console.log("ok")});
+
+            $(this).parent().find("#ll_status").css({opacity:1}).animate({opacity:0},2000);
             update_canvas_mjpeg();
         });
 
@@ -395,11 +472,11 @@
 
     }
 
-    async function set_params(pars,callback){
+    async function set_params(pars,ahead=3,callback){
 
         let req = [];
         for(p in pars){
-            req.push(p+"="+pars[p]+"&*"+p+"=0xf");
+            req.push(p+"="+pars[p]+"*"+ahead+"&*"+p+"=0xf");
         }
 
         $.ajax({
@@ -407,6 +484,10 @@
             success: callback
         });
 
+    }
+
+    const sleep = ms => {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
 </script>
