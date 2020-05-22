@@ -379,11 +379,11 @@
 
         $("#quick_fullres").click(async function(){
 
-            set_params({
+            await set_params({
                 "TRIG_PERIOD"    : 10000000
             },-2);
 
-            set_params({
+            await set_params({
                 "AUTOEXP_EXP_MAX": 100000,
                 "WOI_WIDTH"      : 2592,
                 "WOI_HEIGHT"     : 1936,
@@ -393,7 +393,7 @@
                 "COMPRESSOR_RUN" : 3
             },3);
 
-            set_params({
+            await set_params({
                 "TRIG_PERIOD"    : 10000000,
                 "SENSOR_RUN"     : 2,
                 "COMPRESSOR_RUN" : 2
@@ -405,11 +405,11 @@
 
         $("#quick_1080p").click(async function(){
 
-            set_params({
+            await set_params({
                 "TRIG_PERIOD"    : 10000000
             },-2);
 
-            set_params({
+            await set_params({
                 "AUTOEXP_EXP_MAX": 30000,
                 "WOI_WIDTH"      : 1920,
                 "WOI_HEIGHT"     : 1088,
@@ -419,7 +419,7 @@
                 "COMPRESSOR_RUN" : 3
             },3);
 
-            set_params({
+            await set_params({
                 "TRIG_PERIOD"    : 3333333,
                 "SENSOR_RUN"     : 2,
                 "COMPRESSOR_RUN" : 2
@@ -431,11 +431,11 @@
 
         $("#quick_720p").click(async function(){
 
-            set_params({
+            await set_params({
                 "TRIG_PERIOD"    : 10000000
             },-2);
 
-            set_params({
+            await set_params({
                 "AUTOEXP_EXP_MAX": 16000,
                 "WOI_WIDTH"      : 1280,
                 "WOI_HEIGHT"     : 720,
@@ -445,7 +445,7 @@
                 "COMPRESSOR_RUN" : 3
             },3);
 
-            set_params({
+            await set_params({
                 "TRIG_PERIOD"    : 1666667,
                 "SENSOR_RUN"     : 2,
                 "COMPRESSOR_RUN" : 2
