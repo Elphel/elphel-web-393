@@ -379,11 +379,11 @@
 
         $("#quick_fullres").click(async function(){
 
-            await set_params({
+            set_params({
                 "TRIG_PERIOD"    : 10000000
             },-2);
 
-            await set_params({
+            set_params({
                 "AUTOEXP_EXP_MAX": 100000,
                 "WOI_WIDTH"      : 2592,
                 "WOI_HEIGHT"     : 1936,
@@ -391,13 +391,13 @@
                 "WOI_LEFT"       : 0,
                 "SENSOR_RUN"     : 0,
                 "COMPRESSOR_RUN" : 3
-            },3,()=>{console.log("ok")});
+            },3);
 
-            await set_params({
+            set_params({
                 "TRIG_PERIOD"    : 10000000,
                 "SENSOR_RUN"     : 2,
                 "COMPRESSOR_RUN" : 2
-            },7,()=>{console.log("ok")});
+            },7);
 
             $(this).parent().find("#ll_status").css({opacity:1}).animate({opacity:0},2000);
             update_canvas_mjpeg();
@@ -405,11 +405,11 @@
 
         $("#quick_1080p").click(async function(){
 
-            await set_params({
+            set_params({
                 "TRIG_PERIOD"    : 10000000
             },-2);
 
-            await set_params({
+            set_params({
                 "AUTOEXP_EXP_MAX": 30000,
                 "WOI_WIDTH"      : 1920,
                 "WOI_HEIGHT"     : 1088,
@@ -417,13 +417,13 @@
                 "WOI_LEFT"       : 336,
                 "SENSOR_RUN"     : 0,
                 "COMPRESSOR_RUN" : 3
-            },3,()=>{console.log("ok")});
+            },3);
 
-            await set_params({
+            set_params({
                 "TRIG_PERIOD"    : 3333333,
                 "SENSOR_RUN"     : 2,
                 "COMPRESSOR_RUN" : 2
-            },7,()=>{console.log("ok")});
+            },7);
 
             $(this).parent().find("#ll_status").css({opacity:1}).animate({opacity:0},2000);
             update_canvas_mjpeg();
@@ -431,11 +431,11 @@
 
         $("#quick_720p").click(async function(){
 
-            await set_params({
+            set_params({
                 "TRIG_PERIOD"    : 10000000
             },-2);
 
-            await set_params({
+            set_params({
                 "AUTOEXP_EXP_MAX": 16000,
                 "WOI_WIDTH"      : 1280,
                 "WOI_HEIGHT"     : 720,
@@ -443,13 +443,13 @@
                 "WOI_LEFT"       : 656,
                 "SENSOR_RUN"     : 0,
                 "COMPRESSOR_RUN" : 3
-            },3,()=>{console.log("ok")});
+            },3);
 
-            await set_params({
+            set_params({
                 "TRIG_PERIOD"    : 1666667,
                 "SENSOR_RUN"     : 2,
                 "COMPRESSOR_RUN" : 2
-            },7,()=>{console.log("ok")});
+            },7);
 
             $(this).parent().find("#ll_status").css({opacity:1}).animate({opacity:0},2000);
             update_canvas_mjpeg();
@@ -472,18 +472,18 @@
 
     }
 
-    async function set_params(pars,ahead=3,callback){
+    async function set_params(pars,ahead=3){
 
         let req = [];
         for(p in pars){
             req.push(p+"="+pars[p]+"*"+ahead+"&*"+p+"=0xf");
         }
 
-        $.ajax({
-            url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+req.join("&"),
-            success: callback
+        let res = await $.ajax({
+            url: "parsedit.php?immediate&sensor_port=<?php echo $master_port;?>&"+req.join("&")
         });
 
+        return res;
     }
 
     const sleep = ms => {
