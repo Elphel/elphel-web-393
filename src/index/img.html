@@ -1,0 +1,50 @@
+<html>
+    <head>
+        <style>
+            body {
+                margin: 0px;
+            }
+            #cnv_div {
+                border: 0px solid red;
+            }
+            #display{
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id='cnv_div'></div>
+
+        <script src="js/elphel.js"></script>
+        <script src="js/UTIF.js"></script>
+        <script src="js/jquery-3.1.1.js"></script>
+        <script src="js/jcanvas.js"></script>
+        <script src="js/exif.js"></script>
+        <script src="js/jquery-jp4.js"></script>
+
+        <script>
+
+            const IMGSRV_PORT0 = 2323;
+
+            const params = new URLSearchParams(location.search);
+            const port = params.get('port') || 0;
+            const refresh = params.get('refresh') || 5;
+
+            if (params.get('port')===null){
+                let s = "";
+                if (location.search===""){
+                    s = "?port="+port;
+                }else{
+                    s = location.search+"&port="+port;
+                }
+                window.history.pushState('', '', location.pathname+s);
+            }
+
+            let imgsrv_port = IMGSRV_PORT0 + parseInt(port);
+
+            let t1 = $("#cnv_div").jp4({src:"http://"+location.host+":"+imgsrv_port+"/img",width:600,fast:true,lowres:2,debug:false,refresh:true});
+
+    </script>
+  </body>
+</html>

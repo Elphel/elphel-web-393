@@ -2,7 +2,8 @@ DOCUMENTROOT=$(DESTDIR)/www/pages
 OWN = -o root -g root
 INSTDOCS = 0644
 INSTALL = install
-DOCS=       index.html \
+DOCS=       img.html \
+            index.html \
             index.php \
             mjpeg.html
 

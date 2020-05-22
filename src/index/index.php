@@ -132,7 +132,14 @@
         $table_contents .= "<div class='port_window img_window'>";
         //$table_contents .= "<div><a href=\"$href1\"><img class='img_window' src='$href1' style='width:300px'/></a></div>";
         $table_contents .= "<div><a href=\"$href1\"><div index='$i' class='port_preview'></div></a></div>";
-        $table_contents .= "<div style='text-align:center;'>port $i: <a title='single image' href='$href1'>bimg</a>, <a title='multi-part image stream (M-JPEG). Played in browser as is.' href='$href2'>mimg</a>, <a href=\"mjpeg.html?port=$i\" title='MJPEG stream played in html canvas' class='canvas_mjpeg'>canvas</a></div>";
+        $table_contents .= "<div style='text-align:center;'>";
+        $table_contents .= "port $i: ";
+        $table_contents .= "<a title='single image' href='$href1'>bimg</a>, ";
+        $table_contents .= "<a href=\"img.html?port=$i\" title='single image, auto refreshed on load'>img</a>, ";
+        $table_contents .= "<a title='multi-part image stream (M-JPEG). Played in browser as is.' href='$href2'>mimg</a>, ";
+        $table_contents .= "<a href=\"mjpeg.html?port=$i\" title='MJPEG stream played in html canvas' class='canvas_mjpeg'>canvas</a>";
+        $table_contents .= "</div>";
+
         $table_contents .= "</div>";
         $table_contents .= "</td>";
 
