@@ -223,13 +223,13 @@
     <a href="camogmgui.php"   title="Store video/images to the camera's storage">Recorder</a><br />
     <a href="snapshot/"       title="Take a snapshot and download from the camera">Snapshot</a><br />
     <a href="raw.php"         title="Take a snapshot and download raw pixel data from the camera">Snapshot (raw image data)</a><br />
-    <span title="for 5MPix sensors - MT9P006">Quick setup (for 5MPix sensors):</span>
+    <span title="5Mpx (MT9P006) and 14Mpx (MT9F002) sensors are supported">Quick setup (5 & 14Mpx sensors):</span>
     <ul>
-        <li><span id="quick_fullres" class='text-primary qlink'>2592x1936 10fps</span> <span id='ll_status'>settings applied</span></li>
+        <li><span id="quick_fullres" class='text-primary qlink'>fullres 10fps</span> <span id='ll_status'>settings applied</span></li>
         <li><span id="quick_1080p" class='text-primary qlink'>1920x1080 30fps</span> <span id='ll_status'>settings applied</span></li>
         <li><span id="quick_720p" class='text-primary qlink'>1280x720 60fps</span> <span id='ll_status'>settings applied</span></li>
     </ul>
-    <a href="photofinish/"    title="Scanline mode demo">Photo finish demo</a><br />
+    <a href="photofinish/"    title="Scanline mode demo. 5Mpx sensor (MT9P006) only">Photo finish demo</a><br />
     <br />
     <a href="hwmon.html"           title="hwmon.html">Temperature monitor</a><br />
     <a href="update_software.html" title="Update NAND flash">Update firmware</a><br />
@@ -392,8 +392,8 @@
 
             await set_params({
                 "AUTOEXP_EXP_MAX": 100000,
-                "WOI_WIDTH"      : 2592,
-                "WOI_HEIGHT"     : 1936,
+                "WOI_WIDTH"      : 10000,
+                "WOI_HEIGHT"     : 10000,
                 "WOI_TOP"        : 0,
                 "WOI_LEFT"       : 0,
                 "SENSOR_RUN"     : 0,
