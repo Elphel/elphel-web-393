@@ -120,8 +120,12 @@
 
   $sample_port = -1;
 
-  foreach(get_sensors() as $i => $sensor){
+  $sensors = get_sensors();
+  $sensor_type = "none";
+
+  foreach($sensors as $i => $sensor){
     if ($sensor!="none"){
+        $sensor_type = $sensor;
         $sample_port = $i;
 
         $sandp = "http://{$_SERVER["SERVER_ADDR"]}:".($port0+$i);
@@ -166,6 +170,9 @@
 
   $expos = elphel_get_P_value($master_port,ELPHEL_EXPOS);
   $expos = round($expos/100)/10;
+
+  $sensor_width  = elphel_get_P_value($master_port,ELPHEL_SENSOR_WIDTH);
+  $sensor_height = elphel_get_P_value($master_port,ELPHEL_SENSOR_HEIGHT);
 
   echo "<table><tr>$table_contents</tr></table>\n";
 
@@ -242,6 +249,10 @@
 </div>
 
 <script>
+
+    var sensor_type = "<?php echo $sensor_type;?>";
+    var sensor_width = <?php echo $sensor_width;?>;
+    var sensor_height = <?php echo $sensor_height;?>;
 
     var jp4_previews_enable = true;
     var jp4_previews = [];
@@ -412,16 +423,19 @@
 
         $("#quick_1080p").click(async function(){
 
+            let w = 1920;
+            let h = 1088;
+
             await set_params({
                 "TRIG_PERIOD"    : 10000000
             },-2);
 
             await set_params({
                 "AUTOEXP_EXP_MAX": 30000,
-                "WOI_WIDTH"      : 1920,
-                "WOI_HEIGHT"     : 1088,
-                "WOI_TOP"        : 432,
-                "WOI_LEFT"       : 336,
+                "WOI_WIDTH"      : w,
+                "WOI_HEIGHT"     : h,
+                "WOI_TOP"        : (sensor_height-h)/2,
+                "WOI_LEFT"       : (sensor_width-w)/2,
                 "SENSOR_RUN"     : 0,
                 "COMPRESSOR_RUN" : 3
             },3);
@@ -438,16 +452,19 @@
 
         $("#quick_720p").click(async function(){
 
+            let w = 1280;
+            let h = 720;
+
             await set_params({
                 "TRIG_PERIOD"    : 10000000
             },-2);
 
             await set_params({
                 "AUTOEXP_EXP_MAX": 16000,
-                "WOI_WIDTH"      : 1280,
-                "WOI_HEIGHT"     : 720,
-                "WOI_TOP"        : 616,
-                "WOI_LEFT"       : 656,
+                "WOI_WIDTH"      : w,
+                "WOI_HEIGHT"     : h,
+                "WOI_TOP"        : (sensor_height-h)/2,
+                "WOI_LEFT"       : (sensor_width-w)/2,
                 "SENSOR_RUN"     : 0,
                 "COMPRESSOR_RUN" : 3
             },3);
