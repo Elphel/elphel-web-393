@@ -43,24 +43,36 @@ function cmd_sensors(){
     return wrap_into_xml($res);
 }
 
+function get_formatted_ts($ts){
+
+    $ts_s  = substr($ts,0,10);
+    $ts_ms  = substr($ts,11);
+
+    $ts_formatted = date("Y-m-d H:i:s.$ts_ms",$ts_s);
+    return $ts_formatted;
+}
+
 function cmd_time(){
 
     date_default_timezone_set('UTC');
+    exec("date +%s.%3N",$ots);
 
     $t = elphel_get_fpga_time();
-    if (!isset($_GET['ts'])){
-        //date +%s will report system time
-        //print(exec("date +%s"));
-        print("Camera time: $t");
-    }else{
+    $tsys = $ots[0];
+
+    print("Camera time (fpga):  $t (".get_formatted_ts($t).")\n");
+    print("Camera time (sys):   $tsys (".get_formatted_ts($tsys).")\n");
+
+    if (isset($_GET['ts'])){
         // ts is in ms
         $ts_s  = substr($_GET['ts'],0,10);
-        $ts_ms = substr($_GET['ts'],-3);
-        //$ts = $_GET['ts']/1000;
-        $ts_formatted = date("Y-m-d H:i:s.$ts_ms",$ts_s);
-        print("Your time:   $ts_s.$ts_ms ($ts_formatted)\nCamera time: $t\n");
+        $ts_ms = substr($_GET['ts'],11);
+
+        $ts_formatted = get_formatted_ts($_GET['ts']);
+        print("Your (browser) time: $ts_s.$ts_ms ($ts_formatted)\n");
 
         if (isset($_GET['apply'])||(abs($ts_s-$t)>24*3600)){
+
             elphel_set_fpga_time($_GET['ts']/1000);
             exec("date -s '$ts_formatted'");
             exec("hwclock --systohc");
