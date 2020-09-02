@@ -62,7 +62,7 @@ function cmd_time(){
 
         if (isset($_GET['apply'])||(abs($ts_s-$t)>24*3600)){
             elphel_set_fpga_time($_GET['ts']/1000);
-            exec("date -s $ts_formatted");
+            exec("date -s '$ts_formatted'");
             exec("hwclock --systohc");
             print("Timestamps differ by more than 24h. Camera and fpga time updated.\n");
         }
