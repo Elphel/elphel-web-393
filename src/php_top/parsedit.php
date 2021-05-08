@@ -1577,6 +1577,7 @@ function getParDescriptions($autocampars) {
     }
   }
   */
+  // TODO: restore to individual files - different ports will have different sesnors with diffrent descriptions for SENSOR_REGS
   $path='/etc/elphel393/autocampars.xml'; // link to a master channel config
   $path = str_replace("0.",strval($GLOBALS [sensor_port]).".",$path); // NC393: here it does not really matter
   $xml = simplexml_load_file($path);
