@@ -33,22 +33,34 @@
 *!
 *!
 */
-   if (count($_GET)==0) {
+   include 'include/show_source_include.php';
+   if (count($_GET) < 1) {
       echo <<<USAGE
-   <p>This script returns camera variables as XML file, it also allows you to set those variables. Usually those changes will not take effect immediately - please use ccam.php that both changes variables and programs the camera to use them.</p>
-   <p>The variable names to be read are specified without values (like camvar.php?WOI_WIDTH&WOI_HEIGHT ), the ones to be written - with the values (camvar.php?QUALITY=75). It is also possible to mix both types in the same request.</p>
+   <p>This script returns camera variables as XML file, it also allows you to set those variables.
+       Usually those changes will not take effect immediately -
+       please use ccam.php that both changes variables and programs the camera to use them.</p>
+   <p>The variable names to be read are specified without values (like camvar.php?WOI_WIDTH&WOI_HEIGHT ),
+      the ones to be written - with the values (camvar.php?QUALITY=75). It is also possible to mix both types in the same request.</p>
+   <p>sensor_port=0..3 - specify which sensor port to use, default is sensor_port=0</p>
+
 USAGE;
       exit (0);
     }
+    
+    $sensor_port=0;
     $toRead=array();
     $toWrite=array();
     foreach($_GET as $key=>$value) {
-      if ($value==="") $toRead[$key]=$value;
-      else $toWrite[$key]=(integer) $value;
+        if ($key == 'sensor_port'){
+            $sensor_port = (integer) $value;
+        } else {
+            if ($value==="") $toRead[$key]=$value;
+            else $toWrite[$key]=(integer) $value;
+        }
     }
-    $npars=(count($toWrite)>0)?elphel_set_P_arr($toWrite):0;
-    if (count($toRead)>0) $toRead=elphel_get_P_arr($toRead);
-    if ($_GET["STATE"]!==NULL) $toRead["STATE"]=elphel_get_state();
+    $npars=(count($toWrite)>0)?elphel_set_P_arr($sensor_port,$toWrite):0;
+    if (count($toRead)>0) $toRead=elphel_get_P_arr($sensor_port,$toRead);
+    if ($_GET["STATE"]!==NULL) $toRead["STATE"]=elphel_get_state(sensor_port);
     $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><camvars/>");
     foreach ($toRead as $key=>$value) {
        $xml->addChild ($key,$value);

@@ -2,6 +2,8 @@ DOCUMENTROOT=/www/pages
 INCLUDES=$(DOCUMENTROOT)/include
 OWN = -o root -g root
 INSTDOCS = 0644
+INSTEXE =  0755
+
 #INSTALL = install
 DOCS=       favicon.ico \
             robots.txt
@@ -20,7 +22,13 @@ PHP_SCRIPTS=i2c.php \
             snapfull.php \
             test_sensors.php \
             tuneseq.php \
-            utils.php
+            utils.php \
+            ts2frame.php \
+            reset_frames.php \
+            wait_frame.php
+            
+PHP_SCRIPTS_EXE=capture_range.php            
+            
 
 PHPINCLUDES=i2c_include.php \
             show_source_include.php \
@@ -37,6 +45,7 @@ install:
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(INCLUDES)
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(DOCS) $(DESTDIR)$(DOCUMENTROOT)
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHP_SCRIPTS) $(DESTDIR)$(DOCUMENTROOT)
+	$(INSTALL) $(OWN) -m $(INSTEXE)  $(PHP_SCRIPTS_EXE) $(DESTDIR)$(DOCUMENTROOT)
 	$(INSTALL) $(OWN) -m $(INSTDOCS) $(PHPINCLUDES) $(DESTDIR)$(INCLUDES)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(SYSCONFDIR)
 	$(INSTALL) $(OWN) -d $(DESTDIR)$(CONFDIR)
