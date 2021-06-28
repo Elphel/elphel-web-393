@@ -29,7 +29,7 @@
    include 'include/show_source_include.php';
    $minahead = 2;
    $PARS_FRAMES = 16;
-   $maxahead = $PARS_FRAMES - 3;
+   $maxahead = $PARS_FRAMES - 4; // 3;
    $flags = 0;
    
    if (!($_SERVER ['REQUEST_METHOD'] == "GET")){
@@ -75,7 +75,6 @@ USAGE;
     $frame = 0;
     $timestamp = 0.0;
     $PARS_FRAMES = 16;
-    $maxahead = $PARS_FRAMES - 3;
     $minahead = 2;
 //    $port_mask = 15; // not set - same as ts2frame.php
 //    $duration =  1; // not set - end, set - start 
