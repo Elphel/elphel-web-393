@@ -49,6 +49,7 @@ var cams = [];
 
 var wb_en = 1;
 var aexp_en = 1;
+var skip_previews = 0;
 
 
 $(function(){
@@ -62,11 +63,17 @@ function parseURL(){
     var parameters=location.href.replace(/\?/ig,"&").split("&");
     for (var i=0;i<parameters.length;i++) parameters[i]=parameters[i].split("=");
     for (var i=1;i<parameters.length;i++) {
+//        alert("parseURL(): parameter: "+parameters[i][0]+"="+parameters[i][1]);
+//       console.log("parseURL(): parameter: "+parameters[i][0]+"="+parameters[i][1]);
         switch (parameters[i][0]) {
             case "ip":
               //ips_from_url = true;
               ips_str = parameters[i][1];
               ips_str = ips_str.replace(/,|;/gm,'\n');
+              break;
+            case "skip_previews": // do not show previews - terribly slow for Bosons
+              skip_previews = 1;
+ //             alert("parseURL(): got skipping previews");
               break;
         }
     }
@@ -294,8 +301,11 @@ function rec_button_update_state(){
         recording = true;
         rec_button_switch(recording);
       }
-
-      refresh_previews_intvl = setInterval(refresh_previews,2000);
+      if (!skip_previews) { // do not schedule previews as they are very slow for Bosons
+        refresh_previews_intvl = setInterval(refresh_previews,2000);
+      } else {
+//          alert("skipping previews");
+      }
       refresh_status_intvl   = setInterval(refresh_status,2000);
     }
 
