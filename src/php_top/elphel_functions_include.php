@@ -162,6 +162,8 @@ function curl_multi_finish($data, $use_xml=true, $ntry=0, $echo = false, $with_h
 			do {
 				$curl_mrc = curl_multi_exec ($curl_mh, $curl_active);
 			} while ($curl_mrc == CURLM_CALL_MULTI_PERFORM );
+		} else {
+		    break; // all activity was over before call to curl_multi_finish()
 		}
 		if ($echo) echo colorize("$curl_active ",'YELLOW',1);
 		$nrep++;

@@ -1,0 +1,174 @@
+<html><head><title>Running LWIR16 sequences</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta content="">
+  <style></style>
+<script language="JavaScript">
+var initialized = false;
+var seq_counter =  0;
+var duration =   100;
+var pre_delay =    5.0;
+var ffc_period = 30;
+var run =      true;
+var want_run = true;
+var next_ffc_sec = 0; // will be overdue
+function parse_response(resp){
+  var result = "";
+  console.log(resp);
+  if (resp.getElementsByTagName("result").length!=0){
+  	result = resp.getElementsByTagName("result")[0].childNodes[0].nodeValue;
+  }else if (resp.getElementsByTagName("reboot").length!=0){
+  	result = resp.getElementsByTagName("reboot")[0].childNodes[0].nodeValue;
+  }else if (resp.getElementsByTagName("error").length!=0){
+    result = resp.getElementsByTagName("error")[0].childNodes[0].nodeValue;
+  }else{
+  	result = "Error";
+  }
+  document.getElementById("btn_response").innerHTML = result;
+}
+
+function send_request(rq,callback){
+  var request = new XMLHttpRequest();
+  request.open('GET', rq, true);
+  request.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var resp = this.responseXML;
+  	  callback(resp);
+    }
+  };
+  request.onerror = function() {
+    console.log("request error");
+  };
+  request.send();
+}
+
+
+
+function init_lwir(){
+    send_request("http://192.168.0.41/lwir16/lwir16.php?cmd=init",init_response);
+    document.getElementById('idpre_delay').value=  ""+pre_delay;
+    document.getElementById('idduration').value=   ""+duration;
+    document.getElementById('idffc_period').value= ""+ffc_period;
+}
+function init_response(resp){
+    initialized = true;
+//    alert ("LWIR16 initialized");
+    document.getElementById('idStartStop').innerHTML= run? 'STOP': 'START';
+    console.log("LWIR16 initialized");
+    want_run = run;
+    captureSet();
+}
+
+function capture_response(resp){
+    document.getElementById('idcount').value=""+seq_counter;
+//    document.getElementById('idcount').innerHTML=""+seq_counter;
+    //id="idcount"
+    seq_counter++;
+    if (want_run) {
+        run = true;
+//        send_request("http://192.168.0.41/lwir16/lwir16.php?cmd=capture&duration="+duration+"&pre_delay="+pre_delay,capture_response);
+        captureSet();
+    } else {
+        run = false;
+        document.getElementById('idStartStop').innerHTML='START';
+    }
+}
+
+function updatePreDelay(field_id){
+  var v=parseDouble(document.getElementById(field_id).value);
+  if (isNaN(v)){
+    v = 5.0;
+  }
+  pre_delay = v;
+  document.getElementById(field_id).value=""+v;
+}
+
+
+function updateDuration(field_id){
+  var v=parseInt(document.getElementById(field_id).value);
+  if (isNaN(v)){
+    v = 100;
+  }
+  duration = v;
+  document.getElementById(field_id).value=""+v;
+}
+
+function updateFFCPeriod(field_id){
+  var v=parseInt(document.getElementById(field_id).value);
+  if (isNaN(v)){
+    v = 100;
+  }
+  ffc_period = v;
+  document.getElementById(field_id).value=""+v;
+}
+
+
+function clickedRun(field_id){
+    want_run = !run;
+//    alert("want_run="+want_run);
+    if (want_run){
+        run = true;
+        document.getElementById(field_id).innerHTML='STOP';
+        captureSet();
+//        send_request("http://192.168.0.41/lwir16/lwir16.php?cmd=capture&duration="+duration+"&pre_delay="+pre_delay,init_response);
+    }
+}
+
+
+function captureSet(){
+    var now_sec = 0.001 * ((new Date()).getTime());
+    var ffc_cmd = "";
+    if (now_sec > next_ffc_sec) {
+        ffc_cmd = "&ffc";
+        next_ffc_sec = now_sec + ffc_period;
+        document.getElementById("idffc").value="NOW";
+    } else {
+            document.getElementById('idffc').value=""+ (0.01 * Math.round(100*(next_ffc_sec - now_sec)));
+    }
+    send_request("http://192.168.0.41/lwir16/lwir16.php?cmd=capture&duration="+duration+"&pre_delay="+pre_delay+ffc_cmd,capture_response);
+}
+
+</script>
+  </head>
+  
+  
+  <body onload='init_lwir()'>
+  <table>
+  <tr>
+  <td>Pre-capture delay</td><td>
+        <input id="idpre_delay" name="npre_delay" size="10" maxlength="10" value="?" onchange="updatePreDelay('idpre_delay')" type="text">
+  </td>
+  <td><button id="idStartStop" name = "nStartStop" onclick="clickedRun('idStartStop')">???</button></td>
+  </tr>
+  <tr>
+  <td>Sequence length (@60Hz)</td><td>
+        <input id="idduration" name="nduration" size="10" maxlength="10" value="?" onchange="updateDuration('idduration')" type="text">
+  </td>
+  <td>frames</td>
+  </tr>
+
+  <tr>
+  <td>FFC period</td><td>
+        <input id="idffc_period" name="nffc_period" size="10" maxlength="10" value="?" onchange="updateFFCPeriod('idffc_period')" type="text">
+  </td>
+  <td>sec</td>
+  </tr>
+
+  
+  <tr>
+    <td>Sequence count</td><td>
+       <input id="idcount" name="ncount" size="10" maxlength="10" value="?" type="text" disabled >
+    </td>
+    <td>captured</td>
+  </tr>
+
+  <tr>
+    <td>Time to ffc</td><td>
+       <input id="idffc" name="ncount" size="10" maxlength="10" value="?" type="text" disabled >
+    </td>
+  <td>sec</td>
+  </tr>
+
+  
+  </table>
+  </body>
+</html>

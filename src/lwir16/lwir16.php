@@ -1,16 +1,8 @@
 <?php
 /*!*******************************************************************************
-*! FILE NAME  : reset_frames.php
-*! DESCRIPTION: reset all sensor channels frame numbers (including hardware sequencer)
-*               May be needed at least once before (and after?) switching from
-*               free-running mode to all channels triggered from the common source.
-*               Optional parameter frame: if frame >0 - wait for the specified absolute
-*               frame number on a master port, frame <= 0 - skip frames before resetting
-*               Default is frame = -1, it waits fro the new frame (on master port) before
-*               resetting all channels.
-*               Resetting disturbs frame sequencer, so it is better not to apply any 
-*               frame commands 16 frames before this command as they may be lost.  
-*               
+*! FILE NAME  : lwir.php
+*! DESCRIPTION: Subcameras initialization and capturing of synchronized scene
+*  sequences               
 *! Copyright (C) 2021 Elphel, Inc
 *! -----------------------------------------------------------------------------**
 *!
@@ -29,38 +21,77 @@
 *! -----------------------------------------------------------------------------**
 *!
 */
- // TODO set include path, like in set_include_path ( get_include_path () . PATH_SEPARATOR . '/www/pages/include' );
-   include 'include/show_source_include.php';
-   include "include/elphel_functions_include.php"; // includes curl functions
-   $sysfs_all_frames =     '/sys/devices/soc0/elphel393-framepars@0/all_frames'; // read all frames, write - reset frames
-   $frame = -1; // positive - wait absolute frame number for the master port, negative - skip frame(s)
+   set_include_path ( get_include_path () . PATH_SEPARATOR . '/www/pages/include' );
+   include 'show_source_include.php';
+   include "elphel_functions_include.php"; // includes curl functions
+   define("REG_FFC_FRAMES",     "SENSOR_REGS4");     // Register for the number of FFC frames to integrate
+   define("REG_FFC_RUN",        "SENSOR_REGS26");    // Register to trigger FFC
+   define("SCRIPT_RESET",       "reset_frames.php"); // Reset frame numbers
+   define("SCRIPT_WAIT",        "wait_frame.php");   // wait frame
    $duration = 100;
    $pre_delay = 5.0; // seconds
    $compressor_run =     0; // stop all
+   $ffc =        false; // perform FFC before starting a sequence (and before delay? reduce delay ?)
+   $ffc_groups = 2; // 1/2/4 - do not run FFC on all channels simultaneously (43 failed)
+   $ffc_frames = 8; // read actual?
+   $ffc_wait_frames =      10; // extra wait after FFC finished (2xffc_frames)
+   
+//   public static final String REG_FFC_FRAMES= "SENSOR_REGS4";      // Register for the number of FFC frames to integrate
+//   public static final String REG_FFC_RUN=    "SENSOR_REGS26";     // Register to trigger FFC
    
    foreach($_GET as $key=>$value) {
-       if (($key == 'f')   || ($key == 'frame')){
-           $frame = (integer) $value;
-       } else if (($key == 'ip') || ($key == 'ips')){ //  multicamera operation
+       if (($key == 'ip') || ($key == 'ips')){ //  multicamera operation
            $ips = explode(',',$value);
-       } else if ($key == 'lwir16'){
+       } else if (($key == 'lwir16') || ($key == 'cmd')){
            $lswir16cmds = explode(',',$value);
        } else if ($key == 'pre_delay'){
            $pre_delay = (double) $value; // only used with capture
        } else if (($key == 'd')   || ($key == 'duration')){
-           // TODO: make durations optionally a list, same as port mask (for EO - different)
-           // wait - apply to the first IP in a list? or to the last?
-           //            $duration = (integer) $value;
            $duration = (int) $value; // EO - make 1/6 +1 frames
+       } else if (($key == 'de')   || ($key == 'duration_eo')){
+           $duration_eo = (int) $value; // EO - make 1/6 +1 frames
        } else if ($key == 'nowait'){
            $nowait = 1;
        } else if ($key == 'run'){
            $compressor_run = 2;
+       } else if ($key == 'ffc'){
+           
+           
+           
+           $ffc = true;
+           if ($value) { // string "0" will also be false
+               $v = (int) $value;
+               if (($v == 1) || ($v == 2) || ($v == 4)){
+                   $ffc_groups = $v;
+               }
+           }
+           
+//           printf("<!--\n");
+//           printf('$ffc_groups= '.$ffc_groups."\n");
+//           printf('$ffc=        '.$ffc."\n");
+//           printf("-->\n");
+           
+           
        }
    }
-//   print_r($lswir16cmds);
-//   print('done');
-//   exit(0);
+   if (!isset ($ips)){
+       $ips=array();
+       $ips[] = '192.168.0.41';
+       $ips[] = '192.168.0.42';
+       $ips[] = '192.168.0.43';
+       $ips[] = '192.168.0.44';
+       $ips[] = '192.168.0.45';
+   }
+   if ($duration < 1){
+       $duration = 1;
+   }
+   if (!isset($duration_eo)){
+       $duration_eo =  ($duration/6) + 1; // default
+   }
+   if ($duration_eo < 1){
+       $duration_eo = 1;
+   }
+   
    if (isset($lswir16cmds)){
 //       exit(0);
        $lwir_trig_dly =       0;
@@ -89,14 +120,6 @@
        $REG_FFC_FRAMES= 'SENSOR_REGS4';      // Register for the number of FFC frames to integrate
        $REG_FFC_RUN=    'SENSOR_REGS26';     // Register to trigger FFC
 //       print("1");
-       if (!isset ($ips)){
-           $ips=array();
-           $ips[] = '192.168.0.41';
-           $ips[] = '192.168.0.42';
-           $ips[] = '192.168.0.43';
-           $ips[] = '192.168.0.44';
-           $ips[] = '192.168.0.45';
-       }
 //       print("2");
 //       exit(0);
        
@@ -215,12 +238,18 @@
                printf($rslt);
                exit(0);
            } else if ($cmd == 'capture'){
-//               $duration = 100;
-//               $pre_delay = 5.0; // seconds
                $sensor_port = 0;
+               if ($ffc){ // may move after measuring time, but need to make sure it will be not too late
+                   runFFC($lwir_ips, $ffc_groups, $ffc_frames,  $ffc_wait_frames);
+               }
+               
                $this_frame=elphel_get_frame($sensor_port);
                $this_timestamp=elphel_frame2ts($sensor_port,$this_frame);
                $timestamp = $this_timestamp + $pre_delay; // this will be a delay between capture sequences
+//               if ($ffc){ // may be here, then need to check that there is some time left
+//                   runFFC($lwir_ips, $ffc_groups, $ffc_frames,  $ffc_wait_frames);
+//               }
+               
            
                $urls = array();
                for ($i = 0; $i<count($ips); $i++){
@@ -228,10 +257,7 @@
                    $url = 'http://'.$ips[$i].'/capture_range.php?sensor_port='.$sensor_port; //
                    $url .= '&ts='.$timestamp; // &timestamp" -> ×tamp
                    $url .= '&port_mask=15'; // .$port_mask[$i];
-                   $dur = ($i < 4) ? $duration :((int) ($duration/6) + 1);
-                   if ($duration <= 0){
-                       $dur = $duration; // for negaive (start) and zero (stop) 
-                   }
+                   $dur = ($i < 4) ? $duration : $duration_eo;
                    $url .= '&duration='. $dur;
 //                   $url .= '&maxahead='. $maxahead;
 //                   $url .= '&minahead='. $minahead;
@@ -249,6 +275,9 @@
 //               print ('results:'); print_r($results); print ('<br/');
 //               exit(0);
                $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><capture_range/>");
+               $xml->addChild ('ffc', $ffc ? 'true':'false');
+               $xml->addChild ('ffc_groups',$ffc_groups);
+               $xml->addChild ('ffc_frames',$ffc_frames);
                for ($i = 0; $i<count($ips); $i++){
                    $xml_ip = $xml->addChild ('ip_'.$ips[$i]);
                    foreach ($results[$i] as $key=>$value){
@@ -261,36 +290,132 @@
                header("Pragma: no-cache\n");
                printf($rslt);
                exit(0);
+           } else if ($cmd == 'reboot'){
+               //log_msg('running autocampars.py ['.implode(',',$IPs).'] pyCmd reboot');
+               $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><lwir16_reboot/>");
+               for ($i = 0; $i<count($ips); $i++){
+                   $xml_ip = $xml->addChild ('ip_'.$ips[$i]);
+                   $xml_ip->addChild('reboot','started');
+               }
+               $rslt=$xml->asXML();
+               header("Content-Type: text/xml");
+               header("Content-Length: ".strlen($rslt)."\n");
+               header("Pragma: no-cache\n");
+               printf($rslt);
+               // one of the next flushes prevent running reboot
+//               ob_flesh();
+//               flush();
+               exec ( 'autocampars.py ['.implode(',',$ips).'] pyCmd reboot', $output, $retval );
+               exit(0); // no time to close log
+           } else if ($cmd == 'state'){
+               // TODO: read all subcameras
+               $state = file('/var/state/camera');
+               $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><lwir16_state/>");
+               foreach ($state as $line){
+                   $kv = explode('=',$line);
+                   if (count ($kv) > 1){
+                        $xml->addChild (trim($kv[0]),trim($kv[1]));
+                   }
+               }
+               $rslt=$xml->asXML();
+               header("Content-Type: text/xml");
+               header("Content-Length: ".strlen($rslt)."\n");
+               header("Pragma: no-cache\n");
+//               printf('<!--');
+//               var_dump($_GET);
+//               printf( '-->');
+               printf($rslt);
+               exit (0);
            }
        }
+   } else { // Just output usage?
+       echo <<<EOT
+<pre>
+This script supports initialization of the LWIR16 camera (16 LWIR 640x512 sensors and 4 2592x1936 color ones)
+and capturing of short image sequences (100 frames fit into 64MB per-channel image buffer) for (relatively)
+slow recording with camogm. Untill videocompression for 16-bit TIFFs is not implemented, recording is not fast
+enough for continupous recording. This script should be launched in the 'master' subcamera only, it will
+communidate with the other ones.
+
+URL parameters:
+<b>lwir16=init</b> - syncronize all 5 cameras, set acquisition parameters
+<b>lwir16=capture</b> - wait specified time, synchronously turn on compressors in each channel of each subcamera,
+                        acquire specified number of frames in each channel (reduced, and turn compressors off.
+ 
+</pre>
+EOT;
+       
+       
    }
-//   print("bug!");
-//   exit(0);
    
-   if (isset($ips)){ // start parallel requests to all cameras ($ips should include this one too), collect responses and exit
-       $results = resetIPs($ips);
-       $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><reset_frames/>");
-       for ($i = 0; $i<count($ips); $i++){
-           $xml_ip = $xml->addChild ('ip_'.$ips[$i]);
-           foreach ($results[$i] as $key=>$value){
-               $xml_ip->addChild($key,$value);
-           }
+   /*
+   $ffc_groups = 2; // 1/2/4 - do not run FFC on all channels simultaneously (43 failed)
+   $ffc_frames = 8; // read actual?
+   $ffc_wait_frames =      10; // extra wait after FFC finished (2xffc_frames)
+
+   */
+   function runFFC($lwir_ips, $ffc_groups, $ffc_frames,  $ffc_wait_frames) { // return number of frames used
+       
+       $skipped = 0;
+       $port_masks =array();
+       foreach ($lwir_ips as $l){
+           $port_masks[] = 15; // select all 4 ports 
        }
-       $rslt=$xml->asXML();
-       header("Content-Type: text/xml");
-       header("Content-Length: ".strlen($rslt)."\n");
-       header("Pragma: no-cache\n");
-       printf($rslt);
-       exit(0);
+       if      ($ffc_groups == 1) $group_masks = array(15);
+       else if ($ffc_groups == 2) $group_masks = array(5, 10);
+       else                       $group_masks = array(1, 2, 4, 8);
+//       printf("<!--\n");
+//       printf('$ffc_groups=     '.$ffc_groups."\n");
+//       printf('$ffc_frames=     '.$ffc_frames."\n");
+//       printf('$ffc_wait_frames='.$ffc_wait_frames."\n");
+//       print_r($group_masks);
+//       printf("-->\n");
+       for ($ig = 0; $ig < $ffc_groups; $ig++){
+           $urls = array();
+           $ip0 = -1;
+           for ($i = 0; $i < count($lwir_ips); $i++) { // start urls for 4 of lwir port0
+               $mask = $port_masks[$i] & $group_masks[$ig];
+               if ($mask != 0) {
+                   $p=0;
+                   for (;((1 << $p) & $mask) == 0; $p++); // find lowest non-zero bit
+                   $urls[] = sprintf("http://%s/parsedit.php?immediate&sensor_port=%d&%s=1&*%s=%d",$lwir_ips[$i],$p,REG_FFC_RUN,REG_FFC_RUN,$mask);
+                   if ($ip0 < 0) {
+                       $ip0 = $i; // first used ip index
+                   }
+               }
+               
+           }
+//           printf("<!--\n");
+//           printf('$ig=             '.$ig."\n");
+//           print_r($urls);
+//           printf("-->\n");
+           if ($urls){ // not empty
+               $curl_data = curl_multi_start ($urls);
+               $enable_echo = false;
+               $results =  curl_multi_finish($curl_data, true, 0, $enable_echo); // Switch true -> false if errors are reported (other output damaged XML)
+           }
+           $skip_frames = 2 * $ffc_frames + $ffc_wait_frames;
+           skipFrames(array($lwir_ips[$ip0]),  $skip_frames);
+       }
+       return $skipped; // better read actual frame after
    }
  
+//   define("REG_FFC_FRAMES",     "SENSOR_REGS4");   // Register for the number of FFC frames to integrate
+//   define("REG_FFC_RUN",        "SENSOR_REGS26"); // Register to trigger FFC
+   
+   
    function resetIPs($ips) {
+       $frame = -2; // skip 2 frames before reset
        $urls = array();
        for ($i = 0; $i<count($ips); $i++){
            // $_SERVER[SCRIPT_NAME] STARTS WITH '/'
-           $url = 'http://'.$ips[$i].$_SERVER[SCRIPT_NAME].'?frame='.$frame; //
+           $url = 'http://'.$ips[$i].'/'.SCRIPT_RESET.'?frame='.$frame; //
            $urls[] = $url;
        }
+//       printf("<!--\n");
+//       print_r($urls);
+//       printf("-->\n");
+       
        $curl_data = curl_multi_start ($urls);
        $enable_echo = false;
        return curl_multi_finish($curl_data, true, 0, $enable_echo); // Switch true -> false if errors are reported (other output damaged XML)
@@ -299,46 +424,12 @@
    function skipFrames($ips,$skip) {
        $urls = array();
        for ($i = 0; $i<count($ips); $i++){
-           // $_SERVER[SCRIPT_NAME] STARTS WITH '/'
 //           $url = 'http://'.$ips[$i].$_SERVER[SCRIPT_NAME].'?frame='.$frame; //
-           $url = 'http://'.$ips[$i].'/wait_frame.php?frame='.(-$skip); //
+           $url = 'http://'.$ips[$i].'/'.SCRIPT_WAIT.'?frame='.(-$skip); //
            $urls[] = $url;
        }
        $curl_data = curl_multi_start ($urls);
        $enable_echo = false;
        return curl_multi_finish($curl_data, true, 0, $enable_echo); // Switch true -> false if errors are reported (other output damaged XML)
    }
-/*
-       $urls = array();
-       for ($i = 0; $i<count($ips); $i++){
-           // $_SERVER[SCRIPT_NAME] STARTS WITH '/'
-           $url = 'http://'.$ips[$i].$_SERVER[SCRIPT_NAME].'?frame='.$frame; //
-           $urls[] = $url;
-       }
-       $curl_data = curl_multi_start ($urls);
-       $enable_echo = false;
-       $results =  curl_multi_finish($curl_data, true, 0, $enable_echo); // Switch true -> false if errors are reported (other output damaged XML)
-
- */   
-   
-   $f = @fopen($sysfs_all_frames, "w");
-   if ($f===false) {
-       $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><error/>");
-       $xml->addChild ('error',print_r(error_get_last(),1));
-   } else {
-       $fw=@fwrite($f, strval($frame));
-       if ($fw===false){
-           $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><error/>");
-           $xml->addChild ('error',print_r(error_get_last(),1));
-       } else {
-           fclose($f);
-           $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><reset_frames/>");
-           $xml->addChild ('frame',$frame);
-       }
-   }
-   $rslt=$xml->asXML();
-   header("Content-Type: text/xml");
-   header("Content-Length: ".strlen($rslt)."\n");
-   header("Pragma: no-cache\n");
-   printf($rslt);
 ?>

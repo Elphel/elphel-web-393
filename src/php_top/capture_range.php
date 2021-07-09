@@ -26,7 +26,9 @@
 *! -----------------------------------------------------------------------------**
 *!
 */
+// TODO set include path, like in set_include_path ( get_include_path () . PATH_SEPARATOR . '/www/pages/include' );
    include 'include/show_source_include.php';
+   include "include/elphel_functions_include.php"; // includes curl functions
    $minahead = 2;
    $PARS_FRAMES = 16;
    $maxahead = $PARS_FRAMES - 4; // 3;
@@ -83,30 +85,108 @@ USAGE;
     foreach($_GET as $key=>$value) {
         if ($key == 'sensor_port'){
             $sensor_port = (integer) $value;
+        } else if (($key == 'a')  || ($key == 'ahead')){ // will overwrite timestamp with this value (in seconds) from now
+            $ahead_now = (double) $value;
         } else if (($key == 'ts')  || ($key == 'timestamp')){
             $timestamp = (double) $value;
         } else if (($key == 'f')   || ($key == 'frame')){
             $frame = (integer) $value;
         } else if (($key == 'm')   || ($key == 'port_mask')){
-            $port_mask = (integer) $value;
+//            $port_mask = (integer) $value;
+            $masklist = $value;
         } else if (($key == 'd')   || ($key == 'duration')){
-            $duration = (integer) $value;
+// TODO: make durations optionally a list, same as port mask (for EO - different)            
+ // wait - apply to the first IP in a list? or to the last?           
+//            $duration = (integer) $value;
+            $duration_list = $value;
         } else if (($key == 'mxa') || ($key == 'maxahead')){
             $maxahead = (integer) $value;
         } else if (($key == 'mna') || ($key == 'minahead')){
             $minahead = (integer) $value;
         } else if (($key == 'w')   || ($key == 'wait')){ // wait all done
             $wait = true;
-        } else if (($key == 'e')   || ($key == 'extra')){ // wait all done
-            $extra = (integer) $value;
+        } else if (($key == 'e')   || ($key == 'extra')){
+            $extra = (integer) $value; // not used?
+        } else if (($key == 'ip') || ($key == 'ips')){ //  multicamera operation
+            $ips = explode(',',$value);
         }
     }
+    if (isset($ahead_now)){
+        $this_frame=elphel_get_frame($sensor_port);
+        $this_timestamp=elphel_frame2ts($sensor_port,$this_frame);
+        $timestamp = $this_timestamp + $ahead_now;
+    }
+    // if ips are provided, treat port mask as commaseparated list
+    //            $port_mask = (integer) $value;
+    if (isset($ips)){
+        $pml = explode(',', $masklist);
+        $port_mask = array ();
+        for ($i = 0; $i<count($ips); $i++){
+            if ($i < count($pml)){
+                $port_mask[] = (integer) $pml[$i];
+            } else {
+                $port_mask[] = 15; // default - all sensors
+            }
+        }
+        $durl = explode(',', $duration_list);
+        $duration = array();
+        for ($i = 0; $i<count($ips); $i++){
+            if ($i < count($durl)){
+                $duration[] = (integer) $durl[$i];
+            } else {
+                $duration[] = $duration[0]; // at least one duration should be provided
+            }
+        }
+    } else {
+        $port_mask = (integer) $masklist;      // single valude
+        $duration =  (integer) $duration_list; // single valude
+    }
+    
+    // convert provided timestamp to even number of frame timestamp
     if (($frame !=0) || ($timestamp !=0.0)) {
         if (($frame <=0) && ($timestamp > 0.0)){
             $frame = elphel_ts2frame($sensor_port,$timestamp);
         }
         $timestamp = elphel_frame2ts($sensor_port,$frame); // update, even if provided to fit better integer number of frames
     }
+    
+    if (isset($ips)){ // start parallel requests to all cameras ($ips should include this one too), collect responses and exit
+        // prepare URLs
+        $urls = array();
+        for ($i = 0; $i<count($ips); $i++){
+            // $_SERVER[SCRIPT_NAME] STARTS WITH '/'
+            $url = 'http://'.$ips[$i].$_SERVER[SCRIPT_NAME].'?sensor_port='.$sensor_port; //
+            $url .= '&ts='.$timestamp; // &timestamp" -> ×tamp
+            $url .= '&port_mask='.$port_mask[$i];
+            $url .= '&duration='. $duration[$i];
+            $url .= '&maxahead='. $maxahead;
+            $url .= '&minahead='. $minahead;
+            $url .= '&extra='.    $extra;
+            if ($wait && ($i == (count($ips) - 1))){ // addd to the last ip in a list
+                $url .= '&wait';
+            }
+            $urls[] = $url;
+        }
+//        print_r($urls);
+//        exit(0);
+        $curl_data = curl_multi_start ($urls);
+        $enable_echo = false;
+        $results =  curl_multi_finish($curl_data, true, 0, $enable_echo); // Switch true -> false if errors are reported (other output damaged XML)
+        $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><capture_range/>");
+        for ($i = 0; $i<count($ips); $i++){
+            $xml_ip = $xml->addChild ('ip_'.$ips[$i]);
+            foreach ($results[$i] as $key=>$value){
+                $xml_ip->addChild($key,$value);
+            }
+        }
+        $rslt=$xml->asXML();
+        header("Content-Type: text/xml");
+        header("Content-Length: ".strlen($rslt)."\n");
+        header("Pragma: no-cache\n");
+        printf($rslt);
+        exit(0);
+    }
+    
     
     $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><capture_range/>");
     $flags = 0;

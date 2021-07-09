@@ -22,7 +22,9 @@
 *! -----------------------------------------------------------------------------**
 *!
 */
-   include 'include/show_source_include.php';
+// TODO set include path, like in set_include_path ( get_include_path () . PATH_SEPARATOR . '/www/pages/include' );
+include 'include/show_source_include.php';
+include "include/elphel_functions_include.php"; // includes curl functions
    $frame = -1; // positive - wait absolute frame number for the master port, negative - skip frame(s)
    $sensor_port = 0;
    foreach($_GET as $key=>$value) {
@@ -30,7 +32,33 @@
            $sensor_port = (integer) $value;
        } else if (($key == 'f')   || ($key == 'frame')){
            $frame = (integer) $value;
+       } else if (($key == 'ip') || ($key == 'ips')){ //  multicamera operation
+           $ips = explode(',',$value);
        }
+   }
+   if (isset ($ips)){
+       $urls = array();
+       for ($i = 0; $i<count($ips); $i++){
+           // $_SERVER[SCRIPT_NAME] STARTS WITH '/'
+           $url = 'http://'.$ips[$i].$_SERVER[SCRIPT_NAME].'?frame='.$frame; //
+           $urls[] = $url;
+       }
+       $curl_data = curl_multi_start ($urls);
+       $enable_echo = false;
+       $results =  curl_multi_finish($curl_data, true, 0, $enable_echo); // Switch true -> false if errors are reported (other output damaged XML)
+       $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><wait_frames/>");
+       for ($i = 0; $i<count($ips); $i++){
+           $xml_ip = $xml->addChild ('ip_'.$ips[$i]);
+           foreach ($results[$i] as $key=>$value){
+               $xml_ip->addChild($key,$value);
+           }
+       }
+       $rslt=$xml->asXML();
+       header("Content-Type: text/xml");
+       header("Content-Length: ".strlen($rslt)."\n");
+       header("Pragma: no-cache\n");
+       printf($rslt);
+       exit(0);
    }
    if ($frame < 0) {
        elphel_skip_frames($sensor_port, -$frame);
