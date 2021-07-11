@@ -26,9 +26,9 @@
 *! -----------------------------------------------------------------------------**
 *!
 */
-// TODO set include path, like in set_include_path ( get_include_path () . PATH_SEPARATOR . '/www/pages/include' );
-   include 'include/show_source_include.php';
-   include "include/elphel_functions_include.php"; // includes curl functions
+   set_include_path ( get_include_path () . PATH_SEPARATOR . '/www/pages/include' );
+   include 'show_source_include.php';
+   include "elphel_functions_include.php"; // includes curl functions
    $minahead = 2;
    $PARS_FRAMES = 16;
    $maxahead = $PARS_FRAMES - 4; // 3;
