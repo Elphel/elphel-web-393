@@ -333,4 +333,86 @@ function get_sensors(){
     return $sensors;
 }
 
+/**
+ * Locating process(es) by name and optional interpreter name.
+ * 
+ * @param string name - name of the program/script, both basename and full name are OK.
+ * @param string $interpreter - name of the interpreter (optional), both basename and full name are OK. This
+ *        parameter is required when script is executed with explicit interpreter (such as in 'php script.php'.
+ * @param boolean $active_only - skip zombie and kernel thread processes
+ * @return array of matches, each match may have the following fields:
+ *  'active' - false for zombies/kernel threads (indicated by [] in COMMAND field), true otherwise
+ *  'pid' -  integer PID of the process ) (first column of ps output)
+ *  'user' - process owner (second column of ps output)
+ *  'vsz' -  process virtual memory size (multiplied by 1000000 if third column of ps output ends with 'm')
+ *  'stat' - fourth column of ps output
+ *  'scmd' - fifth column of the ps output (with enclosing [] removed)
+ *  'exe'-   (optional) called script path if present (enclosed in {} in ps output) when interpreter is invoked from #! line
+ *  'interpreter' - intrepreter full path if specified or detected from #! by ps
+ *  'argv' - array of the command line tokens, starting with the program/script path. 
+ *  
+ *  Long argument lists are truncated by "ps -w"
+ */
+function getPIDByName($name, $interpreter="",$active_only=false){
+    $ss = $interpreter ? ($interpreter.".*".$name) : $name;
+    exec('ps -w | grep "'.$ss.'"', $arr);
+    $rslt=array();
+    $sep = " \n\t";
+    foreach ($arr as $entry){
+//        echo $entry."\n";
+        $active = substr($entry, -1) != ']';
+        $l = array();
+        $l['active'] =    $active;
+        $l['pid'] = (int) strtok($entry, $sep);
+        $l['user'] =      strtok($sep);
+        $vsz=             strtok($sep);
+        $l['vsz'] = (int) $vsz;
+        if (strchr($vsz,'m')){
+            $l['vsz'] *=1000000;
+        }
+        $l['stat'] =      strtok($sep);
+        $l['scmd'] =   trim(trim(strtok('')),'[]'); // rest of the string with leading ' ' removed
+        
+        // parse command line
+        $acmd = array();
+        $tok = strtok($l['scmd'], $sep);
+        while ($tok !== false){
+            $acmd[] = $tok;
+            $tok = strtok($sep);
+        }
+        
+        if ($acmd[0][0] == "{"){
+            $l['exe'] = trim(array_shift($acmd),'{}'); // first token - enclosed in {} executed script that calle interpreter throuh #!
+            if (!$interpreter) {
+                $interpreter = $acmd[0];
+                if (strrpos($interpreter, '/') !== false){
+                    $interpreter = substr($interpreter, strrpos($interpreter, '/') + 1);
+                }
+            }
+        }
+        if ($interpreter){ // see if interpreter matches
+            $first_tok = array_shift($acmd); // shifts array, removes first element
+            $offs = strpos($first_tok,$interpreter);
+            if ($offs === false){
+                continue; // interpreter does not match
+            } else if (($offs >0) && ($first_tok[$offs -1] != '/')){
+                continue; // interpreter does not match (only ends with)
+            }
+            $l['interpreter'] = $first_tok;
+        }
+        if (!count($acmd)){
+            continue; // only interpreter present; // should not get here
+        }
+        $argv0 = $acmd[0];
+        $offs = strpos($argv0,$name);
+        if ($offs === false){
+            continue; // program name does not match
+        } else if (($offs >0) && ($argv0[$offs -1] != '/')){
+            continue; // program name does not match (only ends with)
+        }
+        $l['argv'] = $acmd;
+        $rslt[] = $l;
+    }
+    return $rslt;
+}
 ?>
