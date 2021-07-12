@@ -4,13 +4,26 @@
   <style></style>
 <script language="JavaScript">
 var initialized = false;
-var seq_counter =  0;
-var duration =   100;
-var pre_delay =    5.0;
-var ffc_period = 30;
-var run =      true;
-var want_run = true;
-var next_ffc_sec = 0; // will be overdue
+
+var pre_delay;//  =     5.0;
+var duration;//  =    100;
+var duration_eo;//  = 100;
+var ffc;//  =         false;
+var ffc_period;//  =   30;
+var ffc_groups;//  =    2;
+var ffc_frames;//  =    8;
+var compressor_run;//  =  false;
+var debug;//  =        0;
+
+var sequence_num;//  = 0;
+var last_ffc;//  =     0;
+var time_to_ffc;//  =  0;
+var capture_run;//  =  0;
+var want_run;
+var request_num = 0;
+var update_editable = true;
+var apply_pending = false;
+
 function parse_response(resp){
   var result = "";
   console.log(resp);
@@ -41,134 +54,235 @@ function send_request(rq,callback){
   request.send();
 }
 
-
-
-function init_lwir(){
-    send_request("http://192.168.0.41/lwir16/lwir16.php?cmd=init",init_response);
-    document.getElementById('idpre_delay').value=  ""+pre_delay;
-    document.getElementById('idduration').value=   ""+duration;
-    document.getElementById('idffc_period').value= ""+ffc_period;
-}
-function init_response(resp){
-    initialized = true;
-//    alert ("LWIR16 initialized");
-    document.getElementById('idStartStop').innerHTML= run? 'STOP': 'START';
-    console.log("LWIR16 initialized");
-    want_run = run;
-    captureSet();
-}
-
-function capture_response(resp){
-    document.getElementById('idcount').value=""+seq_counter;
-//    document.getElementById('idcount').innerHTML=""+seq_counter;
-    //id="idcount"
-    seq_counter++;
-    if (want_run) {
-        run = true;
-//        send_request("http://192.168.0.41/lwir16/lwir16.php?cmd=capture&duration="+duration+"&pre_delay="+pre_delay,capture_response);
-        captureSet();
-    } else {
-        run = false;
-        document.getElementById('idStartStop').innerHTML='START';
+function sendStatusRequest(){
+    var url = "http://192.168.0.41/lwir16/lwir16.php?daemon=status";
+    if (apply_pending) {
+        var mod_pars =   modParameters();
+//    console.log('mod_pars members:');
+        for(const p in mod_pars) {
+            url +="&"+p+"="+mod_pars[p];
+        }
+        update_editable = true; // will update edited fields
+        apply_pending = false;
     }
+    send_request(url,parseStatusResponse);
 }
 
-function updatePreDelay(field_id){
-  var v=parseDouble(document.getElementById(field_id).value);
-  if (isNaN(v)){
-    v = 5.0;
-  }
-  pre_delay = v;
-  document.getElementById(field_id).value=""+v;
+function sendRestartRequest(){
+    var url = "http://192.168.0.41/lwir16/lwir16.php?daemon=restart&cmd=STATUS";
+    send_request(url,parseStatusResponse);
 }
 
 
-function updateDuration(field_id){
-  var v=parseInt(document.getElementById(field_id).value);
-  if (isNaN(v)){
-    v = 100;
-  }
-  duration = v;
-  document.getElementById(field_id).value=""+v;
-}
 
-function updateFFCPeriod(field_id){
-  var v=parseInt(document.getElementById(field_id).value);
-  if (isNaN(v)){
-    v = 100;
-  }
-  ffc_period = v;
-  document.getElementById(field_id).value=""+v;
-}
-
-
-function clickedRun(field_id){
-    want_run = !run;
-//    alert("want_run="+want_run);
-    if (want_run){
-        run = true;
-        document.getElementById(field_id).innerHTML='STOP';
-        captureSet();
-//        send_request("http://192.168.0.41/lwir16/lwir16.php?cmd=capture&duration="+duration+"&pre_delay="+pre_delay,init_response);
+function parseStatusResponse(resp){
+  var result = "";
+//  console.log(resp);
+  if (update_editable) {
+    if (resp.getElementsByTagName("pre_delay").length!=0){
+        pre_delay = parseFloat(resp.getElementsByTagName("pre_delay")[0].childNodes[0].nodeValue);
+        document.getElementById("idpre_delay").value = pre_delay;
     }
+    
+    if (resp.getElementsByTagName("duration").length!=0){
+        duration = parseInt(resp.getElementsByTagName("duration")[0].childNodes[0].nodeValue);
+        document.getElementById("idduration").value = duration;
+    }
+    
+    if (resp.getElementsByTagName("duration_eo").length!=0){
+        duration_eo = parseInt(resp.getElementsByTagName("duration_eo")[0].childNodes[0].nodeValue);
+        document.getElementById("idduration_eo").value = duration_eo;
+    }
+
+    if (resp.getElementsByTagName("ffc").length!=0){
+        ffc = parseInt(resp.getElementsByTagName("ffc")[0].childNodes[0].nodeValue);
+        document.getElementById("idffc").checked = ffc > 0;
+    }
+
+    if (resp.getElementsByTagName("ffc_period").length!=0){
+        ffc_period = parseFloat(resp.getElementsByTagName("ffc_period")[0].childNodes[0].nodeValue);
+        document.getElementById("idffc_period").value = ffc_period;
+    }
+
+    if (resp.getElementsByTagName("ffc_groups").length!=0){
+        ffc_groups = parseInt(resp.getElementsByTagName("ffc_groups")[0].childNodes[0].nodeValue);
+        document.getElementById("idffc_groups").value = ffc_groups;
+    }
+    
+    if (resp.getElementsByTagName("ffc_frames").length!=0){
+        ffc_frames = parseInt(resp.getElementsByTagName("ffc_frames")[0].childNodes[0].nodeValue);
+        document.getElementById("idffc_frames").value = ffc_frames;
+    }
+
+    if (resp.getElementsByTagName("compressor_run").length!=0){
+        compressor_run = parseInt(resp.getElementsByTagName("compressor_run")[0].childNodes[0].nodeValue);
+        document.getElementById("idcompressor_run").checked = compressor_run > 0;
+    }
+    
+    if (resp.getElementsByTagName("debug").length!=0){
+        debug = parseInt(resp.getElementsByTagName("debug")[0].childNodes[0].nodeValue);
+        document.getElementById("iddebug").value = debug;
+    }
+  }
+  if (resp.getElementsByTagName("sequence_num").length!=0){
+  	sequence_num = parseInt(resp.getElementsByTagName("sequence_num")[0].childNodes[0].nodeValue);
+  	document.getElementById("idsequence_num").value = sequence_num;
+  }
+
+  if (resp.getElementsByTagName("last_ffc").length!=0){
+  	last_ffc = parseFloat(resp.getElementsByTagName("last_ffc")[0].childNodes[0].nodeValue);
+  	document.getElementById("idlast_ffc").value = last_ffc;
+  }
+  
+  if (resp.getElementsByTagName("time_to_ffc").length!=0){
+  	time_to_ffc = parseFloat(resp.getElementsByTagName("time_to_ffc")[0].childNodes[0].nodeValue);
+  	document.getElementById("idtime_to_ffc").value = time_to_ffc;
+  }
+  
+  if (resp.getElementsByTagName("capture_run").length!=0){
+  	capture_run = parseInt(resp.getElementsByTagName("capture_run")[0].childNodes[0].nodeValue);
+  	document.getElementById("idcapture_run").checked = capture_run > 0;
+  	if (update_editable) {
+        document.getElementById("idStartStop").innerHTML=capture_run?"Stop":"Start";
+        document.getElementById("idStartStop").disabled = false;
+        want_run = capture_run;
+  	}
+  }
+  if (update_editable) {
+       document.getElementById('idApply').innerHTML='Apply';
+       document.getElementById('idApply').disabled= false;
+       document.getElementById('idRestart').innerHTML='Restart';
+       document.getElementById('idRestart').disabled= false;
+       
+  }
+  request_num++;
+  document.getElementById("idrequest_num").value = request_num;
+  update_editable = false;
+  sendStatusRequest();
 }
 
-
-function captureSet(){
-    var now_sec = 0.001 * ((new Date()).getTime());
-    var ffc_cmd = "";
-    if (now_sec > next_ffc_sec) {
-        ffc_cmd = "&ffc";
-        next_ffc_sec = now_sec + ffc_period;
-        document.getElementById("idffc").value="NOW";
-    } else {
-            document.getElementById('idffc').value=""+ (0.01 * Math.round(100*(next_ffc_sec - now_sec)));
+function modParameters(){
+    var mod_pars={};
+    if (document.getElementById("idpre_delay").value != (""+pre_delay)){
+        mod_pars['pre_delay'] = document.getElementById("idpre_delay").value;
     }
-    send_request("http://192.168.0.41/lwir16/lwir16.php?cmd=capture&duration="+duration+"&pre_delay="+pre_delay+ffc_cmd,capture_response);
+    if (document.getElementById("idduration").value != (""+duration)){
+        mod_pars['duration'] = document.getElementById("idduration").value;
+    }
+    if (document.getElementById("idduration_eo").value != (""+duration_eo)){
+        mod_pars['duration_eo'] = document.getElementById("idduration_eo").value;
+    }
+    if (document.getElementById("idffc").checked != ffc){
+        mod_pars['ffc'] = document.getElementById("idffc").checked?"1":"0";
+    }
+    if (document.getElementById("idffc_period").value != (""+ffc_period)){
+        mod_pars['ffc_period'] = document.getElementById("idffc_period").value;
+    }
+    if (document.getElementById("idffc_groups").value != (""+ffc_groups)){
+        mod_pars['ffc_groups'] = document.getElementById("idffc_groups").value;
+    }
+    if (document.getElementById("idffc_frames").value != (""+ffc_frames)){
+        mod_pars['ffc_frames'] = document.getElementById("idffc_frames").value;
+    }
+    if (document.getElementById("idcompressor_run").checked != compressor_run){
+        mod_pars['compressor_run'] = document.getElementById("idcompressor_run").checked?"1":"0";
+    }
+    if (want_run != capture_run) {
+        mod_pars['cmd'] = want_run? "START":"STOP"; 
+    }
+    console.log('mod_pars members:');
+    for(const p in mod_pars) {
+        console.log (p, mod_pars[p]);
+    }
+    return mod_pars;
+}
+
+function setPending(){
+    document.getElementById('idApply').innerHTML='Pending';
+    document.getElementById('idApply').disabled= true;
+    document.getElementById("idStartStop").innerHTML="Pending";
+    document.getElementById("idStartStop").disabled = true;
+    document.getElementById("idRestart").innerHTML="Pending";
+    document.getElementById("idRestart").disabled = true;
+    apply_pending = true;
+}
+
+function clickedRestart(){
+    setPending();
+    sendRestartRequest();
+}
+function clickedRun(){
+    want_run = !capture_run;
+    setPending();
+}
+
+function clickedApply(){
+    setPending();
 }
 
 </script>
   </head>
   
   
-  <body onload='init_lwir()'>
+  <body onload='sendStatusRequest()'>
   <table>
-  <tr>
-  <td>Pre-capture delay</td><td>
-        <input id="idpre_delay" name="npre_delay" size="10" maxlength="10" value="?" onchange="updatePreDelay('idpre_delay')" type="text">
-  </td>
-  <td><button id="idStartStop" name = "nStartStop" onclick="clickedRun('idStartStop')">???</button></td>
-  </tr>
-  <tr>
-  <td>Sequence length (@60Hz)</td><td>
-        <input id="idduration" name="nduration" size="10" maxlength="10" value="?" onchange="updateDuration('idduration')" type="text">
-  </td>
-  <td>frames</td>
-  </tr>
-
-  <tr>
-  <td>FFC period</td><td>
-        <input id="idffc_period" name="nffc_period" size="10" maxlength="10" value="?" onchange="updateFFCPeriod('idffc_period')" type="text">
-  </td>
-  <td>sec</td>
-  </tr>
-
   
-  <tr>
-    <td>Sequence count</td><td>
-       <input id="idcount" name="ncount" size="10" maxlength="10" value="?" type="text" disabled >
-    </td>
-    <td>captured</td>
-  </tr>
-
-  <tr>
-    <td>Time to ffc</td><td>
-       <input id="idffc" name="ncount" size="10" maxlength="10" value="?" type="text" disabled >
-    </td>
-  <td>sec</td>
-  </tr>
-
+  <tr><td>
+  <button id="idStartStop" name = "nStartStop" onclick="clickedRun()" disabled="true">???</button>
+  </td><td>
+    <button id="idApply" name = "nApply" onclick="clickedApply()"      disabled = "true">???</button>
+</td><td>&nbsp;</td> <td>&nbsp;</td><td>&nbsp;</td>
+<td><button id="idRestart" name = "nRestart" onclick="clickedRestart()" >Restart</button></td></tr>
   
+  <tr><td>Pre-capture delay</td><td>
+        <input id="idpre_delay" name="npre_delay" size="10" maxlength="10" value="?" type="text">
+  </td><td> sec</td><td>Sequence count</td><td>
+       <input id="idsequence_num" name="nsequence_num" size="10" maxlength="10" value="?" type="text" disabled >
+  </td><td>captured</td></tr>
+
+  <tr><td>Sequence length (@60Hz)</td><td>
+        <input id="idduration" name="nduration" size="10" maxlength="10" value="?" type="text">
+  </td><td>frames</td><td>Request count</td><td>
+       <input id="idrequest_num" name="nrequest_num" size="10" maxlength="10" value="?" type="text" disabled >
+  </td><td>&nbsp;</td></tr>
+
+  <tr><td>Sequence length (@10Hz)</td><td>
+        <input id="idduration_eo" name="nduration_eo" size="10" maxlength="10" value="?"  type="text">
+  </td><td>frames</td><td>Capture run</td><td>
+        <input id="idcapture_run" name="ncapture_run" type="checkbox" disabled>
+  </td><td>&nbsp;</td></tr>
+  
+  <tr><td>FFC</td><td>
+        <input id="idffc" name="nffc" type="checkbox">
+  </td><td>&nbsp;</td><td>Last FFC</td><td>
+       <input id="idlast_ffc" name="nlast_ffc" size="10" maxlength="10" value="?" type="text" disabled >
+  </td><td>sec</td></tr>
+
+  <tr><td>FFC period</td><td>
+        <input id="idffc_period" name="nffc_period" size="10" maxlength="10" value="?" type="text">
+  </td><td>sec</td><td>Time to FFC</td><td>
+       <input id="idtime_to_ffc" name="ntime_to_ffc" size="10" maxlength="10" value="?" type="text" disabled >
+  </td><td>sec</td></tr>
+
+  <tr><td>FFC groups</td><td>
+        <select id="idffc_groups" name="nffc_groups"  value="?">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="4" selected="selected">4</option>
+        </select>
+  </td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+  <tr><td>FFC frames</td><td>
+        <input id="idffc_frames" name="nffc_frames" size="10" maxlength="10" value="?" type="text">
+  </td><td>frames</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+  
+  <tr><td>Compress after Init</td><td>
+        <input id="idcompressor_run" name="ncompressor_run" type="checkbox">
+  </td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+  <tr><td>Debug level</td><td>
+        <input id="iddebug" name="ndebug" size="10" maxlength="10" value="?" type="text">
+  </td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
   </table>
   </body>
 </html>

@@ -63,12 +63,14 @@
    define('DAEMON_CTRL',        'daemon');
    define('DAEMON_CTRL_CMDS',   'cmd'); //comma-separated commands to be sent to the daemon
    
+//   print_r($_GET); // magic
+//   exit(0); // magic
    
    // initializations before reading lwir16.ini
    $GLOBALS[COMPRESSOR_RUN] = 0;
    $GLOBALS[DURATION] = 100;
    $GLOBALS[PRE_DELAY] = 5.0; // seconds
-   $GLOBALS[FFC] =       false; // perform FFC before starting a sequence (and before delay? reduce delay ?)
+   $GLOBALS[FFC] =        0; // perform FFC before starting a sequence (and before delay? reduce delay ?)
 //   $ffc =        false; 
    $GLOBALS[FFC_GROUPS] = 2; // 1/2/4 - do not run FFC on all channels simultaneously (43 failed)
    $GLOBALS[FFC_FRAMES] = 8; // read actual?
@@ -108,7 +110,7 @@
        } else if ($key == 'run'){
            $GLOBALS[COMPRESSOR_RUN] = 2;
        } else if ($key == 'ffc'){
-           $GLOBALS[FFC] = true;
+           $GLOBALS[FFC] = 1;
            if ($value) { // string "0" will also be false
                $v = (int) $value;
                if (($v == 1) || ($v == 2) || ($v == 4)){
@@ -117,6 +119,10 @@
            }
        }
    }
+//   print_r($lswir16cmds);
+//   exit(0);
+   
+   
    if (isset($duration) && !isset($duration_eo)){
        $duration_eo = (int) ($duration/EO_DECIMATE + 1);
    }
@@ -124,7 +130,8 @@
    if (isset($duration_eo)) $GLOBALS[DURATION_EO] = $duration_eo;
    if ($GLOBALS[DURATION] < 1)    $GLOBALS[DURATION] = 1;
    if ($GLOBALS[DURATION_EO] < 1) $GLOBALS[DURATION_EO] = 1;
-
+   
+   
    if (isset($lswir16cmds)){
        $lwir_trig_dly =       0;
        $eo_quality =         97;
@@ -180,7 +187,7 @@
            } else if ($cmd == 'capture'){
                $results =  runCapture($GLOBALS[FFC], $nowait); // runCapture($run_ffc, $nowait = 0, $debug=0)
                $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><capture_range/>");
-               $xml->addChild ('ffc', $GLOBALS[FFC] ? 'true':'false');
+               $xml->addChild ('ffc', $GLOBALS[FFC]);
                $xml->addChild (FFC_GROUPS,$GLOBALS[FFC_GROUPS]);
                $xml->addChild (FFC_FRAMES,$GLOBALS[FFC_FRAMES]);
                for ($i = 0; $i<count($GLOBALS[IPS]); $i++){
@@ -591,11 +598,9 @@ EOT;
                                $xml_state->addChild (trim($kv[0]),trim($kv[1]));
                            }
                        }
-                       $xml->addChild (SECUENCE_NUM, $GLOBALS[SECUENCE_NUM]);
-                       if ($GLOBALS[FFC]) {
-                           $GLOBALS[TIME_TO_FFC] = $GLOBALS[LAST_FFC] + $GLOBALS[FFC_PERIOD] - time();
-                           $xml->addChild (TIME_TO_FFC, $GLOBALS[TIME_TO_FFC]);
-                       }
+                       $GLOBALS[TIME_TO_FFC] = $GLOBALS[LAST_FFC] + $GLOBALS[FFC_PERIOD] - time();
+                       $xml->addChild (SECUENCE_NUM,    $GLOBALS[SECUENCE_NUM]);
+                       $xml->addChild (TIME_TO_FFC,     $GLOBALS[TIME_TO_FFC]);
                        $xml->addChild (IPS, implode(',',$GLOBALS[IPS]));
                        $xml->addChild (DURATION,        $GLOBALS[DURATION]);
                        $xml->addChild (DURATION_EO,     $GLOBALS[DURATION_EO]);
@@ -652,7 +657,9 @@ EOT;
                if ($GLOBALS[DEBUG]){
                    print_r($ini);
                }
-               unset     ($GLOBALS[DAEMON_CMD]);
+               unset ($GLOBALS[DAEMON_CMD]);
+               
+               
                applyConf ($ini); // update $GLOBALS
                $from_pipe = true;
                if ($GLOBALS[DEBUG] > 1){
@@ -726,7 +733,7 @@ EOT;
        if (isset($arr[DAEMON_CMD]))      $GLOBALS[DAEMON_CMD] =             $arr[DAEMON_CMD];
        if (isset($arr[DEBUG]))           $GLOBALS[DEBUG] = (int)            $arr[DEBUG];
        if (isset($arr[COMPRESSOR_RUN]))  $GLOBALS[COMPRESSOR_RUN] = (int)   $arr[COMPRESSOR_RUN]; // only after INIT
-       if (isset($arr[FFC]))             $GLOBALS[FFC] =                    $arr[FFC]?true:false; // only after INIT
+       if (isset($arr[FFC]))             $GLOBALS[FFC] =                    $arr[FFC]?1:0;
    }
 
 /**
@@ -736,41 +743,88 @@ EOT;
  */
     function daemon_control($cmd)
     {
-       /*
-        echo "<pre>\n";
-        print_r($_SERVER);
-        echo "</pre>\n";
-        exit(0);
-        */
+//        echo "<pre>\n";
+//        print_r($_SERVER);
+//        echo "</pre>\n";
+//        exit(0);
         // see if it already running
+        $debug = 0;
         $max_wait = 10; // seconds
 //        $sript_name = substr($_SERVER['SCRIPT_NAME'], 1); // remove leading '/'
         $sript_path = $_SERVER['SCRIPT_FILENAME'];
         $sript_name = basename($sript_path);
         $pids = getPIDByName($sript_name, 'php', $active_only = false);
+        
+//        echo "<pre>0:\n";
+//        print_r($pids);
+//        echo "</pre>\n";
+        
         // Stop if needed
         if ($pids && (($cmd == 'restart') || ($cmd == 'stop'))) {
-            $mode = 0600;
-            if (! file_exists(PIPE_CMD)) {
-                // create the pipe
-                umask(0);
-                posix_mkfifo(PIPE_CMD, $mode);
+            // below - does not work with non-blocking "w+", will take care later
+            /*
+         * $mode = 0600;
+         * if (! file_exists(PIPE_CMD)) {
+         * // create the pipe
+         * umask(0);
+         * posix_mkfifo(PIPE_CMD, $mode);
+         * }
+         * $f = fopen(PIPE_CMD, "w+"); // make it non-blocking as the receiver may be hang
+         * fwrite($f, "CMD=EXIT");
+         * fclose($f);
+         * for ($i = 0; $pids && ($i < $max_wait); $i ++) {
+         * sleep (1);
+         * $pids = getPIDByName($sript_name, 'php', $active_only = false);
+         * }
+         */
+
+            // if(file_exists(PIPE_CMD)) unlink(PIPE_CMD); //delete pipe
+            // if(file_exists(PIPE_RESPONSE)) unlink(PIPE_RESPONSE); //delete pipe
+
+            // print_r($pids);
+        if ($debug) {
+            echo "<pre>1:\n";
+            print_r($pids);
+            echo "</pre>\n";
+        }
+            
+            if ($pids) { // did not exit, ask politely
+                foreach ($pids as $proc) {
+                    exec('kill ' . $proc['pid'], $output, $retval);
+                }
             }
-            $f = fopen(PIPE_CMD, "w+"); // make it non-blocking as the receiver may be hang
-            fwrite($f, "CMD=EXIT");
-            fclose($f);
-            for ($i = 0; $i < $max_wait; $i ++) {
+            if ($debug) {
+                echo "<pre>2:\n";
+                print_r($pids);
+                echo "</pre>\n";
+            }
+            
+            for ($i = 0; $pids && ($i < $max_wait); $i ++) {
+                sleep (1);
                 $pids = getPIDByName($sript_name, 'php', $active_only = false);
-                if (! $pid)
-                    break;
             }
-            if ($pids) { // did not exit
+            if ($debug) {
+                echo "<pre>3:\n";
+                print_r($pids);
+                echo "</pre>\n";
+            }
+            if ($pids) { // did not exit - just kill them
                 foreach ($pids as $proc) {
                     exec('kill -9 ' . $proc['pid'], $output, $retval);
                 }
             }
+            $pids = getPIDByName($sript_name, 'php', $active_only = false);
+            if ($debug) {
+                echo "<pre>4\n";
+                print_r($pids);
+                echo "</pre>\n";
+            }
+            
         }
         $pids = getPIDByName($sript_name, 'php', $active_only = false);
+        
+//        print_r($pids);
+        
         if (!$pids && ($cmd != 'stop')) {
             exec($sript_path . ' > /dev/null 2>&1 &'); // "> /dev/null 2>&1 &" makes sure it is really really run as a background job that does not wait for input
 // wait it to run
@@ -780,8 +834,16 @@ EOT;
             }
             
         }
+        /*
+        $exit_ps = ($cmd == 'stop') || !pids ; // nothing else to do if it is not running
+        if (($cmd == 'restart') || ($cmd == 'start')){
+            if (!isset ($_GET[DAEMON_CTRL_CMDS]) && !isset ($_GET[DAEMON_CMD])){ // no other commands (like "status")
+                $exit_ps = true;
+            }
+        }
+        */
         if (($cmd == 'restart') || ($cmd == 'start') || ($cmd == 'stop') || !pids) { // nothing else to do if it is not running
-            // just respond with $pids xml
+//        if ($exit_ps) { // nothing else to do if it is not running just respond with $pids xml
             $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><lwir16_daemon_status/>");
             if ($pids) {
                 /*
