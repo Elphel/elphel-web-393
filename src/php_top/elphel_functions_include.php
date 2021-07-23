@@ -178,12 +178,16 @@ function curl_multi_finish($data, $use_xml=true, $ntry=0, $echo = false, $with_h
 			$xml = simplexml_load_string (curl_multi_getcontent ($ch));
 			curl_multi_remove_handle ($curl_mh, $ch);
 			$results[$i] = array ();
-			foreach ($xml as $tag => $value) {
-				$svalue = (string) $value;
-				if (strlen ($svalue) > 0) {
-					if ($svalue[0] == '"') $results[$i][$tag] = trim ($svalue, '"');
-					else $results[$i][$tag] = (int) $svalue;
-				}
+			try {
+    			foreach ($xml as $tag => $value) {
+    				$svalue = (string) $value;
+    				if (strlen ($svalue) > 0) {
+    					if ($svalue[0] == '"') $results[$i][$tag] = trim ($svalue, '"');
+    					else $results[$i][$tag] = (int) $svalue;
+    				}
+    			}
+			} catch (exception $e) {
+			  // empty array?  
 			}
 		}
 	} else {

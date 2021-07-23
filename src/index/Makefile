@@ -5,6 +5,7 @@ INSTALL = install
 DOCS=       img.html \
             index.html \
             index.php \
+            index1.php \
             mjpeg.html
 
 all:

@@ -36,7 +36,18 @@
    define('CONF_LWIR16',        '/etc/elphel393/lwir16.ini');
    define('EO_DECIMATE',        6);
    // GLOBALS field name
+   define('CAM_IP_PREF',        'cam_'); // camera
+   define('CAM_PORT_SEP',       '_'); // camera ip to port seperator
    define('IPS',                'ips');
+   define('PORT_MASKS',         'port_masks');
+   define('ALL_PORTS',          15);
+   define('IMGSRV_PORT0',       2323);
+   define('TIFF_TELEM',         'tiff_telem');
+   define('TIFF_MN',            'tiff_mn');
+   define('TIFF_MX',            'tiff_mx');
+   define('TIFF_BIN_SHIFT',     'tiff_bin');
+   define('TIFF_STATS',         'tiff_stats');
+   define('TIFF_AUTO',          'tiff_auto');
    define('DURATION',           'duration');
    define('DURATION_EO',        'duration_eo');
    define('PRE_DELAY',          'pre_delay');
@@ -74,6 +85,13 @@
 //   $ffc =        false; 
    $GLOBALS[FFC_GROUPS] = 2; // 1/2/4 - do not run FFC on all channels simultaneously (43 failed)
    $GLOBALS[FFC_FRAMES] = 8; // read actual?
+   /*
+   $GLOBALS[TIFF_TELEM] =     1; // one top line
+   $GLOBALS[TIFF_MN] =        0;
+   $GLOBALS[TIFF_MX] =        0xffff;
+   $GLOBALS[TIFF_BIN_SHIFT] = 1; // bin_size = 2
+   $GLOBALS[TIFF_AUTO] =      0; // use very min/veri max (1 - 0.1%, 2 - 0.5%, 3 - 1%, 4 - 5%, 5 - 10%)
+   */
    
    $ini =    parse_ini_file(CONF_LWIR16);
    applyConf($ini);
@@ -94,9 +112,14 @@
    
    
    unset($duration);unset($duration_eo);
+   unset ($masks);
    foreach($_GET as $key=>$value) {
        if (($key == 'ip') || ($key == 'ips')){ //  multicamera operation
            $GLOBALS[IPS] = explode(',',$value);
+           unset ($GLOBALS[PORT_MASKS]); // invalidate
+       } else if ($key == PORT_MASKS){ //
+           $masks = explode(',',$value);
+           unset ($GLOBALS[PORT_MASKS]); // invalidate
        } else if (($key == 'lwir16') || ($key == 'cmd')){
            $lswir16cmds = explode(',',$value);
        } else if ($key == 'pre_delay'){
@@ -118,11 +141,33 @@
                }
            }
        }
+       else if ($key == TIFF_TELEM)     $GLOBALS[TIFF_TELEM] =     (int) $value;
+       else if ($key == TIFF_MN)        $GLOBALS[TIFF_MN] =        (int) $value;
+       else if ($key == TIFF_MX)        $GLOBALS[TIFF_MX] =        (int) $value;
+       else if ($key == TIFF_BIN_SHIFT) $GLOBALS[TIFF_BIN_SHIFT] = (int) $value;
+       else if ($key == TIFF_AUTO)      $GLOBALS[TIFF_AUTO] =      (int) $value;
+   }
+   if (!isset($GLOBALS[PORT_MASKS])){
+       $GLOBALS[PORT_MASKS] = array();
+       for ($i = 0; $i < count($GLOBALS[IPS]); $i++){
+//           print ('<pre>'.$i."\n</pre>");
+           if (isset($masks) && (count($masks) > $i)){
+               $GLOBALS[PORT_MASKS][$GLOBALS[IPS][$i]] = (int) ($masks[$i]);
+           } else {
+               $GLOBALS[PORT_MASKS][$GLOBALS[IPS][$i]] = ALL_PORTS;
+//               print ('<pre>'.$i."->".$GLOBALS[PORT_MASKS][$GLOBALS[IPS][$i]]."\n</pre>");
+           }
+       }
    }
 //   print_r($lswir16cmds);
 //   exit(0);
-   
-   
+    /*
+   echo"<pre>\n"; //****************
+   print_r($ini);
+   print_r($GLOBALS);
+   echo"</pre>";
+   exit(0);
+   */
    if (isset($duration) && !isset($duration_eo)){
        $duration_eo = (int) ($duration/EO_DECIMATE + 1);
    }
@@ -173,7 +218,7 @@
                $results = runInit();
                $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><lwir16_init/>");
                for ($i = 0; $i<count($results); $i++){
-                   $xml_ip = $xml->addChild ('ip_'.$GLOBALS[IPS][$i]);
+                   $xml_ip = $xml->addChild (CAM_IP_PREF.$GLOBALS[IPS][$i]);
                    foreach ($results[$i] as $key=>$value){
                        $xml_ip->addChild($key,$value);
                    }
@@ -232,23 +277,80 @@
                header("Pragma: no-cache\n");
                printf($rslt);
                exit (0);
-           }
-       }
+           } else if ($cmd == TIFF_STATS) {
+            /*
+            echo "<pre>\n"; // ****************
+            print_r($ini);
+            print_r($GLOBALS);
+            echo "</pre>";
+            exit(0);
+            */
+            $urls = array();
+            $xml_names = array();
+            for ($i = 0; $i < count($GLOBALS[IPS]); $i ++) {
+                // $_SERVER[SCRIPT_NAME] STARTS WITH '/'
+                for ($port = 0; $port < 4; $port ++) if ($GLOBALS[PORT_MASKS][$GLOBALS[IPS][$i]] & (1 << $port)){
+                    $url = 'http://' . $GLOBALS[IPS][$i] . ':'.(IMGSRV_PORT0+$port).
+                    '/'.TIFF_TELEM.'='.$GLOBALS[TIFF_TELEM].
+                    '/'.TIFF_MN.'='.$GLOBALS[TIFF_MN].
+                    '/'.TIFF_MX.'='.$GLOBALS[TIFF_MX].
+                    '/'.TIFF_BIN_SHIFT.'='.$GLOBALS[TIFF_BIN_SHIFT].
+                    '/'.TIFF_STATS;
+                    $urls[] = $url;
+                    $xml_names[] = CAM_IP_PREF.$GLOBALS[IPS][$i].CAM_PORT_SEP.$port;
+                }
+            }
+            
+///            echo "<pre>\n"; // ****************
+///            print_r($urls);
+            $curl_data = curl_multi_start($urls);
+            $enable_echo = false;
+            $results = curl_multi_finish($curl_data, true, 0, $enable_echo); // Switch true -> false if errors are reported (other output damaged XML)
+///            print_r($xml_names);
+//            if ($debug) {
+///                printf("--- results:\n");
+///                print_r($results);
+                
+ //           }
+//            echo "</pre>";
+//            exit(0);
+            $xml = new SimpleXMLElement("<?xml version='1.0'  standalone='yes'?><".TIFF_STATS."/>");
+            for ($i = 0; $i<count($results); $i++){
+                $xml_ip_port = $xml->addChild ($xml_names[$i]);
+///                echo("\n".$xml_names[$i]);
+///                print_r($results[$i]);
+                foreach ($results[$i] as $key=>$value){
+                    $xml_ip_port->addChild($key,$value);
+                }
+            }
+            $rslt=$xml->asXML();
+///            var_dump($xml);
+///            echo $rslt;
+///            echo "</pre>";
+///            exit(0);
+            
+            header("Content-Type: text/xml");
+            header("Content-Length: ".strlen($rslt)."\n");
+            header("Pragma: no-cache\n");
+            printf($rslt);
+            exit(0);
+        }
+      }
    } else { // Just output usage?
        echo <<<EOT
-        <pre>
-        This script supports initialization of the LWIR16 camera (16 LWIR 640x512 sensors and 4 2592x1936 color ones)
-        and capturing of short image sequences (100 frames fit into 64MB per-channel image buffer) for (relatively)
-        slow recording with camogm. Untill videocompression for 16-bit TIFFs is not implemented, recording is not fast
-        enough for continupous recording. This script should be launched in the 'master' subcamera only, it will
-        communidate with the other ones.
-        
-        URL parameters:
-        <b>lwir16=init</b> - syncronize all 5 cameras, set acquisition parameters
-        <b>lwir16=capture</b> - wait specified time, synchronously turn on compressors in each channel of each subcamera,
-                                acquire specified number of frames in each channel (reduced, and turn compressors off.
-         
-        </pre>
+            <pre>
+            This script supports initialization of the LWIR16 camera (16 LWIR 640x512 sensors and 4 2592x1936 color ones)
+            and capturing of short image sequences (100 frames fit into 64MB per-channel image buffer) for (relatively)
+            slow recording with camogm. Untill videocompression for 16-bit TIFFs is not implemented, recording is not fast
+            enough for continupous recording. This script should be launched in the 'master' subcamera only, it will
+            communidate with the other ones.
+            
+            URL parameters:
+            <b>lwir16=init</b> - syncronize all 5 cameras, set acquisition parameters
+            <b>lwir16=capture</b> - wait specified time, synchronously turn on compressors in each channel of each subcamera,
+                                    acquire specified number of frames in each channel (reduced, and turn compressors off.
+             
+            </pre>
 EOT;
 // Watch EOT w/o any spaces! 
    }
@@ -436,7 +538,8 @@ EOT;
            // $_SERVER[SCRIPT_NAME] STARTS WITH '/'
            $url = 'http://'.$GLOBALS[IPS][$i].'/capture_range.php?sensor_port='.$sensor_port; //
            $url .= '&ts='.$timestamp; // &timestamp" -> ×tamp
-           $url .= '&port_mask=15'; // .$port_mask[$i];
+//           $url .= '&port_mask=15'; // .$port_mask[$i];
+           $url .= '&port_mask='.$GLOBALS[PORT_MASKS][$GLOBALS[IPS][$i]]; //indexed by IPs
            $dur = ($i < 4) ? $GLOBALS[DURATION] : $GLOBALS[DURATION_EO];
            $url .= '&duration='. $dur;
            //                   $url .= '&maxahead='. $maxahead;
@@ -459,11 +562,10 @@ EOT;
    }
    
    function runFFC($lwir_ips, $ffc_wait_frames, $debug=0) { // return number of frames used
-       
        $skipped = 0;
        $port_masks =array();
-       foreach ($lwir_ips as $l){
-           $port_masks[] = 15; // select all 4 ports 
+       foreach ($lwir_ips as $lip){
+           $port_masks[] = $GLOBALS[PORT_MASKS][$lip]; // select all 4 ports 
        }
        if      ($GLOBALS[FFC_GROUPS] == 1) $group_masks = array(15);
        else if ($GLOBALS[FFC_GROUPS] == 2) $group_masks = array(5, 10);
@@ -720,7 +822,22 @@ EOT;
    }
    
    function applyConf($arr){
-       if (isset($arr[IPS]))         $GLOBALS[IPS] =        explode(',',$arr[IPS]);
+       //port_masks=  "15,15,15,15,15"
+       if (isset($arr[IPS])) {
+           $GLOBALS[IPS] =        explode(',',$arr[IPS]);
+           if (isset ($arr[PORT_MASKS])){
+               $masks = explode(',',$arr[PORT_MASKS]);
+           }
+           // Add port masks incdexed by IPs. Changing IPs resets masks
+           $GLOBALS[PORT_MASKS] = array();
+           for ($i = 0; $i < count($GLOBALS[IPS]); $i++){
+               if (isset($masks) && (count($masks) > $i)){
+                   $GLOBALS[PORT_MASKS][$GLOBALS[IPS][$i]] = (int) $masks[$i];
+               } else {
+                   $GLOBALS[PORT_MASKS][$GLOBALS[IPS][$i]] = ALL_PORTS;
+               }
+           }
+       }
        if (isset($arr[DURATION])){
            $GLOBALS[DURATION] =   (int)       $arr[DURATION];
            $GLOBALS[DURATION_EO] = (int) ($GLOBALS[DURATION]/EO_DECIMATE+1);
@@ -734,6 +851,11 @@ EOT;
        if (isset($arr[DEBUG]))           $GLOBALS[DEBUG] = (int)            $arr[DEBUG];
        if (isset($arr[COMPRESSOR_RUN]))  $GLOBALS[COMPRESSOR_RUN] = (int)   $arr[COMPRESSOR_RUN]; // only after INIT
        if (isset($arr[FFC]))             $GLOBALS[FFC] =                    $arr[FFC]?1:0;
+       if (isset($arr[TIFF_TELEM]))      $GLOBALS[TIFF_TELEM] = (int)       $arr[TIFF_TELEM];
+       if (isset($arr[TIFF_MN]))         $GLOBALS[TIFF_MN] = (int)          $arr[TIFF_MN];
+       if (isset($arr[TIFF_MX]))         $GLOBALS[TIFF_MX] = (int)          $arr[TIFF_MX];
+       if (isset($arr[TIFF_BIN_SHIFT]))  $GLOBALS[TIFF_BIN_SHIFT] = (int)   $arr[TIFF_BIN_SHIFT];
+       if (isset($arr[TIFF_AUTO]))       $GLOBALS[TIFF_AUTO] = (int)        $arr[TIFF_AUTO];
    }
 
 /**
