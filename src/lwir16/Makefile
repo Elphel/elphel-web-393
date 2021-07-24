@@ -8,9 +8,12 @@ CONFDIR      = $(SYSCONFDIR)/elphel393
 
 
 INSTALL = install
-DOCS=       index.html
+DOCS=       index.html \
+            test_goggles.html \
+            test_rc.html
             
 PHP_SCRIPTS_EXE=lwir16.php \
+            dualsock.php \
             test_int.php \
             test_wpipe.php \
             test_ps.php
