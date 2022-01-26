@@ -4,6 +4,7 @@ OWN = -o root -g root
 INSTDOCS = 0644
 INSTALL = install
 DOCS=       index.html \
+			index1.html \
             multicam.js \
             multicam.css \
             multicam.php

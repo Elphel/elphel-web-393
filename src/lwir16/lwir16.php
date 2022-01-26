@@ -358,7 +358,7 @@ EOT;
         // TODO: use lwir16.ini
         $eo_quality = 97;
         $exposure = 1000; // 1 ms
-        $autoExposureMax = 500000;
+        $autoExposureMax = 25000; // 500000; ~28ms - max for 10Hz
         $autoExp = 1;
         $gain = 2 * 0x10000;
         $rScale = 1 * 0x10000;

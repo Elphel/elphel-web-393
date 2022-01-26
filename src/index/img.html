@@ -30,6 +30,8 @@
             const params = new URLSearchParams(location.search);
             const port = params.get('port') || 0;
             const refresh = params.get('refresh') || 5;
+            const sensor_type = params.get('sensor_type') || '';
+            console.log("img.html: sensor_type="+sensor_type);
 
             if (params.get('port')===null){
                 let s = "";
@@ -42,8 +44,11 @@
             }
 
             let imgsrv_port = IMGSRV_PORT0 + parseInt(port);
-
-            let t1 = $("#cnv_div").jp4({src:"http://"+location.host+":"+imgsrv_port+"/img",width:1600,fast:true,lowres:2,debug:false,refresh:true});
+			if (sensor_type == "boson640") {
+	            let t1 = $("#cnv_div").jp4({src:"http://"+location.host+":"+imgsrv_port+"/tiff_palette=2/tiff_telem=1/tiff_auto=0/tiff_convert/bimg",width:1600,fast:true,lowres:2,debug:false,refresh:true});
+			} else {
+    	        let t1 = $("#cnv_div").jp4({src:"http://"+location.host+":"+imgsrv_port+"/img",width:1600,fast:true,lowres:2,debug:false,refresh:true});
+            }
 
     </script>
   </body>

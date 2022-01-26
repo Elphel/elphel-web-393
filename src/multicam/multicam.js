@@ -352,6 +352,19 @@ function init_port(cam_i,port_i){
     }
   });
 
+  var url = "http://"+cams[cam_i].ip+"/parsedit.php?immediate&sensor_port="+cams[cam_i].ports[port_i].index+"&BITS";
+  $.ajax({
+    url: url,
+    cam_i: cam_i,
+    port_i: port_i,
+    success: function(res){
+      bits = parseInt($(res).find("BITS").text());
+      cams[this.cam_i].ports[this.port_i].bits = bits;
+    }
+  });
+
+
+
 }
 
 // * if any attribute is not initialized it will be NaN
@@ -477,6 +490,7 @@ function refresh_previews(){
     if (cams[i].init){
       for(var j=0;j<cams[i].ports.length;j++){
         var cam = cams[i];
+        var is_lwir = cam.ports[j].bits > 8;
         //var img_src = 'http://'+cam.ip+':'+cam.ports[j].port+'/img?'+ts;
         var hst_src = 'http://'+cam.ip+'/pnghist.cgi?sensor_port='+cam.ports[j].index+'&sqrt=1&scale=5&average=5&height=128&fillz=1&linterpz=0&draw=2&colors=41&_time='+ts;
 
@@ -486,10 +500,15 @@ function refresh_previews(){
         if (!cam.ports[j].preview){
           //console.log("preview does not exist");
           var jp4prev = elem.find(".port_preview[index="+j+"]");
+		  var imgsrv_img = "/img";
+		  if (is_lwir){
+			  imgsrv_img = "/tiff_palette=2/tiff_telem=1/tiff_auto=33/tiff_convert/bimg";
+		  }
           var preview = jp4prev.jp4({
             //ip: cam.ip,
             //port: cam.ports[j].port,
-            src: "http://"+cam.ip+":"+cam.ports[j].port+"/img",
+//            src: "http://"+cam.ip+":"+cam.ports[j].port+"/img",
+            src: "http://"+cam.ip+":"+cam.ports[j].port+imgsrv_img,
             width: 200,
             fast: true,
             lowres:4,
@@ -503,11 +522,10 @@ function refresh_previews(){
           cam.ports[j].preview.data.refresh();
 
         }
-
-
         //console.log(jp4prev.data.getAddr());
-
-        elem.find(".hist_preview[index="+j+"]").attr('src',hst_src);
+		if (!is_lwir) {
+            elem.find(".hist_preview[index="+j+"]").attr('src',hst_src);
+        }
       }
     }
   }

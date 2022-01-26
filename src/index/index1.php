@@ -122,7 +122,7 @@
 
   $sensors = get_sensors();
   $sensor_type = "none";
-
+  $preview_image_cmd=array();
   foreach($sensors as $i => $sensor){
     if ($sensor!="none"){
         $sensor_type = $sensor;
@@ -131,15 +131,24 @@
         $sandp = "http://{$_SERVER["SERVER_ADDR"]}:".($port0+$i);
         $href1 = "$sandp/bimg";
         $href2 = "$sandp/mimg";
-
+        $href3 = "$sandp/tiff_palette=2/tiff_telem=1/tiff_auto=33/tiff_convert/bimg";
+        if ($sensor_type == 'boson640'){
+            $preview_image_cmd[] = '/tiff_palette=2/tiff_telem=1/tiff_auto=33/tiff_convert/bimg';
+        } else {
+            $preview_image_cmd[] = 'img';
+        }
         $table_contents .= "<td valign='top'>";
         $table_contents .= "<div class='port_window img_window'>";
         //$table_contents .= "<div><a href=\"$href1\"><img class='img_window' src='$href1' style='width:300px'/></a></div>";
-        $table_contents .= "<div><a href=\"$href1\"><div index='$i' class='port_preview'></div></a></div>";
+        if ($sensor_type == boson640){
+            $table_contents .= "<div><a href=\"$href3\"><div index='$i' class='port_preview'></div></a></div>";
+        } else {
+            $table_contents .= "<div><a href=\"$href1\"><div index='$i' class='port_preview'></div></a></div>";
+        }
         $table_contents .= "<div style='text-align:center;'>";
-        $table_contents .= "port $i: ";
+        $table_contents .= "port $i: (".$sensor_type.")";
         $table_contents .= "<a title='single image' href='$href1'>bimg</a>, ";
-        $table_contents .= "<a href=\"img.html?port=$i\" title='single image, auto refreshed on load, LOW RES, displays jpeg, tiff and jp4 formats'>img</a>, ";
+        $table_contents .= "<a href=\"img.html?port=$i&amp;sensor_type=$sensor_type\" title='single image, auto refreshed on load, LOW RES, displays jpeg, tiff and jp4 formats'>img</a>, ";
         $table_contents .= "<a title='multi-part image stream (M-JPEG). Played in browser as is.' href='$href2'>mimg</a>, ";
         $table_contents .= "<a href=\"mjpeg.html?port=$i\" title='MJPEG stream played in html canvas' class='canvas_mjpeg'>canvas</a>";
         $table_contents .= "</div>";
@@ -281,9 +290,9 @@
             index = parseInt($(this).attr("index"));
             if (jp4_previews_enable) {
                 //jp4_previews[index] = $(this).jp4({ip:location.host,port:2323+index,width:300,fast:true,lowres:4});
-                jp4_previews[index] = $(this).jp4({src:"http://"+location.host+":"+(2323+index)+"/img",width:300,fast:true,lowres:4});
+                jp4_previews[index] = $(this).jp4({src:"http://"+location.host+":"+(2323+index)+"<?php echo $preview_image_cmd[0];?>",width:300,fast:true,lowres:4});
             }else{
-                $(this).html("<img width='300' src='http://"+location.host+":"+(2323+index)+"/img' />");
+                $(this).html("<img width='300' src='http://"+location.host+":"+(2323+index)+"<?php echo $preview_image_cmd[0];?>' />");
             }
         });
     }
