@@ -1,0 +1,166 @@
+#settings{
+  padding:5px;
+}
+
+table td {
+  padding-right:10px;
+}
+
+.btn.active:focus, .btn:focus{
+  outline:none;
+}
+
+.btn-toggle{
+  padding: 1px 0px;
+}
+
+#edit_addrs{
+  padding: 2px;
+}
+
+#ea_btn{
+  outline:none;
+  font-weight:bold;
+}
+
+#addrs{
+  padding: 0px 2px 2px 2px;
+}
+
+#eai_text{
+  resize:none;
+  margin:0px;
+}
+
+#edit_addrs_input{
+  position:absolute;
+  top:2px;
+  left:2px;
+  border:1px solid rgb(169,169,169);
+  padding:2px;
+  background: white;
+  z-index: 100;
+}
+
+#eai_text_div{
+  line-height:14px;
+}
+
+#rec_start{
+  outline:none;
+  border: 0px solid #00AA66;
+}
+
+.rec_outer{
+  position:relative;
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  border: 1px solid rgba(100,100,100,1);
+  background: white;
+}
+
+.rec_inner{
+  position:relative;
+  top:25%;
+  left:25%;
+  width:50%;
+  height:50%;
+  border-radius:50%;
+  background: rgb(166,14,14);
+}
+
+.rec_outer:active{
+  border: 1px solid rgb(166,14,14);
+}
+
+.rec_outer_active{
+  border: 1px solid rgb(166,14,14);
+}
+
+.rec_inner_running{
+  top:5%;
+  left:5%;
+  width:90%;
+  height:90%;
+}
+
+.port_preview{
+  width:200px;
+}
+
+.hist_preview{
+  border:1px solid rgba(200,200,200,0.5);
+  width:200px;
+}
+
+#display{
+  padding:5px;
+}
+
+hr{
+  margin-top:2px;
+  margin-bottom:2px;
+}
+
+#display_status th, #s_device{
+  text-align:center;
+}
+
+#s_space{
+  text-align:right;
+}
+
+#display_status td, #display_status th{
+  border:1px solid rgba(100,100,100,0.8);
+  padding:2px 5px;
+}
+
+.port_preview canvas,#display{
+  padding:0px;
+}
+
+#system_tests{
+  margin:5px;
+}
+
+#display_all {
+  display: flex;
+}
+
+#display_preview {
+  flex: 0 0 65%;
+}
+
+#controls {
+  flex: 1;
+}
+
+.ip_text{
+	display: none;
+}
+
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 2px;
+  width: 100%;
+  border: none;
+  text-align: center;
+  outline: none;
+  font-size: 10px;
+  font-weight: bold;  
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
+

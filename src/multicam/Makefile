@@ -5,9 +5,13 @@ INSTDOCS = 0644
 INSTALL = install
 DOCS=       index.html \
 			index1.html \
+			index2.html \
             multicam.js \
+            multicam2.js \
             multicam.css \
-            multicam.php
+            multicam2.css \
+            multicam.php \
+            multicam2.php
 
 ZIPDOCS= zip/deflate.js \
          zip/inflate.js \

@@ -238,6 +238,7 @@ function get_port_info($port){
     'TRIG' => 0,
     'TRIG_MASTER' => 0,
     'TRIG_PERIOD' => 0,
+    'TRIG_DECIMATE' => 0,
     'TRIG_CONDITION' => 0,
     'TRIG_OUT' => 0,
     'GAINR' => 0,

@@ -361,7 +361,14 @@ function parse_port(port){
   var pn = p.attr('index');
   var mux = p.attr('mux');
   var sensors = p.attr('sensor');
-
+  var format  = pp_parse_format(p.find('color'));
+  var quality = p.find('quality').text()+'%';
+//  alert(format);
+//  alert(format.includes("tiff"));
+  if (format.includes("tiff")){
+	  quality = "lossless"
+  }
+  
   var res = [
     '<tr>',
     '  <td class=\'center\'>'+pn+'</td>',
@@ -369,12 +376,12 @@ function parse_port(port){
     '  <td>'+sensors+'</td>',
     '  <td class=\'center\'>'+pp_parse_sensor_run(p.find('sensor_run'))+'</td>',
     '  <td class=\'center\'>'+pp_parse_sensor_run(p.find('compressor_run'))+'</td>',
-    '  <td class=\'center\'>'+pp_parse_format(p.find('color'))+'</td>',
-    '  <td class=\'center\'>'+p.find('quality').text()+'%</td>',
+    '  <td class=\'center\'>'+format+'</td>',
+    '  <td class=\'center\'>'+quality+'</td>',
     '  <td class=\'center\'>'+p.find('woi_width').text()+'x'+p.find('woi_height').text()+'</td>',
     '  <td class=\'center\'>'+p.find('trig').text()+'</td>',
     '  <td class=\'center\'>'+p.find('trig_master').text()+'</td>',
-    '  <td class=\'center\'>'+pp_parse_trig_period(p.find('trig_period').text(),p.find('expos').text())+'</td>',
+    '  <td class=\'center\'>'+pp_parse_trig_period(p.find('trig_period').text(),p.find('trig_decimate').text(),p.find('expos').text())+'</td>',
     '  <td class=\'center\'>'+pp_parse_trig_p(p.find('trig_out').text())+'</td>',
     '  <td class=\'center\'>'+pp_parse_trig_p(p.find('trig_condition').text())+'</td>',
     '  <td class=\'right\'>'+pp_parse_expos(p.find('expos').text(),p.find('trig_period').text())+'</td>',
@@ -433,10 +440,11 @@ function pp_parse_trig_p(str){
 
 }
 
-function pp_calc_trig_period(str){
+function pp_calc_trig_period(str, sdecimate){
   var clock = 100000000;
   var v = parseInt(str);
-  v = v/clock;
+  var decimate = 1.0 + parseInt(sdecimate) 
+  v = v/clock*decimate;
   return v;
 }
 
@@ -446,9 +454,9 @@ function pp_calc_exposure(str){
   return v;
 }
 
-function pp_parse_trig_period(period,str){
+function pp_parse_trig_period(period,decimate,str){
 
-  var per = pp_calc_trig_period(period);
+  var per = pp_calc_trig_period(period, decimate);
   var exp = pp_calc_exposure(str);
 
   var fps = (1/per);
@@ -477,10 +485,12 @@ function pp_parse_format(str){
 
   if (fmt==5){
     fmt = "jp4";
-  }else if (fmt==0){
+  } else if (fmt==15){
+    fmt = "tiff";
+  } else if (fmt==0){
     color = "rgb(240,160,0)";
     fmt = "jpeg";
-  }else{
+  } else{
     color = "rgb(230,0,0)";
     fmt = "else";
   }
