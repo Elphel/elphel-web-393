@@ -26,7 +26,7 @@ var apply_pending = false;
 
 function parse_response(resp){
   var result = "";
-  console.log(resp);
+  console.log("parse_response(), resp="+resp);
   if (resp.getElementsByTagName("result").length!=0){
   	result = resp.getElementsByTagName("result")[0].childNodes[0].nodeValue;
   }else if (resp.getElementsByTagName("reboot").length!=0){
@@ -40,11 +40,13 @@ function parse_response(resp){
 }
 
 function send_request(rq,callback){
+  console.log("send_request(), rq="+rq);
   var request = new XMLHttpRequest();
   request.open('GET', rq, true);
   request.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var resp = this.responseXML;
+      console.log("send_request(), callback, resp="+resp);
   	  callback(resp);
     }
   };
@@ -55,8 +57,10 @@ function send_request(rq,callback){
 }
 
 function sendStatusRequest(){
+    console.log("sendStatusRequest()");
     var url = "http://192.168.0.41/lwir16/lwir16.php?daemon=status";
     if (apply_pending) {
+        console.log("sendStatusRequest(), apply_pending");
         var mod_pars =   modParameters();
 //    console.log('mod_pars members:');
         for(const p in mod_pars) {
@@ -69,6 +73,7 @@ function sendStatusRequest(){
 }
 
 function sendRestartRequest(){
+    console.log("sendRestartRequest()");
     var url = "http://192.168.0.41/lwir16/lwir16.php?daemon=restart&cmd=STATUS";
     send_request(url,parseStatusResponse);
 }
@@ -76,6 +81,7 @@ function sendRestartRequest(){
 
 
 function parseStatusResponse(resp){
+  console.log("parseStatusResponse(), resp="+resp);
   var result = "";
 //  console.log(resp);
   if (update_editable) {
@@ -158,6 +164,7 @@ function parseStatusResponse(resp){
   request_num++;
   document.getElementById("idrequest_num").value = request_num;
   update_editable = false;
+  console.log("parseStatusResponse() almost Done, sending again sendStatusRequest()");
   sendStatusRequest();
 }
 

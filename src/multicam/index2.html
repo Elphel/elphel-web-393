@@ -25,7 +25,90 @@
       <div id='display_controls'>
          <button type="button" class="collapsible">Recording Status</button>
          <div id='display_status'></div>
+         <button type="button" class="collapsible">LWIR16 Status</button>
+         <div id='lwir16_status'>
+           <table><tr><td>
+             <table>
+               <tr><td><label for="seq_num"    >Seq Num</label></td><td><input type="text" id="idsequence_num" name="seq_num"      size="5" value="?" disabled="disabled"></td></tr>
+               <tr><td><label for="request_num">Requests</label></td><td><input type="text" id="idrequest_num" name="request_num"    size="5" value="?" disabled="disabled"></td></tr>
+               <tr><td><label for="capture_run">Running</label></td><td><input type="checkbox" id="idcapture_run" name="capture_run" disabled="disabled"></td></tr>
+             </table>
+           </td><td>
+             <table>
+               <tr><td><label for="last_ffc"    >Last FFC</label></td><td><input type="text" id="idlast_ffc" name="last_ffc"      size="5" value="?" disabled="disabled">s</td></tr>
+               <tr><td><label for="time_to_ffc" >To FFC</label></td><td><input type="text" id="idtime_to_ffc" name="time_to_ffc"   size="5" value="?" disabled="disabled">s</td></tr>
+               <tr><td colspan = "2">&nbsp;</td></tr>
+           </table>
+           </td></tr></table>
+         </div>
+         <button type="button" class="collapsible">LWIR16 Controls</button>
+         <div id='lwir16_controls'>
+
+           <table><tr><td>
+             <table>
+               <tr><td><button id="idStartStop" name = "nStartStop" disabled="true">???</button></td>
+               <td><button id="idApply" name = "nApply" disabled = "true">???</button></td>
+               </tr>
+               
+               <tr><td><label for="idpre_delay"   >Inter-Delay</label></td><td><input type="text" id="idpre_delay" name="pre_delay"      size="5" value="?">s</td></tr>
+               <tr><td><label for="duration"      >LWIR frames</label></td><td><input type="text" id="idduration" name="duration"      size="5" value="?"></td></tr>
+               <tr><td><label for="duration_eo"   >RGB frames</label></td><td><input type="text" id="idduration_eo" name="duration_eo"      size="5" value="?"></td></tr>
+               <tr><td><label for="compressor_run">Compress Init</label></td><td><input type="checkbox" id="idcompressor_run" name="compressor_run"></td></tr>
+             </table>
+           </td><td>
+             <table>
+               <tr><td><label for="ffc"    >FFC</label></td><td><input type="checkbox" id="idffc" name="ffc"></td></tr>
+               <tr><td><label for="ffc_period"    >FFC period</label></td><td><input type="text" id="idffc_period" name="ffc_period"      size="5" value="?"></td></tr>
+               <tr><td><label for="ffc_groups"    >FFC groups</label></td><td><select id="idffc_groups" name="idffc_groups">
+														                         <option value="1">1</option>
+														        			  	  <option value="2">2</option>
+																		          <option value="4" selected="selected">4</option>
+																		        </select>
+                                                                         </td></tr>
+               <tr><td><label for="ffc_frames"    >FFC frames</label></td><td><input type="text" id="idffc_frames" name="ffc_frames"      size="5" value="?"></td></tr>
+               <tr><td><label for="debug"    >Debug</label></td><td><input type="text" id="iddebug" name="debug"      size="5" value="?"></td></tr>
+           </table>
+           </td></tr></table>
+
+         </div>
          
+         <button type="button" class="collapsible">Multicam Controls</button>
+         <div id='multicam settings'>
+		    <table>
+			    <tr>
+				    <td>
+					    <table>
+					    <th><td colspan="2">Image Refresh<td> </th>
+					    <tr> <td><label>Enable</label></td>
+					    <td>
+					          <div id="toggle_refresh" class="btn-group btn-toggle">
+					            <button class="btn btn-xs btn-success active">ON</button>
+					            <button class="btn btn-xs btn-default">OFF</button>
+					          </div>
+					     </td> </tr>
+					    <tr><td><label for="ref_rate">Images</label></td>
+							<td><input type="text" id="ref_rate" name="ref_rate" size="4">s</td>
+						</tr><tr>
+						    <td><label for="sref_rate">Status</label></td>
+							<td><input type="text" id="sref_rate" name="sref_rate" size="4">s
+					    </td> </tr>
+					    </table>
+				    </td>
+				    <td>
+					    <table><th><td colspan="2">SSD Recording<td> </th>
+					    <tr><td><label>Record</label></td>
+					      <td><div id="toggle_record" class="btn-group btn-toggle">
+					            <button class="btn btn-xs btn-success active">ON</button>
+					            <button class="btn btn-xs btn-default">OFF</button>
+					          </div>
+					      </td>
+					    </tr><tr> <td><label id = "root_dir" for="ssd_directory">/mnt/sda1/</label></td>
+							 <td><input type="text" id="dir_name" name="ssd_directory" size="10"></td>
+					    </tr><tr><td colspan="2">&nbsp;</td></tr></table>
+				    </td>
+			    </tr> 
+		    </table>
+         </div>
          <button type="button" class="collapsible">Eyesis Controls</button>
 		 <div id='settings'>
 		    <table>
@@ -52,11 +135,22 @@
 		        <td>Auto Exposure:</td>
 		        <td>
 		          <div id="toggle_aexp" class="btn-group btn-toggle">
-		            <button class="btn btn-xs btn-success active">ON</button>
-		            <button class="btn btn-xs btn-default">OFF</button>
-		          </div>
-		        </td>
+								<button class="btn btn-xs btn-success active">ON</button>
+								<button class="btn btn-xs btn-default">OFF</button>
+							</div>
+						</td>
 		      </tr>
+
+		      <tr id="manual_exposure_div" title='Manual Exposure'>
+		        <td><label for="exposure_ms">Manual</label></td>
+		        <td><input type="text" id="exposure_ms" name="exposure_ms" size="6" value="50">ms</td>
+		      </tr>
+
+		      <tr id="image_quality_div" title='Image Quality'>
+		        <td><label for="jpeg_quality">Quality</label></td>
+		        <td><input type="text" id="jpeg_quality" name="jpeg_quality" size="6" value="97">%</td>
+		      </tr>
+
 		      <tr>
 		        <td>
 		          <button id='system_tests' title='system info' class="btn btn-sm btn-success">tests</button>

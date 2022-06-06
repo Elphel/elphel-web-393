@@ -487,7 +487,7 @@ EOT;
         return $results;
    }
 
-   function runCapture($run_ffc, $nowait = 0, $debug=0) {
+   function runCapture($run_ffc, $nowait = 0, $debug=0) { // works, but the main script hangs
        // TODO: use lwir16.ini
 //       $eo_quality = 97;
 //       $exposure = 1000; // 1 ms
@@ -662,7 +662,7 @@ EOT;
        $GLOBALS[CAPTURE_RUN] = 0; // until command
        $GLOBALS[LAST_FFC] = 0; // overdue
        $GLOBALS[SECUENCE_NUM] = 0;
-       if ($GLOBALS[DEBUG > 1])  {
+       if ($GLOBALS[DEBUG] > 1)  { // was if ($GLOBALS[DEBUG > 1])  {
            printf("--- GLOBALS: ---\n");
            print_r($GLOBALS);
        }

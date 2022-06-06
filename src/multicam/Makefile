@@ -11,7 +11,8 @@ DOCS=       index.html \
             multicam.css \
             multicam2.css \
             multicam.php \
-            multicam2.php
+            multicam2.php \
+            reboot.html
 
 ZIPDOCS= zip/deflate.js \
          zip/inflate.js \
