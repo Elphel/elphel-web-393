@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <title>Reboot cameras</title>
+    <meta content="">
+    <style></style>
+    <script src="../js/jquery-3.1.1.js"></script>
+    <script>
+    //192.168.0.41/multicam/reboot.html?ip=192.168.0.41,192.168.0.42,192.168.0.43,192.168.0.44,192.168.0.45&continue=http://192.168.0.41/multicam/index2.html&delay=10
+//	    var reboot_url="/autocampars.php?reboot";
+	    var reboot_url=":2323/reboot";
+//	    var reboot_url="/parsedit.php?immediate&sensor_port=0&WB_EN"; // just for testing
+	    var get_frame_url = "parsedit.php?immediate&sensor_port=0&THIS_FRAME";
+	    var good_frame = 50;
+    	var ips = [];
+	    var cont = "";
+	    var delay_sec = "45";
+	    var count_left = 0;
+	    var url = ""
+	    	$(function(){
+	    		main();
+	    		});
+	    var refresh_intvl;
+	    function main(){
+	        console.log("parseURL()");    
+	        var ips_str = location.host;
+	        var parameters=location.href.replace(/\?/ig,"&").split("&");
+	        for (var i=0;i<parameters.length;i++) parameters[i]=parameters[i].split("=");
+	        for (var i=1;i<parameters.length;i++) {
+	            switch (parameters[i][0]) {
+	                case "ip":
+	                	ips = parameters[i][1].split(",");
+	                  break;
+	                case "continue": // do not show previews - terribly slow for Bosons
+	                  cont = parameters[i][1];
+	                  break;
+	                case "delay": // do not show previews - terribly slow for Bosons
+	                	delay_sec = parseFloat(parameters[i][1]);
+	                    break;
+	            }
+	        }
+	        count_left = parseInt(delay_sec);
+	        for (var i =0; i < ips.length; i++){
+	            console.log("ip["+i+"]="+ips[i]);
+	        }
+	        console.log("cont="+cont);
+	        console.log("delay="+count_left);
+		    $('#label_reboot').html('Rebooted, waiting to restart '+cont+" ...");
+		    $('#restart').val(delay_sec);
+		    for (var i = ips.length-1; i>=0; i--){
+		    	var url = "http://"+ips[i]+reboot_url;
+        		console.log("Sending reboot request: "+url);
+		        $.ajax({
+		            url: url,
+		            ip:ips[i],
+		            success: function(){
+		        		console.log("****** reboot response from "+this.ip+", url="+this.url);
+		      	  	}
+		          }).fail(function(data,status){
+		              console.log(this.ip+" No response - OK now (does not have a chance to send response while rebooting). url = "+this.url);
+	            });
+		    }
+		    refresh_intvl = setInterval(updateCount,1000);
+	    }
+	    function updateCount(){
+	    	$('#restart').val(count_left);
+	    	count_left--;
+	    	if (count_left < 0) {
+	    		clearInterval(refresh_intvl);
+			    $('#label_reboot').html('Waiting '+ips[0]+" to initialize"); // add to the main program too?
+			    refresh_intvl = setInterval(waitMasterFrame50,1000);
+	    		// maybe try some safe url?
+//	    		window.location.replace(cont);
+	    	}
+	    }
+	    
+	    function waitMasterFrame50(){
+    		clearInterval(refresh_intvl); // ajax failure will restart delay
+	        $.ajax({
+	            url: "http://"+ips[0]+"/"+get_frame_url,
+	            success: function(response){
+	            	var frame = parseInt($(response).find("THIS_FRAME").text());
+	        		console.log("Master camera frame = "+frame);
+	        		if (frame >= good_frame) {
+	    			    $('#label_reboot').html('Starting'); // add to the main program too?
+	    			    if (cont.length> 0) { 
+	    	    			window.location.replace(cont);
+	    			    }
+	        		} else {
+	  	              console.log("Frame number="+frame+" < "+good_frame+"waiting longer");
+	  	              $('#restart').val(count_left);
+	  		    	  count_left++;
+			    	  refresh_intvl = setInterval(waitMasterFrame50,1000);
+	        			
+	        		}
+	      	  	}
+	          }).fail(function(data,status){
+	              console.log(this.ip+" Frame request failed. Retrying");
+	  	    	  $('#restart').val(count_left);
+		    	  count_left++;
+		    	  refresh_intvl = setInterval(waitMasterFrame50,1000);
+	          });
+	    }
+	    //7763773
+    </script>
+  </head>
+<!-- <body onload = "main()"> -->
+  <body>
+    <div >
+		<label id="label_reboot" style="font-size: 300%" for="reboot_count">Rebooted, waiting to ? ...</label>
+		<input id="restart" style="font-size: 300%" type="text" name="restart" size="4" disabled="disabled">
+	</div>
+  </body>
+  
+</html>
