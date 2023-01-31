@@ -22,6 +22,33 @@ var Port = function(options){
 
 }
 
+var BOSON_FFCS_REG= {
+	"gao_gain":   0,
+	"gao_sffc":   7,
+	"gao_ffc":    1,
+	"gao_temp":   2,
+	"bpr":        22,
+	"scnr":       36,
+	"srnr":       51,
+	"spnr":       46,
+	"tf":         42,
+	"tf_delta_nf":43
+};
+
+var boson_ffc= {
+	"gao_gain":   1,
+	"gao_sffc":   1,
+	"gao_ffc":    1,
+	"gao_temp":   1,
+	"bpr":        1,
+	"scnr":       1,
+	"srnr":       1,
+	"spnr":       1,
+	"tf":         1,
+	"tf_delta_nf":1
+};
+
+
 // camera class
 var Camera = function(options){
 
@@ -65,6 +92,7 @@ var refresh_status_intvl;
 var refresh_previews_intvl;
 var exp_ms =  50;
 var quality = 97;
+
 
 $(function(){
   init();
@@ -139,12 +167,13 @@ function init2(){
   init_multicam_controls(); // 2022
   console.log("Got cameras");
   console.log(cams);
+  initBosonFFC();
 }
 
 
 
 function get_ports(){
-
+  
   for(var i=0;i<cams.length;i++){
 	console.log("get_ports():"+i);
     $.ajax({
@@ -905,7 +934,7 @@ function updateAexpExpQuality(){
     url = "parsedit.php?immediate&sensor_port=0&AUTOEXP_ON="+aexp_en+"&*AUTOEXP_ON=0xf&EXPOS="+exp_us+"&*EXPOS=0xf&QUALITY="+quality+"&*QUALITY=0xf";
     console.log("updateAexpExpQuality(): url="+url);
     multi_ajax(url,function(res){
-      console.log(this.ip+": aexp "+aexp_en);
+      console.log(this.ip+":  "+aexp_en);
     }, 'mt9p006');
 }
 
@@ -927,7 +956,31 @@ function multi_ajax(url,callback,sensor_type=""){
   }
 }
 
+function initBosonFFC(){
+    console.log("initBosonFFC()");
+	for (var ffc_name in boson_ffc) {
+		console.log(ffc_name+" = " + boson_ffc[ffc_name]);
+		$('#'+ffc_name).change(function() {
+		    updateBosonFFC($(this).attr('id'));
+		});
+		console.log("initBosonFFC(), "+ffc_name);
+	}
+}
 
+function updateBosonFFC(ffc_name) {
+//	ffc_name=$(this).attr('id');
+	var in_type = $('#'+ffc_name).attr("type");
+	boson_ffc[ffc_name] = (in_type == 'text') ? ($('#'+ffc_name).val()): (($('#'+ffc_name).is(':checked'))?1:0);
+	console.log ("updateBosonFFC(): ffc_name="+ffc_name+": "+boson_ffc[ffc_name]+" val="+($('#'+ffc_name).val()+" type="  +($('#'+ffc_name).attr("type"))  ));
+	var sensor_reg = "SENSOR_REGS"+BOSON_FFCS_REG[ffc_name];
+	url = "parsedit.php?immediate&sensor_port=0&"+sensor_reg+"="+boson_ffc[ffc_name]+"&*"+sensor_reg+"=0xf";
+    console.log("updateBosonFFC(): url="+url);
+    multi_ajax(url,function(res){
+      console.log(this.ip+": "+url);
+    }, 'boson640');
+    // TODO: add FFC command after changes? Need to spread not to overpower
+    
+}
 
 
 

@@ -41,13 +41,35 @@
            </table>
            </td></tr></table>
          </div>
+
+         <button type="button" class="collapsible">LWIR16 FFC controls</button>
+         <div id='lwir16_ffc_controls'>
+           <table><tr><td>
+             <table>
+               <tr><td><label for="gao_gain">GAO Gain</label></td><td><input type="checkbox" id="gao_gain" name="gao_gain" checked="checked"></td></tr>
+               <tr><td><label for="gao_sffc">GAO SFFC</label></td><td><input type="checkbox" id="gao_sffc" name="gao_sffc" checked="checked"></td></tr>
+               <tr><td><label for="gao_ffc">GAO FFC</label></td><td><input type="checkbox" id="gao_ffc" name="gao_ffc" checked="checked"></td></tr>
+               <tr><td><label for="gao_temp">GAO Temp</label></td><td><input type="checkbox" id="gao_temp" name="gao_temp" checked="checked"></td></tr>
+               <tr><td><label for="bpr">BPR</label></td><td><input type="checkbox" id="idbpr" name="bpr" checked="checked"></td></tr>
+             </table>
+           </td><td>
+             <table>
+               <tr><td><label for="scnr">SCNR</label></td><td><input type="checkbox" id="scnr" name="scnr" checked="checked"></td></tr>
+               <tr><td><label for="srnr">SRNR</label></td><td><input type="checkbox" id="srnr" name="srnr" checked="checked"></td></tr>
+               <tr><td><label for="spnr">SPNR</label></td><td><input type="checkbox" id="spnr" name="spnr" checked="checked"></td></tr>
+               <tr><td><label for="tf">TF</label></td><td><input type="checkbox" id="tf" name="tf" checked="checked" disabled="disabled"></td></tr>
+               <tr><td><label for="tf_delta_nf">TF DELTA NF</label></td><td><input type="text" id="tf_delta_nf" name="tf_delta_nf"size="5" value="?">s</td></tr>
+           </table>
+           </td></tr></table>
+         </div>
+         
          <button type="button" class="collapsible">LWIR16 Controls</button>
          <div id='lwir16_controls'>
 
            <table><tr><td>
              <table>
-               <tr><td><button id="idStartStop" name = "nStartStop" disabled="true">???</button></td>
-               <td><button id="idApply" name = "nApply" disabled = "true">???</button></td>
+               <tr><td><button id="idStartStop" name = "nStartStop" disabled="disabled">???</button></td>
+               <td><button id="idApply" name = "nApply" disabled = "disabled">???</button></td>
                </tr>
                
                <tr><td><label for="idpre_delay"   >Inter-Delay</label></td><td><input type="text" id="idpre_delay" name="pre_delay"      size="5" value="?">s</td></tr>
